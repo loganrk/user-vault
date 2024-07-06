@@ -8,54 +8,20 @@ import (
 
 type App interface {
 	GetPort() string
-	IsMiddlewarePprofProperties() (bool, string)
-	GetStoreDatabaseProperties() (string, string, string)
-	GetStoreCacheDiskProperties() (bool, int)
+	GetStoreDatabaseProperties() (string, string, string, string, string)
+	GetStoreDatabaseTableUser() string
 	GetStoreCacheHeapProperties() (bool, int)
-	GetEndpointCategoryProperties() (bool, string, string)
-	GetEndpointProductProperties() (bool, string, string)
+	GetApiUserLoginEnabled() bool
+	GetApiUserLoginProperties() (string, string)
+	GetApiUserRegisterEnabled() bool
+	GetApiUserRegisterProperties() (string, string)
+	GetApiUserForgotPasswordEnabled() bool
+	GetApiUserForgotPasswordProperties() (string, string)
+	GetApiUserResetPasswordEnabled() bool
+	GetApiUserResetPasswordProperties() (string, string)
 }
 
-type app struct {
-	port       string `yaml:"app"`
-	middleware struct {
-		pprof struct {
-			enabled bool   `yaml:"enabled"`
-			route   string `yaml:"route"`
-		} `yaml:"pprof"`
-	} `yaml:"middleware"`
-	endpoint struct {
-		category struct {
-			enabled bool   `yaml:"enabled"`
-			route   string `yaml:"route"`
-			method  string `yaml:"method"`
-		}
-		product struct {
-			enabled bool   `yaml:"enabled"`
-			route   string `yaml:"route"`
-			method  string `yaml:"method"`
-		}
-	} `yaml:"endpoint"`
-	store struct {
-		database struct {
-			host     string `yaml:"host"`
-			port     string `yaml:"port"`
-			password string `yaml:"password"`
-		} `yaml:"database"`
-		cache struct {
-			disk struct {
-				enabled bool `yaml:"enabled"`
-				expiry  int  `yaml:"expiry"`
-			} `yaml:"disk"`
-			heap struct {
-				enabled bool `yaml:"enabled"`
-				expiry  int  `yaml:"expiry"`
-			} `yaml:"heap"`
-		} `yaml:"cache"`
-	} `yaml:"store"`
-}
-
-func InitApp(path string) (App, error) {
+func StartAppConfig(path string) (App, error) {
 
 	configFile, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -67,45 +33,71 @@ func InitApp(path string) (App, error) {
 		return nil, err
 	}
 
-	return &appConfig, nil
+	return appConfig, nil
 }
 
-func (c *app) GetPort() string {
+func (c app) GetPort() string {
 
 	return c.port
 }
 
-func (c *app) IsMiddlewarePprofProperties() (bool, string) {
-	pprof := c.middleware.pprof
-	return pprof.enabled, pprof.route
-}
-
-func (c *app) GetStoreDatabaseProperties() (string, string, string) {
+/* start of config-store */
+func (c app) GetStoreDatabaseProperties() (string, string, string, string, string) {
 	database := c.store.database
 
-	return database.host, database.port, database.password
+	return database.host, database.port, database.username, database.password, database.name
 }
 
-func (c *app) GetStoreCacheDiskProperties() (bool, int) {
-	diskCache := c.store.cache.disk
+func (c app) GetStoreDatabaseTableUser() string {
 
-	return diskCache.enabled, diskCache.expiry
+	return c.store.database.tables.user
 }
 
-func (c *app) GetStoreCacheHeapProperties() (bool, int) {
+func (c app) GetStoreCacheHeapProperties() (bool, int) {
 	heapCache := c.store.cache.heap
 
 	return heapCache.enabled, heapCache.expiry
 }
 
-func (c *app) GetEndpointCategoryProperties() (bool, string, string) {
-	endpoint := c.endpoint.category
+/* start of config-api */
+func (c app) GetApiUserLoginEnabled() bool {
 
-	return endpoint.enabled, endpoint.route, endpoint.method
+	return c.api.userLogin.enabled
 }
 
-func (c *app) GetEndpointProductProperties() (bool, string, string) {
-	endpoint := c.endpoint.product
+func (c app) GetApiUserLoginProperties() (string, string) {
+	api := c.api.userLogin
 
-	return endpoint.enabled, endpoint.route, endpoint.method
+	return api.method, api.route
+}
+
+func (c app) GetApiUserRegisterEnabled() bool {
+
+	return c.api.userRegister.enabled
+}
+
+func (c app) GetApiUserRegisterProperties() (string, string) {
+	api := c.api.userRegister
+
+	return api.method, api.route
+}
+
+func (c app) GetApiUserForgotPasswordEnabled() bool {
+
+	return c.api.userForgotPassword.enabled
+}
+
+func (c app) GetApiUserForgotPasswordProperties() (string, string) {
+	api := c.api.userForgotPassword
+
+	return api.method, api.route
+}
+
+func (c app) GetApiUserResetPasswordEnabled() bool {
+	return c.api.userResetPassword.enabled
+}
+func (c app) GetApiUserResetPasswordProperties() (string, string) {
+	api := c.api.userResetPassword
+
+	return api.method, api.route
 }
