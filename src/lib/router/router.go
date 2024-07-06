@@ -3,7 +3,6 @@ package router
 import (
 	"net/http"
 
-	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,23 +23,6 @@ func (r *Router) RegisterRoute(method, path string, handlerFunc http.HandlerFunc
 	})
 }
 
-func (r *Router) RegisterMiddlewares(middlewares []interface{}) error {
-	for _, middleware := range middlewares {
-		if mdw, ok := middleware.(gin.HandlerFunc); ok {
-			r.gin.Use(mdw)
-		}
-	}
-	return nil
-}
-
-func (r *Router) RegisterPprof() {
-	pprof.Register(r.gin)
-}
-
 func (r *Router) StartServer(port string) error {
 	return r.gin.Run(":" + port)
-}
-
-func (r *Router) Http2H2CEnabled() {
-	r.gin.UseH2C = true
 }
