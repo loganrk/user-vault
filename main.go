@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"mayilon/config"
 	"mayilon/src/http/v1/api"
 	"mayilon/src/lib/db"
 	"mayilon/src/lib/router"
+	authMiddleware "mayilon/src/middleware/auth"
 	"mayilon/src/service"
 	userSrv "mayilon/src/service/user"
 	userStore "mayilon/src/store/user"
@@ -13,7 +15,7 @@ import (
 
 func main() {
 
-	appConfigIns, err := config.StartAppConfig("")
+	appConfigIns, err := config.StartAppConfig(`C:\xampp\htdocs\pro\mayilon\config\yaml\app.yaml`)
 	if err != nil {
 		log.Println(err)
 		return
@@ -29,8 +31,8 @@ func main() {
 	})
 
 	if err2 != nil {
-		log.Println(err2)
-		return
+		//log.Println(err2)
+		//	return
 	}
 
 	userStoreIns := userStore.New(appConfigIns, dbIns)
@@ -44,8 +46,16 @@ func main() {
 
 	routerIns := router.New()
 
+	authMiddlewareEnabled, authMiddlewareToken := appConfigIns.GetMiddlewareAuthProperties()
+	if authMiddlewareEnabled {
+		authMiddlewareIns := authMiddleware.New(authMiddlewareToken)
+		routerIns.Use(authMiddlewareIns.Use())
+	}
+
 	if appConfigIns.GetApiUserLoginEnabled() {
+
 		userApiMethod, userApiRoute := appConfigIns.GetApiUserLoginProperties()
+		fmt.Println(userApiMethod, userApiRoute)
 		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserLogin)
 	}
 
@@ -65,5 +75,10 @@ func main() {
 	}
 
 	port := appConfigIns.GetPort()
-	routerIns.StartServer(port)
+	fmt.Println(port)
+	err3 := routerIns.StartServer(port)
+	if err3 != nil {
+		log.Println(err3)
+		return
+	}
 }

@@ -1,13 +1,15 @@
 package config
 
 import (
-	"io/ioutil"
+	"errors"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
 
 type App interface {
 	GetPort() string
+	GetMiddlewareAuthProperties() (bool, string)
 	GetStoreDatabaseProperties() (string, string, string, string, string)
 	GetStoreDatabaseTableUser() string
 	GetStoreCacheHeapProperties() (bool, int)
@@ -22,82 +24,86 @@ type App interface {
 }
 
 func StartAppConfig(path string) (App, error) {
-
-	configFile, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
 	var appConfig app
-	err = yaml.Unmarshal(configFile, &appConfig)
+
+	configFile, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("error reading config file")
+	}
+
+	if err := yaml.Unmarshal(configFile, &appConfig); err != nil {
+		return nil, errors.New("error unmarshalling config. error: " + err.Error())
 	}
 
 	return appConfig, nil
 }
 
 func (c app) GetPort() string {
+	return c.Port
+}
 
-	return c.port
+func (c app) GetMiddlewareAuthProperties() (bool, string) {
+	auth := c.Middleware.Auth
+	return auth.Enabled, auth.Token
 }
 
 /* start of config-store */
 func (c app) GetStoreDatabaseProperties() (string, string, string, string, string) {
-	database := c.store.database
+	database := c.Store.Database
 
-	return database.host, database.port, database.username, database.password, database.name
+	return database.Host, database.Port, database.Username, database.Password, database.Name
 }
 
 func (c app) GetStoreDatabaseTableUser() string {
 
-	return c.store.database.tables.user
+	return c.Store.Database.Tables.User
 }
 
 func (c app) GetStoreCacheHeapProperties() (bool, int) {
-	heapCache := c.store.cache.heap
+	heapCache := c.Store.Cache.Heap
 
-	return heapCache.enabled, heapCache.expiry
+	return heapCache.Enabled, heapCache.Expiry
 }
 
 /* start of config-api */
 func (c app) GetApiUserLoginEnabled() bool {
 
-	return c.api.userLogin.enabled
+	return c.Api.UserLogin.Enabled
 }
 
 func (c app) GetApiUserLoginProperties() (string, string) {
-	api := c.api.userLogin
+	api := c.Api.UserLogin
 
-	return api.method, api.route
+	return api.Method, api.Route
 }
 
 func (c app) GetApiUserRegisterEnabled() bool {
 
-	return c.api.userRegister.enabled
+	return c.Api.UserRegister.Enabled
 }
 
 func (c app) GetApiUserRegisterProperties() (string, string) {
-	api := c.api.userRegister
+	api := c.Api.UserRegister
 
-	return api.method, api.route
+	return api.Method, api.Route
 }
 
 func (c app) GetApiUserForgotPasswordEnabled() bool {
 
-	return c.api.userForgotPassword.enabled
+	return c.Api.UserForgotPassword.Enabled
 }
 
 func (c app) GetApiUserForgotPasswordProperties() (string, string) {
-	api := c.api.userForgotPassword
+	api := c.Api.UserForgotPassword
 
-	return api.method, api.route
+	return api.Method, api.Route
 }
 
 func (c app) GetApiUserResetPasswordEnabled() bool {
-	return c.api.userResetPassword.enabled
+	return c.Api.UserResetPassword.Enabled
 }
 func (c app) GetApiUserResetPasswordProperties() (string, string) {
-	api := c.api.userResetPassword
+	api := c.Api.UserResetPassword
 
-	return api.method, api.route
+	return api.Method, api.Route
 }
