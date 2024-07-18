@@ -1,8 +1,11 @@
 port: 8000
 middleware:
-  auth:
+  authorization:
     enabled: true
     token: c713-kut8-1xkt-qf0a
+  authentication:
+    secret_key: c713kut8
+    token_expiry: 3600
 api:
   user_login:
     enabled: true
@@ -23,15 +26,20 @@ api:
 store:
   database:
     host: localhost
-    port: 3607
+    port: 3306
     username: root
     password: ""
-    name: mayilon
-    table_pefix: pm_
-    tables:
+    name: test
+    table:
+      prefix: pm_
       user: user
+      user_login_attempt: user_login_attempt
   cache:
     heap:
       enabled: true
       max_capacity: 2000
       expiry: 3600
+
+user:
+  max_login_attempt: 5
+  login_attempt_session_period: 60

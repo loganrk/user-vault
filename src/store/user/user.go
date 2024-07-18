@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"mayilon/config"
 	"mayilon/src/store"
 	"mayilon/src/types"
@@ -21,18 +22,20 @@ type tables struct {
 	userLoginAttempt string
 }
 
-func New(appConfigIns config.App, dbIns *gorm.DB) store.User {
+func New(tableConfigIns config.Table, dbIns *gorm.DB) store.User {
+	tablePrefix := tableConfigIns.GetPrefix()
 	return &userStore{
 		db: dbIns,
 		tables: tables{
-			user: appConfigIns.GetStoreDatabaseTableUser(),
+			user:             tablePrefix + tableConfigIns.GetUser(),
+			userLoginAttempt: tablePrefix + tableConfigIns.GetUserLoginAttemp(),
 		},
 	}
 }
 
-func (s *userStore) CreateUser(ctx context.Context, userData types.User) error {
+func (s *userStore) CreateUser(ctx context.Context, userData types.User) (int, error) {
 	result := s.db.WithContext(ctx).Table(s.tables.user).Create(&userData)
-	return result.Error
+	return userData.Id, result.Error
 }
 
 func (s *userStore) GetUserByID(ctx context.Context, id int) (types.User, error) {
@@ -63,7 +66,8 @@ func (s *userStore) GetUserLoginAttemptCount(ctx context.Context, userId int, se
 	return int(result.RowsAffected), nil
 }
 
-func (s *userStore) CreateUserLoginAttempt(ctx context.Context, userLoginAttempt types.UserLoginAttempt) error {
+func (s *userStore) CreateUserLoginAttempt(ctx context.Context, userLoginAttempt types.UserLoginAttempt) (int, error) {
+	fmt.Println(userLoginAttempt)
 	result := s.db.WithContext(ctx).Table(s.tables.userLoginAttempt).Create(&userLoginAttempt)
-	return result.Error
+	return userLoginAttempt.Id, result.Error
 }

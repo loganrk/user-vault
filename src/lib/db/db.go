@@ -16,6 +16,7 @@ type Config struct {
 }
 
 func New(conf Config) (*gorm.DB, error) {
+
 	dsn := conf.Username + ":" + conf.Password + "@tcp(" + conf.Host + ":" + conf.Port + ")/" + conf.Name + "?charset=utf8mb4&parseTime=True&loc=Local"
 	return gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Error),
