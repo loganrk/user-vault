@@ -42,4 +42,4 @@ store:
 
 user:
   max_login_attempt: 5
-  login_attempt_session_period: 1200
+  login_attempt_session_period: 60
