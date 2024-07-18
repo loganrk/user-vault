@@ -1,9 +1,9 @@
 package types
 
 const (
-	LOGIN_ATTEMPT_PROCEED     = 1
+	LOGIN_ATTEMPT_SUCCESS     = 1
 	LOGIN_ATTEMPT_MAX_REACHED = 2
-	LOGIN_ATTEMPT_NOT_PROCEED = 3
+	LOGIN_ATTEMPT_FAILED      = 3
 )
 
 type User struct {
@@ -16,7 +16,7 @@ type User struct {
 }
 
 type UserLoginAttempt struct {
-	Id        int `gorm:"primarykey;size:16"`
-	UserId    int `gorm:"user_id"`
-	Timestamp int `gorm:"timestamp"`
+	Id        int   `gorm:"primarykey;size:16"`
+	UserId    int   `gorm:"user_id"`
+	Timestamp int64 `gorm:"timestamp"`
 }

@@ -7,7 +7,9 @@ import (
 	"mayilon/src/http/v1/api"
 	"mayilon/src/lib/db"
 	"mayilon/src/lib/router"
-	authMiddleware "mayilon/src/middleware/auth"
+	authnMiddleware "mayilon/src/middleware/authn"
+	authzMiddleware "mayilon/src/middleware/authz"
+
 	"mayilon/src/service"
 	userSrv "mayilon/src/service/user"
 	userStore "mayilon/src/store/user"
@@ -15,7 +17,7 @@ import (
 
 func main() {
 
-	appConfigIns, err := config.StartAppConfig(`C:\xampp\htdocs\pro\mayilon\config\yaml\app.yaml`)
+	appConfigIns, err := config.StartAppConfig(``)
 	if err != nil {
 		log.Println(err)
 		return
@@ -31,32 +33,34 @@ func main() {
 	})
 
 	if err2 != nil {
-		//log.Println(err2)
-		//	return
+		log.Println(err2)
+		return
 	}
 
-	userStoreIns := userStore.New(appConfigIns, dbIns)
-	userSrvIns := userSrv.New(userStoreIns)
+	userStoreIns := userStore.New(appConfigIns.GetTable(), dbIns)
+	userSrvIns := userSrv.New(userStoreIns, appConfigIns.GetUser())
 
 	svcList := service.List{
 		User: userSrvIns,
 	}
 
-	apiIns := api.New(svcList)
-
 	routerIns := router.New()
 
-	authMiddlewareEnabled, authMiddlewareToken := appConfigIns.GetMiddlewareAuthProperties()
-	if authMiddlewareEnabled {
-		authMiddlewareIns := authMiddleware.New(authMiddlewareToken)
-		routerIns.Use(authMiddlewareIns.Use())
+	authnMiddlewareSecretKey, authnMiddlewareTokenExpiry := appConfigIns.GetMiddlewareAuthenticationProperties()
+	authnMiddlewareIns := authnMiddleware.New(authnMiddlewareSecretKey, authnMiddlewareTokenExpiry)
+
+	authzMiddlewareEnabled, authzMiddlewareToken := appConfigIns.GetMiddlewareAuthorizationProperties()
+	if authzMiddlewareEnabled {
+		authzMiddlewareIns := authzMiddleware.New(authzMiddlewareToken)
+		routerIns.UseBefore(authzMiddlewareIns.Use())
 	}
 
-	if appConfigIns.GetApiUserLoginEnabled() {
+	apiIns := api.New(svcList, authnMiddlewareIns)
 
+	if appConfigIns.GetApiUserLoginEnabled() {
 		userApiMethod, userApiRoute := appConfigIns.GetApiUserLoginProperties()
-		fmt.Println(userApiMethod, userApiRoute)
 		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserLogin)
+
 	}
 
 	if appConfigIns.GetApiUserRegisterEnabled() {

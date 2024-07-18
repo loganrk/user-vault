@@ -1,15 +1,18 @@
 package api
 
 import (
+	"mayilon/src/middleware"
 	"mayilon/src/service"
 )
 
 type Api struct {
-	Services service.List
+	Services       service.List
+	Authentication middleware.Authn
 }
 
-func New(svcList service.List) *Api {
+func New(svcList service.List, authnIns middleware.Authn) *Api {
 	return &Api{
-		Services: svcList,
+		Services:       svcList,
+		Authentication: authnIns,
 	}
 }

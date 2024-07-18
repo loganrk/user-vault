@@ -9,9 +9,9 @@ import (
 
 type App interface {
 	GetPort() string
-	GetMiddlewareAuthProperties() (bool, string)
+	GetMiddlewareAuthorizationProperties() (bool, string)
+	GetMiddlewareAuthenticationProperties() (string, int)
 	GetStoreDatabaseProperties() (string, string, string, string, string)
-	GetStoreDatabaseTableUser() string
 	GetStoreCacheHeapProperties() (bool, int)
 	GetApiUserLoginEnabled() bool
 	GetApiUserLoginProperties() (string, string)
@@ -21,6 +21,18 @@ type App interface {
 	GetApiUserForgotPasswordProperties() (string, string)
 	GetApiUserResetPasswordEnabled() bool
 	GetApiUserResetPasswordProperties() (string, string)
+	GetTable() Table
+	GetUser() User
+}
+
+type Table interface {
+	GetPrefix() string
+	GetUser() string
+	GetUserLoginAttemp() string
+}
+type User interface {
+	GetMaxLoginAttempt() int
+	GetLoginAttemptSessionPeriod() int
 }
 
 func StartAppConfig(path string) (App, error) {
@@ -42,9 +54,13 @@ func (c app) GetPort() string {
 	return c.Port
 }
 
-func (c app) GetMiddlewareAuthProperties() (bool, string) {
-	auth := c.Middleware.Auth
-	return auth.Enabled, auth.Token
+func (c app) GetMiddlewareAuthorizationProperties() (bool, string) {
+	authorization := c.Middleware.Authorization
+	return authorization.Enabled, authorization.Token
+}
+func (c app) GetMiddlewareAuthenticationProperties() (string, int) {
+	authentication := c.Middleware.Authentication
+	return authentication.SecretKey, authentication.TokenExpiry
 }
 
 /* start of config-store */
@@ -52,11 +68,6 @@ func (c app) GetStoreDatabaseProperties() (string, string, string, string, strin
 	database := c.Store.Database
 
 	return database.Host, database.Port, database.Username, database.Password, database.Name
-}
-
-func (c app) GetStoreDatabaseTableUser() string {
-
-	return c.Store.Database.Tables.User
 }
 
 func (c app) GetStoreCacheHeapProperties() (bool, int) {
@@ -106,4 +117,34 @@ func (c app) GetApiUserResetPasswordProperties() (string, string) {
 	api := c.Api.UserResetPassword
 
 	return api.Method, api.Route
+}
+
+func (c app) GetTable() Table {
+	return c.Store.Database.Table
+}
+
+func (t table) GetPrefix() string {
+
+	return t.Prefix
+}
+
+func (t table) GetUser() string {
+
+	return t.User
+}
+func (t table) GetUserLoginAttemp() string {
+
+	return t.UserLoginAttempt
+}
+
+func (c app) GetUser() User {
+	return c.User
+}
+
+func (c user) GetMaxLoginAttempt() int {
+	return c.MaxLoginAttempt
+}
+
+func (c user) GetLoginAttemptSessionPeriod() int {
+	return c.LoginAttemptSessionPeriod
 }

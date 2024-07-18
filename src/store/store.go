@@ -11,5 +11,5 @@ type User interface {
 	GetUserByUsername(ctx context.Context, username string) (types.User, error)
 	GetUserByUsernamePassword(ctx context.Context, username, password string) (types.User, error)
 	GetUserLoginAttemptCount(ctx context.Context, userId int, sessionStartTime time.Time) (int, error)
-	CreateUserLoginAttempt(ctx context.Context, userLoginAttempt types.UserLoginAttempt) error
+	CreateUserLoginAttempt(ctx context.Context, userLoginAttempt types.UserLoginAttempt) (int, error)
 }
