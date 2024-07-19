@@ -33,6 +33,7 @@ type Table interface {
 type User interface {
 	GetMaxLoginAttempt() int
 	GetLoginAttemptSessionPeriod() int
+	GetPasswordHashCost() int
 }
 
 func StartAppConfig(path string) (App, error) {
@@ -138,13 +139,20 @@ func (t table) GetUserLoginAttemp() string {
 }
 
 func (c app) GetUser() User {
+
 	return c.User
 }
 
 func (c user) GetMaxLoginAttempt() int {
+
 	return c.MaxLoginAttempt
 }
 
 func (c user) GetLoginAttemptSessionPeriod() int {
+
 	return c.LoginAttemptSessionPeriod
+}
+func (c user) GetPasswordHashCost() int {
+
+	return c.PasswordHashCost
 }

@@ -33,9 +33,9 @@ func New(tableConfigIns config.Table, dbIns *gorm.DB) store.User {
 	}
 }
 
-func (s *userStore) CreateUser(ctx context.Context, userData types.User) (int, error) {
+func (s *userStore) CreateUser(ctx context.Context, userData types.User) (types.User, error) {
 	result := s.db.WithContext(ctx).Table(s.tables.user).Create(&userData)
-	return userData.Id, result.Error
+	return userData, result.Error
 }
 
 func (s *userStore) GetUserByID(ctx context.Context, id int) (types.User, error) {
@@ -44,15 +44,15 @@ func (s *userStore) GetUserByID(ctx context.Context, id int) (types.User, error)
 	return userData, result.Error
 }
 
-func (s *userStore) GetUserByUsername(ctx context.Context, username string) (types.User, error) {
+func (s *userStore) GetUseridByUsername(ctx context.Context, username string) (int, error) {
 	var userData types.User
 	result := s.db.WithContext(ctx).Table(s.tables.user).Select("id").Where("username = ?", username).First(&userData)
-	return userData, result.Error
+	return userData.Id, result.Error
 }
 
-func (s *userStore) GetUserByUsernamePassword(ctx context.Context, username, password string) (types.User, error) {
+func (s *userStore) GetUserByUseridAndPassword(ctx context.Context, userid int, password string) (types.User, error) {
 	var userData types.User
-	result := s.db.WithContext(ctx).Table(s.tables.user).Select("id", "state", "status").Where("username = ? && password = ?", username, password).First(&userData)
+	result := s.db.WithContext(ctx).Table(s.tables.user).Select("id", "state", "status").Where("id = ? && password = ?", userid, password).First(&userData)
 	return userData, result.Error
 }
 

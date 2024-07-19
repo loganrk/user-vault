@@ -53,4 +53,5 @@ type table struct {
 type user struct {
 	MaxLoginAttempt           int `yaml:"max_login_attempt"`
 	LoginAttemptSessionPeriod int `yaml:"login_attempt_session_period"`
+	PasswordHashCost          int `yaml:"password_hash_cost"`
 }

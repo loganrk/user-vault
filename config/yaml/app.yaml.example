@@ -43,3 +43,4 @@ store:
 user:
   max_login_attempt: 5
   login_attempt_session_period: 60
+  password_hash_cost: 12
