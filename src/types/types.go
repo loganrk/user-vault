@@ -11,6 +11,9 @@ const (
 	USER_STATUS_BANNED   = 4
 
 	USER_STATE_INITIAL = 1
+
+	EMAIL_STATUS_SUCCESS = 1
+	EMAIL_STATUS_FAILED  = 2
 )
 
 type User struct {

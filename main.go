@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"mayilon/config"
 	"mayilon/src/http/v1/api"
@@ -79,7 +78,6 @@ func main() {
 	}
 
 	port := appConfigIns.GetPort()
-	fmt.Println(port)
 	err3 := routerIns.StartServer(port)
 	if err3 != nil {
 		log.Println(err3)

@@ -34,6 +34,15 @@ func New(userStoreIns store.User, userConfIns config.User) service.User {
 	}
 }
 
+func (u *userService) GetUserByUserid(ctx context.Context, userid int) types.User {
+	userData, err := u.store.GetUserByUserid(ctx, userid)
+	if err != nil {
+
+		return types.User{}
+	}
+	return userData
+}
+
 func (u *userService) GetUseridByUsername(ctx context.Context, username string) int {
 	userid, err := u.store.GetUseridByUsername(ctx, username)
 	if err != nil {

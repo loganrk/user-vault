@@ -38,9 +38,9 @@ func (s *userStore) CreateUser(ctx context.Context, userData types.User) (types.
 	return userData, result.Error
 }
 
-func (s *userStore) GetUserByID(ctx context.Context, id int) (types.User, error) {
+func (s *userStore) GetUserByUserid(ctx context.Context, userid int) (types.User, error) {
 	var userData types.User
-	result := s.db.WithContext(ctx).Table(s.tables.user).Select("id", "state", "status").First(&userData, id)
+	result := s.db.WithContext(ctx).Table(s.tables.user).Select("id", "username", "name", "state", "status").First(&userData, userid)
 	return userData, result.Error
 }
 

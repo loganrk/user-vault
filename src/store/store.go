@@ -7,7 +7,7 @@ import (
 )
 
 type User interface {
-	GetUserByID(ctx context.Context, id int) (types.User, error)
+	GetUserByUserid(ctx context.Context, id int) (types.User, error)
 	GetUseridByUsername(ctx context.Context, username string) (int, error)
 	GetUserByUseridAndPassword(ctx context.Context, userid int, password string) (types.User, error)
 	GetUserLoginAttemptCount(ctx context.Context, userId int, sessionStartTime time.Time) (int, error)
