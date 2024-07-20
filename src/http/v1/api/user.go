@@ -132,7 +132,7 @@ func (a *Api) UserRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if userData.Status == types.USER_STATUS_PENDING {
-		emailStatus := a.Services.Email.SendUserActivation(ctx, userData)
+		emailStatus := a.Services.User.SendUserActivation(ctx, userData)
 		if emailStatus == types.EMAIL_STATUS_SUCCESS {
 			resData := "account created successfuly. please check your email for activate account"
 			res.SetData(resData)

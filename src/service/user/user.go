@@ -3,7 +3,9 @@ package user
 import (
 	"context"
 	"mayilon/config"
+	"mayilon/src/lib/email"
 	"mayilon/src/service"
+
 	"mayilon/src/types"
 	"strconv"
 
@@ -15,6 +17,7 @@ import (
 
 type userService struct {
 	store store.User
+	email email.Email
 	conf
 }
 type conf struct {
