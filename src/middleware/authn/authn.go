@@ -1,7 +1,6 @@
 package authn
 
 import (
-	"fmt"
 	"mayilon/src/middleware"
 	"time"
 
@@ -28,10 +27,14 @@ func (a *authn) CreateToken(uid int) (string, error) {
 		})
 
 	tokenString, err := token.SignedString([]byte(a.secretKey))
-	fmt.Println(err)
 	if err != nil {
 		return "", err
 	}
 
-	return tokenString, nil
+	tokenStringEcr, err := a.encrypt(tokenString)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenStringEcr, nil
 }

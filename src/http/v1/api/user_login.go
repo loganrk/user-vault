@@ -39,7 +39,7 @@ func (a *Api) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	attemptStatus := a.Services.User.CheckLoginAttempt(ctx, userData.Id)
+	attemptStatus := a.Services.User.CheckLoginFailedAttempt(ctx, userData.Id)
 	if attemptStatus == types.LOGIN_ATTEMPT_MAX_REACHED {
 		res.SetError("max login attempt reached. please try after sometime")
 		res.Send(w)
@@ -51,8 +51,8 @@ func (a *Api) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData = a.Services.User.GetUserByUseridAndPassword(ctx, userData.Id, req.Password, userData.Salt)
-	if userData.Id == 0 {
+	passwordMatch := a.Services.User.CheckPassword(ctx, req.Password, userData.Password, userData.Salt)
+	if !passwordMatch {
 		loginAttempId := a.Services.User.CreateLoginAttempt(ctx, userData.Id, false)
 		if loginAttempId == 0 {
 			res.SetError("internal server error")
@@ -72,11 +72,12 @@ func (a *Api) UserLogin(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	userData = a.Services.User.GetUserByUserid(ctx, userData.Id)
 
-	if userData.State != types.USER_STATUS_ACTIVE {
-		if userData.State == types.USER_STATUS_INACTIVE {
+	if userData.Status != types.USER_STATUS_ACTIVE {
+		if userData.Status == types.USER_STATUS_INACTIVE {
 			res.SetError("your account is currently inactive")
-		} else if userData.State == types.USER_STATUS_PENDING {
+		} else if userData.Status == types.USER_STATUS_PENDING {
 			res.SetError("your account verification is pending")
 		} else {
 			res.SetError("your account has been banned")
@@ -87,6 +88,7 @@ func (a *Api) UserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token, err := a.Authentication.CreateToken(userData.Id)
+
 	if err != nil {
 		res.SetError("internal server error")
 		res.Send(w)

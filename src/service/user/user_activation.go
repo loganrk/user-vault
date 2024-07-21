@@ -10,21 +10,22 @@ import (
 )
 
 const (
-	USER_ACTIVATION_TOKEN_ID_MACRO = "{{token}}"
+	USER_ACTIVATION_TOKEN_ID_MACRO = "{{tokenId}}"
 	USER_ACTIVATION_TOKEN_MACRO    = "{{token}}"
-	USER_ACTIVATION_LINK_MACRO     = "{{activationLink}}"
+	USER_ACTIVATION_LINK_MACRO     = "{{link}}"
 	USER_ACTIVATION_NAME_MACRO     = "{{name}}"
 	USER_ACTIVATION_APP_NAME_MACRO = "{{appName}}"
 )
 
 func (u *userService) CreateActivationToken(ctx context.Context, userid int) (int, string) {
 	activationToken := utils.GenerateRandomString(25)
-	exists, err := u.store.UserActivationTokenExists(ctx, activationToken)
+
+	tokenId, err := u.store.GetActivationTokenIdByToken(ctx, activationToken)
 	if err != nil {
 		return 0, ""
 	}
 
-	if exists {
+	if tokenId != 0 {
 		return u.CreateActivationToken(ctx, userid)
 	}
 
@@ -34,7 +35,7 @@ func (u *userService) CreateActivationToken(ctx context.Context, userid int) (in
 		ExpiredAt: time.Now().Add(time.Duration(u.activationLinkExpiry) * time.Second),
 	}
 
-	tokenId, err := u.store.CreateActivationToken(ctx, tokenData)
+	tokenId, err = u.store.CreateActivationToken(ctx, tokenData)
 	if err != nil {
 		return 0, ""
 	}
@@ -75,7 +76,7 @@ func (u *userService) activationTemplateMacroReplacement(template string, name s
 
 }
 
-func (u *userService) SendUserActivation(ctx context.Context, email string, template string) int {
+func (u *userService) SendActivation(ctx context.Context, email string, template string) int {
 
 	return types.EMAIL_STATUS_FAILED
 }

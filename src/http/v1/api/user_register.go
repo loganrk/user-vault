@@ -37,15 +37,14 @@ func (a *Api) UserRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userid := a.Services.User.CreateUser(ctx, req.Username, req.Password, req.Name)
-	if userData.Id == 0 {
+	if userid == 0 {
 		res.SetError("internal server error")
 		res.Send(w)
 		return
 	}
 
 	userData = a.Services.User.GetUserByUserid(ctx, userid)
-
-	if userData.Id != 0 {
+	if userData.Id == 0 {
 		res.SetError("internal server error")
 		res.Send(w)
 		return
@@ -58,7 +57,7 @@ func (a *Api) UserRegister(w http.ResponseWriter, r *http.Request) {
 			if activationLink != "" {
 				template := a.Services.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
 				if template != "" {
-					emailStatus := a.Services.User.SendUserActivation(ctx, userData.Username, template)
+					emailStatus := a.Services.User.SendActivation(ctx, userData.Username, template)
 					if emailStatus == types.EMAIL_STATUS_SUCCESS {
 						resData := "account created successfuly. please check your email for activate account"
 						res.SetData(resData)
@@ -74,12 +73,4 @@ func (a *Api) UserRegister(w http.ResponseWriter, r *http.Request) {
 	resData := "account created successfuly"
 	res.SetData(resData)
 	res.Send(w)
-}
-
-func (a *Api) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func (a *Api) UserResetPassword(w http.ResponseWriter, r *http.Request) {
-
 }

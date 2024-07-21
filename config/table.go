@@ -4,6 +4,7 @@ type Table interface {
 	GetPrefix() string
 	GetUser() string
 	GetUserLoginAttemp() string
+	GetUserActivationToken() string
 }
 
 func (t table) GetPrefix() string {
@@ -18,4 +19,9 @@ func (t table) GetUser() string {
 func (t table) GetUserLoginAttemp() string {
 
 	return t.UserLoginAttempt
+}
+
+func (t table) GetUserActivationToken() string {
+
+	return t.UserActivationToken
 }

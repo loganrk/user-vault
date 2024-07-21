@@ -14,14 +14,7 @@ type App interface {
 	GetMiddlewareAuthenticationProperties() (string, int)
 	GetStoreDatabaseProperties() (string, string, string, string, string)
 	GetStoreCacheHeapProperties() (bool, int)
-	GetApiUserLoginEnabled() bool
-	GetApiUserLoginProperties() (string, string)
-	GetApiUserRegisterEnabled() bool
-	GetApiUserRegisterProperties() (string, string)
-	GetApiUserForgotPasswordEnabled() bool
-	GetApiUserForgotPasswordProperties() (string, string)
-	GetApiUserResetPasswordEnabled() bool
-	GetApiUserResetPasswordProperties() (string, string)
+	GetApi() Api
 	GetTable() Table
 	GetUser() User
 }
@@ -71,47 +64,8 @@ func (a app) GetStoreCacheHeapProperties() (bool, int) {
 	return heapCache.Enabled, heapCache.Expiry
 }
 
-/* start of config-api */
-func (a app) GetApiUserLoginEnabled() bool {
-
-	return a.Api.UserLogin.Enabled
-}
-
-func (a app) GetApiUserLoginProperties() (string, string) {
-	api := a.Api.UserLogin
-
-	return api.Method, api.Route
-}
-
-func (a app) GetApiUserRegisterEnabled() bool {
-
-	return a.Api.UserRegister.Enabled
-}
-
-func (a app) GetApiUserRegisterProperties() (string, string) {
-	api := a.Api.UserRegister
-
-	return api.Method, api.Route
-}
-
-func (a app) GetApiUserForgotPasswordEnabled() bool {
-
-	return a.Api.UserForgotPassword.Enabled
-}
-
-func (a app) GetApiUserForgotPasswordProperties() (string, string) {
-	api := a.Api.UserForgotPassword
-
-	return api.Method, api.Route
-}
-
-func (a app) GetApiUserResetPasswordEnabled() bool {
-	return a.Api.UserResetPassword.Enabled
-}
-func (a app) GetApiUserResetPasswordProperties() (string, string) {
-	api := a.Api.UserResetPassword
-
-	return api.Method, api.Route
+func (a app) GetApi() Api {
+	return a.Api
 }
 
 func (a app) GetUser() User {

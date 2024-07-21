@@ -2,8 +2,8 @@ package request
 
 import (
 	"encoding/json"
+	"mayilon/src/utils"
 	"net/http"
-	"unicode"
 )
 
 type userRegister struct {
@@ -51,76 +51,25 @@ func (u *userRegister) Validate() string {
 		return "password must be between 8 and 12 characters long"
 	}
 
-	if !hasDigit(u.Password) {
+	if !utils.HasDigit(u.Password) {
 
 		return "password must contain at least one digit"
 	}
 
-	if !hasLowercase(u.Password) {
+	if !utils.HasLowercase(u.Password) {
 
 		return "password must contain at least one lowercase letter"
 	}
 
-	if !hasUppercase(u.Password) {
+	if !utils.HasUppercase(u.Password) {
 
 		return "password must contain at least one uppercase letter"
 	}
 
-	if !hasSpecialChar(u.Password) {
+	if !utils.HasSpecialChar(u.Password) {
 
 		return "password must contain at least one special character"
 	}
 
 	return ""
-}
-
-func isValidLength(s string) bool {
-	length := len(s)
-	return length >= 8 && length <= 12
-}
-
-func hasLowercase(s string) bool {
-	for _, c := range s {
-		if unicode.IsLower(c) {
-			return true
-		}
-	}
-	return false
-}
-
-func hasUppercase(s string) bool {
-	for _, c := range s {
-		if unicode.IsUpper(c) {
-			return true
-		}
-	}
-	return false
-}
-
-func hasDigit(s string) bool {
-	for _, c := range s {
-		if unicode.IsDigit(c) {
-			return true
-		}
-	}
-	return false
-}
-
-func hasSpecialChar(s string) bool {
-	specialChars := "@$!%*?&"
-	for _, c := range s {
-		if containsRune(specialChars, c) {
-			return true
-		}
-	}
-	return false
-}
-
-func containsRune(s string, r rune) bool {
-	for _, c := range s {
-		if c == r {
-			return true
-		}
-	}
-	return false
 }

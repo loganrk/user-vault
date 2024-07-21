@@ -7,8 +7,9 @@ middleware:
     enabled: true
     token: c713-kut8-1xkt-qf0a
   authentication:
-    secret_key: c713kut8
+    secret_key: c713kut8-1xktqf0a
     token_expiry: 84000 #seconds
+    
 api:
   user_login:
     enabled: true
@@ -26,10 +27,11 @@ api:
     enabled: true
     route: /user/forgot-password
     method: GET
-  user_reset_password:
+  user_password_reset:
     enabled: true
     route: /user/reset-password
     method: GET
+
 store:
   database:
     host: localhost
@@ -41,6 +43,7 @@ store:
       prefix: pm_
       user: user
       user_login_attempt: user_login_attempt
+      user_activation_token: user_activation_token
   cache:
     heap:
       enabled: true
@@ -54,4 +57,8 @@ user:
   activation:
     template_path: data/template/activation_email_template.html  # macros :[{{appName}},{{name}},{{activationLink}}]
     link: http://localhost:8000/user/activate # macros :[{{tokenId}},{{token}}]
+    link_expiry: 84000 #seconds
+  password_reset:
+    template_path: data/template/password_reset_email_template.html  # macros :[{{appName}},{{name}},{{activationLink}}]
+    link: http://localhost:8000/user/password_reset # macros :[{{tokenId}},{{token}}]
     link_expiry: 1800 #seconds

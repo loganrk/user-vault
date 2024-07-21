@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"mayilon/config"
 	"mayilon/src/service"
 	"mayilon/src/utils"
@@ -26,6 +27,9 @@ type conf struct {
 	activationLink            string
 	activationLinkExpiry      int
 	activationTemplatePath    string
+	passwordResetLink         string
+	passwordResetLinkExpiry   int
+	passwordResetTemplatePath string
 }
 
 func New(userStoreIns store.User, appName string, userConfIns config.User) service.User {
@@ -38,6 +42,9 @@ func New(userStoreIns store.User, appName string, userConfIns config.User) servi
 			activationLink:            userConfIns.GetActivationLink(),
 			activationLinkExpiry:      userConfIns.GetActivationLinkExpiry(),
 			activationTemplatePath:    userConfIns.GetActivationEmailTemplate(),
+			passwordResetLink:         userConfIns.GetPasswordResetLink(),
+			passwordResetLinkExpiry:   userConfIns.GetPasswordResetLinkExpiry(),
+			passwordResetTemplatePath: userConfIns.GetPasswordResetTemplate(),
 		},
 	}
 }
@@ -60,10 +67,10 @@ func (u *userService) GetUserByUsername(ctx context.Context, username string) ty
 	return userData
 }
 
-func (u *userService) CheckLoginAttempt(ctx context.Context, userId int) int {
+func (u *userService) CheckLoginFailedAttempt(ctx context.Context, userId int) int {
 	// TODO: add client based token
 	sesstionStartTime := time.Now().Add(time.Duration(u.conf.loginAttemptSessionPeriod*-1) * time.Second)
-	attempCount, err := u.store.GetUserLoginAttemptCount(ctx, userId, sesstionStartTime)
+	attempCount, err := u.store.GetUserLoginFailedAttemptCount(ctx, userId, sesstionStartTime)
 	if err != nil {
 
 		return types.LOGIN_ATTEMPT_FAILED
@@ -82,7 +89,7 @@ func (u *userService) CreateLoginAttempt(ctx context.Context, userId int, succes
 	loginAttemptId, err := u.store.CreateUserLoginAttempt(ctx, types.UserLoginAttempt{
 		UserId:    userId,
 		Success:   success,
-		Timestamp: time.Now().UnixMilli(),
+		CreatedAt: time.Now(),
 	})
 
 	if err != nil {
@@ -92,18 +99,14 @@ func (u *userService) CreateLoginAttempt(ctx context.Context, userId int, succes
 	return loginAttemptId
 }
 
-func (u *userService) GetUserByUseridAndPassword(ctx context.Context, userid int, password string, saltHash string) types.User {
-	hashPassword, err := u.getHashPassword(password + saltHash)
-	if err != nil {
-		return types.User{}
-	}
+func (u *userService) CheckPassword(ctx context.Context, password string, passwordHash string, saltHash string) bool {
 
-	userData, err := u.store.GetUserByUseridAndPassword(ctx, userid, string(hashPassword))
+	err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password+saltHash))
+	fmt.Println(err)
 	if err != nil {
-
-		return types.User{}
+		return false
 	}
-	return userData
+	return true
 }
 
 func (u *userService) CreateUser(ctx context.Context, username, password, name string) int {
@@ -112,7 +115,8 @@ func (u *userService) CreateUser(ctx context.Context, username, password, name s
 	if err != nil {
 		return 0
 	}
-	hashPassword, err := u.getHashPassword(password + saltHash)
+
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password+saltHash), u.passwordHashCost)
 	if err != nil {
 		return 0
 	}
@@ -122,8 +126,8 @@ func (u *userService) CreateUser(ctx context.Context, username, password, name s
 		Password: string(hashPassword),
 		Salt:     saltHash,
 		Name:     name,
-		State:    types.USER_STATUS_PENDING,
-		Status:   types.USER_STATE_INITIAL,
+		State:    types.USER_STATE_INITIAL,
+		Status:   types.USER_STATUS_PENDING,
 	}
 
 	userid, err := u.store.CreateUser(ctx, userData)
@@ -132,12 +136,6 @@ func (u *userService) CreateUser(ctx context.Context, username, password, name s
 	}
 
 	return userid
-}
-
-func (u *userService) getHashPassword(password string) ([]byte, error) {
-
-	return bcrypt.GenerateFromPassword([]byte(password), u.passwordHashCost)
-
 }
 
 func (u *userService) newSaltHash() (string, error) {

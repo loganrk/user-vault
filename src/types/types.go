@@ -34,11 +34,18 @@ type UserLoginAttempt struct {
 	Id        int       `gorm:"primarykey;size:16"`
 	UserId    int       `gorm:"user_id"`
 	Success   bool      `gorm:"success"`
-	Timestamp int64     `gorm:"timestamp"`
 	CreatedAt time.Time `gorm:"created_at"`
 }
 
 type UserActivationToken struct {
+	Id        int       `gorm:"primarykey;size:16"`
+	UserId    int       `gorm:"user_id"`
+	Token     string    `gorm:"token"`
+	CreatedAt time.Time `gorm:"created_at"`
+	ExpiredAt time.Time `gorm:"expired_at"`
+}
+
+type UserPasswordReset struct {
 	Id        int       `gorm:"primarykey;size:16"`
 	UserId    int       `gorm:"user_id"`
 	Token     string    `gorm:"token"`
