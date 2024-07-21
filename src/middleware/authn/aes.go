@@ -10,8 +10,8 @@ import (
 	"io"
 )
 
-func (a *authn) encrypt(stringToEncrypt string) (string, error) {
-	plaintext := []byte(stringToEncrypt)
+func (a *authn) encrypt(data string) (string, error) {
+	plaintext := []byte(data)
 
 	//Create a new Cipher Block from the key
 	block, err := aes.NewCipher([]byte(a.secretKey))
@@ -33,9 +33,9 @@ func (a *authn) encrypt(stringToEncrypt string) (string, error) {
 	return fmt.Sprintf("%x", ciphertext), nil
 }
 
-func (a *authn) decrypt(encryptedString string) (string, error) {
+func (a *authn) decrypt(data string) (string, error) {
 
-	enc, _ := hex.DecodeString(encryptedString)
+	enc, _ := hex.DecodeString(data)
 	//Create a new Cipher Block from the key
 	block, err := aes.NewCipher([]byte(a.secretKey))
 	if err != nil {
