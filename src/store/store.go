@@ -7,9 +7,15 @@ import (
 )
 
 type User interface {
-	GetUserByID(ctx context.Context, id int) (types.User, error)
+	GetUserByUserid(ctx context.Context, id int) (types.User, error)
 	GetUserByUsername(ctx context.Context, username string) (types.User, error)
-	GetUserByUsernamePassword(ctx context.Context, username, password string) (types.User, error)
-	GetUserLoginAttemptCount(ctx context.Context, userId int, sessionStartTime time.Time) (int, error)
+	GetUserLoginFailedAttemptCount(ctx context.Context, userId int, sessionStartTime time.Time) (int, error)
 	CreateUserLoginAttempt(ctx context.Context, userLoginAttempt types.UserLoginAttempt) (int, error)
+	CreateUser(ctx context.Context, userData types.User) (int, error)
+
+	GetActivationTokenIdByToken(ctx context.Context, token string) (int, error)
+	CreateActivationToken(ctx context.Context, tokenData types.UserActivationToken) (int, error)
+
+	GetPasswordResetTokenIdByToken(ctx context.Context, token string) (int, error)
+	CreatePasswordResetToken(ctx context.Context, tokenData types.UserPasswordReset) (int, error)
 }

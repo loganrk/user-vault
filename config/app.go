@@ -8,31 +8,15 @@ import (
 )
 
 type App interface {
-	GetPort() string
+	GetAppName() string
+	GetAppPort() string
 	GetMiddlewareAuthorizationProperties() (bool, string)
 	GetMiddlewareAuthenticationProperties() (string, int)
 	GetStoreDatabaseProperties() (string, string, string, string, string)
 	GetStoreCacheHeapProperties() (bool, int)
-	GetApiUserLoginEnabled() bool
-	GetApiUserLoginProperties() (string, string)
-	GetApiUserRegisterEnabled() bool
-	GetApiUserRegisterProperties() (string, string)
-	GetApiUserForgotPasswordEnabled() bool
-	GetApiUserForgotPasswordProperties() (string, string)
-	GetApiUserResetPasswordEnabled() bool
-	GetApiUserResetPasswordProperties() (string, string)
+	GetApi() Api
 	GetTable() Table
 	GetUser() User
-}
-
-type Table interface {
-	GetPrefix() string
-	GetUser() string
-	GetUserLoginAttemp() string
-}
-type User interface {
-	GetMaxLoginAttempt() int
-	GetLoginAttemptSessionPeriod() int
 }
 
 func StartAppConfig(path string) (App, error) {
@@ -50,101 +34,44 @@ func StartAppConfig(path string) (App, error) {
 	return appConfig, nil
 }
 
-func (c app) GetPort() string {
-	return c.Port
+func (a app) GetAppName() string {
+	return a.Application.Name
 }
 
-func (c app) GetMiddlewareAuthorizationProperties() (bool, string) {
-	authorization := c.Middleware.Authorization
+func (a app) GetAppPort() string {
+	return a.Application.Port
+}
+
+func (a app) GetMiddlewareAuthorizationProperties() (bool, string) {
+	authorization := a.Middleware.Authorization
 	return authorization.Enabled, authorization.Token
 }
-func (c app) GetMiddlewareAuthenticationProperties() (string, int) {
-	authentication := c.Middleware.Authentication
+func (a app) GetMiddlewareAuthenticationProperties() (string, int) {
+	authentication := a.Middleware.Authentication
 	return authentication.SecretKey, authentication.TokenExpiry
 }
 
 /* start of config-store */
-func (c app) GetStoreDatabaseProperties() (string, string, string, string, string) {
-	database := c.Store.Database
+func (a app) GetStoreDatabaseProperties() (string, string, string, string, string) {
+	database := a.Store.Database
 
 	return database.Host, database.Port, database.Username, database.Password, database.Name
 }
 
-func (c app) GetStoreCacheHeapProperties() (bool, int) {
-	heapCache := c.Store.Cache.Heap
+func (a app) GetStoreCacheHeapProperties() (bool, int) {
+	heapCache := a.Store.Cache.Heap
 
 	return heapCache.Enabled, heapCache.Expiry
 }
 
-/* start of config-api */
-func (c app) GetApiUserLoginEnabled() bool {
-
-	return c.Api.UserLogin.Enabled
+func (a app) GetApi() Api {
+	return a.Api
 }
 
-func (c app) GetApiUserLoginProperties() (string, string) {
-	api := c.Api.UserLogin
-
-	return api.Method, api.Route
+func (a app) GetUser() User {
+	return a.User
 }
 
-func (c app) GetApiUserRegisterEnabled() bool {
-
-	return c.Api.UserRegister.Enabled
-}
-
-func (c app) GetApiUserRegisterProperties() (string, string) {
-	api := c.Api.UserRegister
-
-	return api.Method, api.Route
-}
-
-func (c app) GetApiUserForgotPasswordEnabled() bool {
-
-	return c.Api.UserForgotPassword.Enabled
-}
-
-func (c app) GetApiUserForgotPasswordProperties() (string, string) {
-	api := c.Api.UserForgotPassword
-
-	return api.Method, api.Route
-}
-
-func (c app) GetApiUserResetPasswordEnabled() bool {
-	return c.Api.UserResetPassword.Enabled
-}
-func (c app) GetApiUserResetPasswordProperties() (string, string) {
-	api := c.Api.UserResetPassword
-
-	return api.Method, api.Route
-}
-
-func (c app) GetTable() Table {
-	return c.Store.Database.Table
-}
-
-func (t table) GetPrefix() string {
-
-	return t.Prefix
-}
-
-func (t table) GetUser() string {
-
-	return t.User
-}
-func (t table) GetUserLoginAttemp() string {
-
-	return t.UserLoginAttempt
-}
-
-func (c app) GetUser() User {
-	return c.User
-}
-
-func (c user) GetMaxLoginAttempt() int {
-	return c.MaxLoginAttempt
-}
-
-func (c user) GetLoginAttemptSessionPeriod() int {
-	return c.LoginAttemptSessionPeriod
+func (a app) GetTable() Table {
+	return a.Store.Database.Table
 }

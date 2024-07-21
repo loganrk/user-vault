@@ -1,8 +1,7 @@
 package db
 
 import (
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm/logger"
+	igorm "mayilon/src/lib/db/gorm"
 
 	"gorm.io/gorm"
 )
@@ -14,12 +13,11 @@ type Config struct {
 	Password string
 	Name     string
 }
+type DB interface {
+	GetDb() *gorm.DB
+}
 
-func New(conf Config) (*gorm.DB, error) {
-
-	dsn := conf.Username + ":" + conf.Password + "@tcp(" + conf.Host + ":" + conf.Port + ")/" + conf.Name + "?charset=utf8mb4&parseTime=True&loc=Local"
-	return gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Error),
-	})
+func New(conf Config) (DB, error) {
+	return igorm.New(conf.Host, conf.Port, conf.Username, conf.Password, conf.Name)
 
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"mayilon/config"
 	"mayilon/src/http/v1/api"
@@ -38,7 +37,7 @@ func main() {
 	}
 
 	userStoreIns := userStore.New(appConfigIns.GetTable(), dbIns)
-	userSrvIns := userSrv.New(userStoreIns, appConfigIns.GetUser())
+	userSrvIns := userSrv.New(userStoreIns, appConfigIns.GetAppName(), appConfigIns.GetUser())
 
 	svcList := service.List{
 		User: userSrvIns,
@@ -56,30 +55,35 @@ func main() {
 	}
 
 	apiIns := api.New(svcList, authnMiddlewareIns)
+	apiConfigIns := appConfigIns.GetApi()
 
-	if appConfigIns.GetApiUserLoginEnabled() {
-		userApiMethod, userApiRoute := appConfigIns.GetApiUserLoginProperties()
+	if apiConfigIns.GetUserLoginEnabled() {
+		userApiMethod, userApiRoute := apiConfigIns.GetUserLoginProperties()
 		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserLogin)
 
 	}
 
-	if appConfigIns.GetApiUserRegisterEnabled() {
-		userApiMethod, userApiRoute := appConfigIns.GetApiUserRegisterProperties()
+	if apiConfigIns.GetUserRegisterEnabled() {
+		userApiMethod, userApiRoute := apiConfigIns.GetUserRegisterProperties()
 		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserRegister)
 	}
 
-	if appConfigIns.GetApiUserForgotPasswordEnabled() {
-		userApiMethod, userApiRoute := appConfigIns.GetApiUserForgotPasswordProperties()
+	if apiConfigIns.GetUserActivationEnabled() {
+		userApiMethod, userApiRoute := apiConfigIns.GetUserActivationProperties()
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserActivation)
+	}
+
+	if apiConfigIns.GetUserForgotPasswordEnabled() {
+		userApiMethod, userApiRoute := apiConfigIns.GetUserForgotPasswordProperties()
 		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserForgotPassword)
 	}
 
-	if appConfigIns.GetApiUserResetPasswordEnabled() {
-		userApiMethod, userApiRoute := appConfigIns.GetApiUserResetPasswordProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserResetPassword)
+	if apiConfigIns.GetUserPasswordResetEnabled() {
+		userApiMethod, userApiRoute := apiConfigIns.GetUserPasswordResetProperties()
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserPasswordReset)
 	}
 
-	port := appConfigIns.GetPort()
-	fmt.Println(port)
+	port := appConfigIns.GetAppPort()
 	err3 := routerIns.StartServer(port)
 	if err3 != nil {
 		log.Println(err3)

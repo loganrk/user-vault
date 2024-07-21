@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activate Your Account</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .email-wrapper {
+            width: 100%;
+            background-color: #f9f9f9;
+            padding: 20px 0;
+        }
+
+        .email-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .email-header {
+            background-color: #007BFF;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .email-header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .email-body {
+            padding: 20px;
+        }
+
+        .email-body h2 {
+            font-size: 22px;
+            margin-top: 0;
+        }
+
+        .email-body p {
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 0 0 15px;
+        }
+
+        .email-body a {
+            display: inline-block;
+            background-color: #007BFF;
+            color: #ffffff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        .email-footer {
+            background-color: #f1f1f1;
+            color: #888888;
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+        }
+
+        .email-footer p {
+            margin: 0;
+        }
+
+        @media screen and (max-width: 600px) {
+            .email-body p {
+                font-size: 14px;
+            }
+
+            .email-header h1 {
+                font-size: 22px;
+            }
+
+            .email-body h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-wrapper">
+        <div class="email-container">
+            <div class="email-header">
+                <h1>Activate Your Account</h1>
+            </div>
+            <div class="email-body">
+                <h2>Hello {{name}},</h2>
+                <p>Thank you for registering with {{appName}}. To get started, please confirm your email address by
+                    clicking the button below:</p>
+                <a href="{{link}}">Activate Your Account</a>
+
+                <p>If you did not sign up for this account, please disregard this email.</p>
+                </p>
+                <p>Best regards,<br>
+                    The {{appName}} Team
+                </p>
+            </div>
+            <div class="email-footer">
+                <p>&copy; 2024 {{appName}}. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
