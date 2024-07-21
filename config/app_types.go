@@ -1,7 +1,10 @@
 package config
 
 type app struct {
-	Port       string `yaml:"port"`
+	Application struct {
+		Name string `yaml:"name"`
+		Port string `yaml:"port"`
+	} `yaml:"application"`
 	Middleware struct {
 		Authorization struct {
 			Enabled bool   `yaml:"enabled"`
@@ -54,4 +57,9 @@ type user struct {
 	MaxLoginAttempt           int `yaml:"max_login_attempt"`
 	LoginAttemptSessionPeriod int `yaml:"login_attempt_session_period"`
 	PasswordHashCost          int `yaml:"password_hash_cost"`
+	Activation                struct {
+		Link         string `yaml:"link"`
+		LinkExpiry   int    `yaml:"link_expiry"`
+		TemplatePath string `yaml:"template_path"`
+	} `yaml:"activation"`
 }

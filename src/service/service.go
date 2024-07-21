@@ -7,14 +7,18 @@ import (
 
 type List struct {
 	User
-	Email
 }
 
 type User interface {
 	GetUserByUserid(ctx context.Context, userid int) types.User
-	GetUseridByUsername(ctx context.Context, username string) int
+	GetUserByUsername(ctx context.Context, username string) types.User
 	CheckLoginAttempt(ctx context.Context, userId int) int
-	GetUserByUseridAndPassword(ctx context.Context, userid int, password string) types.User
-	CreateUser(ctx context.Context, username, password, name string) types.User
-	SendUserActivation(ctx context.Context, userData types.User) int
+	CreateLoginAttempt(ctx context.Context, userId int, success bool) int
+	GetUserByUseridAndPassword(ctx context.Context, userid int, password string, saltHash string) types.User
+
+	CreateUser(ctx context.Context, username, password, name string) int
+	CreateActivationToken(ctx context.Context, userid int) (int, string)
+	GetActivationLink(tokenId int, token string) string
+	GetActivationEmailTemplate(ctx context.Context, name string, activationLink string) string
+	SendUserActivation(ctx context.Context, email string, template string) int
 }

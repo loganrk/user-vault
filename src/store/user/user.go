@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"fmt"
 	"mayilon/config"
 	"mayilon/src/lib/db"
 	"mayilon/src/store"
@@ -17,8 +16,9 @@ type userStore struct {
 }
 
 type tables struct {
-	user             string
-	userLoginAttempt string
+	user                string
+	userLoginAttempt    string
+	userActivationToken string
 }
 
 func New(tableConfigIns config.Table, dbIns db.DB) store.User {
@@ -32,9 +32,9 @@ func New(tableConfigIns config.Table, dbIns db.DB) store.User {
 	}
 }
 
-func (s *userStore) CreateUser(ctx context.Context, userData types.User) (types.User, error) {
+func (s *userStore) CreateUser(ctx context.Context, userData types.User) (int, error) {
 	result := s.db.GetDb().WithContext(ctx).Table(s.tables.user).Create(&userData)
-	return userData, result.Error
+	return userData.Id, result.Error
 }
 
 func (s *userStore) GetUserByUserid(ctx context.Context, userid int) (types.User, error) {
@@ -43,10 +43,10 @@ func (s *userStore) GetUserByUserid(ctx context.Context, userid int) (types.User
 	return userData, result.Error
 }
 
-func (s *userStore) GetUseridByUsername(ctx context.Context, username string) (int, error) {
+func (s *userStore) GetUserByUsername(ctx context.Context, username string) (types.User, error) {
 	var userData types.User
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.user).Select("id").Where("username = ?", username).First(&userData)
-	return userData.Id, result.Error
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.user).Select("id", "salt").Where("username = ?", username).First(&userData)
+	return userData, result.Error
 }
 
 func (s *userStore) GetUserByUseridAndPassword(ctx context.Context, userid int, password string) (types.User, error) {
@@ -66,7 +66,22 @@ func (s *userStore) GetUserLoginAttemptCount(ctx context.Context, userId int, se
 }
 
 func (s *userStore) CreateUserLoginAttempt(ctx context.Context, userLoginAttempt types.UserLoginAttempt) (int, error) {
-	fmt.Println(userLoginAttempt)
 	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userLoginAttempt).Create(&userLoginAttempt)
 	return userLoginAttempt.Id, result.Error
+}
+
+func (s *userStore) UserActivationTokenExists(ctx context.Context, token string) (bool, error) {
+	var tokenData types.UserActivationToken
+
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userActivationToken).Select("id").Where("token = ?", token).First(&tokenData)
+	if tokenData.Id != 0 {
+		return true, result.Error
+	}
+
+	return false, result.Error
+}
+
+func (s *userStore) CreateActivationToken(ctx context.Context, tokenData types.UserActivationToken) (int, error) {
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userActivationToken).Create(&tokenData)
+	return tokenData.Id, result.Error
 }

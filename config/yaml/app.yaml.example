@@ -1,4 +1,7 @@
-port: 8000
+application:
+  port: 8000
+  name: Mayilon
+
 middleware:
   authorization:
     enabled: true
@@ -14,6 +17,10 @@ api:
   user_register:
     enabled: true
     route: /user/register
+    method: GET
+  user_activation:
+    enabled: true
+    route: /user/activate
     method: GET
   user_forgot_password:
     enabled: true
@@ -45,13 +52,6 @@ user:
   login_attempt_session_period: 60
   password_hash_cost: 12
   activation:
-    template_path:
-    from:
+    template_path: data/template/activation_email_template.html  # macros :[{{appName}},{{name}},{{activationLink}}]
+    link: http://localhost:8000/user/activate # macros :[{{tokenId}},{{token}}]
     link_expiry: 1800 #seconds
-
-email:
-  host:
-  port:
-  username:
-  password:
-

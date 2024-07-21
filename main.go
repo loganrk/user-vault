@@ -16,7 +16,7 @@ import (
 
 func main() {
 
-	appConfigIns, err := config.StartAppConfig(``)
+	appConfigIns, err := config.StartAppConfig(`C:\xampp\htdocs\pro\mayilon\config\yaml\app.yaml`)
 	if err != nil {
 		log.Println(err)
 		return
@@ -37,7 +37,7 @@ func main() {
 	}
 
 	userStoreIns := userStore.New(appConfigIns.GetTable(), dbIns)
-	userSrvIns := userSrv.New(userStoreIns, appConfigIns.GetUser())
+	userSrvIns := userSrv.New(userStoreIns, appConfigIns.GetAppName(), appConfigIns.GetUser())
 
 	svcList := service.List{
 		User: userSrvIns,
@@ -77,7 +77,7 @@ func main() {
 		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserResetPassword)
 	}
 
-	port := appConfigIns.GetPort()
+	port := appConfigIns.GetAppPort()
 	err3 := routerIns.StartServer(port)
 	if err3 != nil {
 		log.Println(err3)
