@@ -51,7 +51,7 @@ func (s *userStore) GetUserByUserid(ctx context.Context, userid int) (types.User
 
 func (s *userStore) GetUserByUsername(ctx context.Context, username string) (types.User, error) {
 	var userData types.User
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.user).Select("id", "password", "salt", "status").Where("username = ?", username).First(&userData)
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.user).Select("id", "password", "salt", "state", "status").Where("username = ?", username).First(&userData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -109,4 +109,20 @@ func (s *userStore) GetPasswordResetTokenIdByToken(ctx context.Context, token st
 func (s *userStore) CreatePasswordResetToken(ctx context.Context, tokenData types.UserPasswordReset) (int, error) {
 	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userActivationToken).Create(&tokenData)
 	return tokenData.Id, result.Error
+}
+
+func (s *userStore) GetPasswordResetDataByToken(ctx context.Context, token string) (types.UserPasswordReset, error) {
+	var tokenData types.UserPasswordReset
+
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userActivationToken).Select("id", "user_id", "expired_at").Where("token = ?", token).First(&tokenData)
+	if result.Error == gorm.ErrRecordNotFound {
+		result.Error = nil
+	}
+
+	return tokenData, result.Error
+}
+
+func (s *userStore) UpdatePassword(ctx context.Context, userid int, password string) error {
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.user).Where("id = ?", userid).Update("password", password)
+	return result.Error
 }

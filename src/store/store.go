@@ -18,4 +18,6 @@ type User interface {
 
 	GetPasswordResetTokenIdByToken(ctx context.Context, token string) (int, error)
 	CreatePasswordResetToken(ctx context.Context, tokenData types.UserPasswordReset) (int, error)
+	GetPasswordResetDataByToken(ctx context.Context, token string) (types.UserPasswordReset, error)
+	UpdatePassword(ctx context.Context, userid int, password string) error
 }

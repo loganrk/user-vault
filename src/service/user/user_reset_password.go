@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -77,4 +79,27 @@ func (u *userService) passwordResetTemplateMacroReplacement(template string, nam
 
 func (u *userService) SendPasswordReset(ctx context.Context, email string, template string) int {
 	return types.EMAIL_STATUS_FAILED
+}
+
+func (u *userService) GetPasswordResetDataByToken(ctx context.Context, token string) types.UserPasswordReset {
+	tokenData, err := u.store.GetPasswordResetDataByToken(ctx, token)
+	if err != nil {
+		return types.UserPasswordReset{}
+	}
+
+	return tokenData
+
+}
+
+func (u *userService) UpdatePassword(ctx context.Context, userid int, password string, saltHash string) bool {
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password+saltHash), u.passwordHashCost)
+	if err != nil {
+		return false
+	}
+	err = u.store.UpdatePassword(ctx, userid, string(hashPassword))
+	if err != nil {
+		return false
+	}
+
+	return true
 }

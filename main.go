@@ -16,7 +16,7 @@ import (
 
 func main() {
 
-	appConfigIns, err := config.StartAppConfig(``)
+	appConfigIns, err := config.StartAppConfig(`C:\xampp\htdocs\pro\mayilon\config\yaml\app.yaml`)
 	if err != nil {
 		log.Println(err)
 		return
@@ -60,7 +60,6 @@ func main() {
 	if apiConfigIns.GetUserLoginEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserLoginProperties()
 		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserLogin)
-
 	}
 
 	if apiConfigIns.GetUserRegisterEnabled() {

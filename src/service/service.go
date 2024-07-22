@@ -26,4 +26,6 @@ type User interface {
 	GetPasswordResetLink(tokenId int, token string) string
 	GetPasswordResetEmailTemplate(ctx context.Context, name string, passwordResetLink string) string
 	SendPasswordReset(ctx context.Context, email string, template string) int
+	GetPasswordResetDataByToken(ctx context.Context, token string) types.UserPasswordReset
+	UpdatePassword(ctx context.Context, userid int, password string, saltHash string) bool
 }
