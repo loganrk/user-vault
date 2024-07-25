@@ -21,11 +21,15 @@ type User interface {
 	GetActivationLink(tokenId int, token string) string
 	GetActivationEmailTemplate(ctx context.Context, name string, activationLink string) string
 	SendActivation(ctx context.Context, email string, template string) int
+	GetUserActivationByToken(ctx context.Context, token string) types.UserActivationToken
+	UpdatedActivationtatus(ctx context.Context, tokenId int, status int)
+	UpdateStatus(ctx context.Context, userid int, status int) bool
 
 	CreatePasswordResetToken(ctx context.Context, userid int) (int, string)
-	GetPasswordResetLink(tokenId int, token string) string
+	GetPasswordResetLink(token string) string
 	GetPasswordResetEmailTemplate(ctx context.Context, name string, passwordResetLink string) string
 	SendPasswordReset(ctx context.Context, email string, template string) int
-	GetPasswordResetDataByToken(ctx context.Context, token string) types.UserPasswordReset
+	GetPasswordResetByToken(ctx context.Context, token string) types.UserPasswordReset
+	UpdatedPasswordResetStatus(ctx context.Context, tokenid int, status int)
 	UpdatePassword(ctx context.Context, userid int, password string, saltHash string) bool
 }

@@ -21,6 +21,7 @@ type tables struct {
 	user                string
 	userLoginAttempt    string
 	userActivationToken string
+	userPasswordReset   string
 }
 
 func New(tableConfigIns config.Table, dbIns db.DB) store.User {
@@ -31,6 +32,7 @@ func New(tableConfigIns config.Table, dbIns db.DB) store.User {
 			user:                tablePrefix + tableConfigIns.GetUser(),
 			userLoginAttempt:    tablePrefix + tableConfigIns.GetUserLoginAttemp(),
 			userActivationToken: tablePrefix + tableConfigIns.GetUserActivationToken(),
+			userPasswordReset:   tablePrefix + tableConfigIns.GetUserPasswordReset(),
 		},
 	}
 }
@@ -78,51 +80,4 @@ func (s *userStore) CreateUserLoginAttempt(ctx context.Context, userLoginAttempt
 		result.Error = nil
 	}
 	return userLoginAttempt.Id, result.Error
-}
-
-func (s *userStore) GetActivationTokenIdByToken(ctx context.Context, token string) (int, error) {
-	var tokenData types.UserActivationToken
-
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userActivationToken).Select("id").Where("token = ?", token).First(&tokenData)
-	if result.Error == gorm.ErrRecordNotFound {
-		result.Error = nil
-	}
-
-	return tokenData.Id, result.Error
-}
-
-func (s *userStore) CreateActivationToken(ctx context.Context, tokenData types.UserActivationToken) (int, error) {
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userActivationToken).Create(&tokenData)
-	return tokenData.Id, result.Error
-}
-func (s *userStore) GetPasswordResetTokenIdByToken(ctx context.Context, token string) (int, error) {
-	var tokenData types.UserPasswordReset
-
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userActivationToken).Select("id").Where("token = ?", token).First(&tokenData)
-	if result.Error == gorm.ErrRecordNotFound {
-		result.Error = nil
-	}
-
-	return tokenData.Id, result.Error
-}
-
-func (s *userStore) CreatePasswordResetToken(ctx context.Context, tokenData types.UserPasswordReset) (int, error) {
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userActivationToken).Create(&tokenData)
-	return tokenData.Id, result.Error
-}
-
-func (s *userStore) GetPasswordResetDataByToken(ctx context.Context, token string) (types.UserPasswordReset, error) {
-	var tokenData types.UserPasswordReset
-
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userActivationToken).Select("id", "user_id", "expired_at").Where("token = ?", token).First(&tokenData)
-	if result.Error == gorm.ErrRecordNotFound {
-		result.Error = nil
-	}
-
-	return tokenData, result.Error
-}
-
-func (s *userStore) UpdatePassword(ctx context.Context, userid int, password string) error {
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.user).Where("id = ?", userid).Update("password", password)
-	return result.Error
 }

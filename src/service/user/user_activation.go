@@ -20,22 +20,23 @@ const (
 func (u *userService) CreateActivationToken(ctx context.Context, userid int) (int, string) {
 	activationToken := utils.GenerateRandomString(25)
 
-	tokenId, err := u.store.GetActivationTokenIdByToken(ctx, activationToken)
+	tokenData, err := u.store.GetActivationByToken(ctx, activationToken)
 	if err != nil {
 		return 0, ""
 	}
 
-	if tokenId != 0 {
+	if tokenData.Id != 0 {
 		return u.CreateActivationToken(ctx, userid)
 	}
 
-	tokenData := types.UserActivationToken{
+	tokenData = types.UserActivationToken{
 		UserId:    userid,
 		Token:     activationToken,
+		Status:    types.USER_ACTIVATION_TOKEN_STATUS_ACTIVE,
 		ExpiredAt: time.Now().Add(time.Duration(u.activationLinkExpiry) * time.Second),
 	}
 
-	tokenId, err = u.store.CreateActivationToken(ctx, tokenData)
+	tokenId, err := u.store.CreateActivation(ctx, tokenData)
 	if err != nil {
 		return 0, ""
 	}
@@ -79,4 +80,31 @@ func (u *userService) activationTemplateMacroReplacement(template string, name s
 func (u *userService) SendActivation(ctx context.Context, email string, template string) int {
 
 	return types.EMAIL_STATUS_FAILED
+}
+
+func (u *userService) GetUserActivationByToken(ctx context.Context, token string) types.UserActivationToken {
+	tokenData, err := u.store.GetActivationByToken(ctx, token)
+	if err != nil {
+		return types.UserActivationToken{}
+	}
+
+	return tokenData
+
+}
+
+func (u *userService) UpdatedActivationtatus(ctx context.Context, id int, status int) {
+	err := u.store.UpdatedActivationtatus(ctx, id, status)
+	if err != nil {
+
+	}
+}
+
+func (u *userService) UpdateStatus(ctx context.Context, userid int, status int) bool {
+
+	err := u.store.UpdateStatus(ctx, userid, status)
+	if err != nil {
+		return false
+	}
+
+	return true
 }

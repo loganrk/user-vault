@@ -54,6 +54,7 @@ type table struct {
 	User                string `yaml:"user"`
 	UserLoginAttempt    string `yaml:"user_login_attempt"`
 	UserActivationToken string `yaml:"user_activation_token"`
+	UserPasswordReset   string `yaml:"user_password_reset"`
 }
 
 type user struct {

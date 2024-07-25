@@ -12,6 +12,12 @@ const (
 	USER_STATUS_PENDING  = 3
 	USER_STATUS_BANNED   = 4
 
+	USER_PASSWORD_RESET_STATUS_ACTIVE   = 1
+	USER_PASSWORD_RESET_STATUS_INACTIVE = 2
+
+	USER_ACTIVATION_TOKEN_STATUS_ACTIVE   = 1
+	USER_ACTIVATION_TOKEN_STATUS_INACTIVE = 2
+
 	USER_STATE_INITIAL = 1
 
 	EMAIL_STATUS_SUCCESS = 1
@@ -41,6 +47,7 @@ type UserActivationToken struct {
 	Id        int       `gorm:"primarykey;size:16"`
 	UserId    int       `gorm:"user_id"`
 	Token     string    `gorm:"token"`
+	Status    int       `gorm:"status"`
 	CreatedAt time.Time `gorm:"created_at"`
 	ExpiredAt time.Time `gorm:"expired_at"`
 }
@@ -49,6 +56,7 @@ type UserPasswordReset struct {
 	Id        int       `gorm:"primarykey;size:16"`
 	UserId    int       `gorm:"user_id"`
 	Token     string    `gorm:"token"`
+	Status    int       `gorm:"status"`
 	CreatedAt time.Time `gorm:"created_at"`
 	ExpiredAt time.Time `gorm:"expired_at"`
 }

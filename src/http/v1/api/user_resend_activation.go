@@ -8,10 +8,10 @@ import (
 	"net/http"
 )
 
-func (a *Api) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
+func (a *Api) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
-	req := request.NewUserForgotPassword()
+	req := request.NewUserResendActivation()
 	res := response.New()
 
 	err := req.Parse(r)
@@ -36,11 +36,11 @@ func (a *Api) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userData.Status != types.USER_STATUS_ACTIVE {
-		if userData.Status == types.USER_STATUS_INACTIVE {
+	if userData.Status != types.USER_STATUS_PENDING {
+		if userData.Status == types.USER_STATUS_ACTIVE {
+			res.SetError("your account is already activated")
+		} else if userData.Status == types.USER_STATUS_INACTIVE {
 			res.SetError("your account is currently inactive")
-		} else if userData.Status == types.USER_STATUS_PENDING {
-			res.SetError("your account verification is pending")
 		} else {
 			res.SetError("your account has been banned")
 		}
@@ -49,15 +49,15 @@ func (a *Api) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenId, passwordResetToken := a.Services.User.CreatePasswordResetToken(ctx, userData.Id)
-	if tokenId != 0 && passwordResetToken != "" {
-		passwordResetLink := a.Services.User.GetPasswordResetLink(passwordResetToken)
-		if passwordResetLink != "" {
-			template := a.Services.User.GetPasswordResetEmailTemplate(ctx, userData.Name, passwordResetLink)
+	tokenId, activationToken := a.Services.User.CreateActivationToken(ctx, userData.Id)
+	if tokenId != 0 && activationToken != "" {
+		activationLink := a.Services.User.GetActivationLink(tokenId, activationToken)
+		if activationLink != "" {
+			template := a.Services.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
 			if template != "" {
-				emailStatus := a.Services.User.SendPasswordReset(ctx, userData.Username, template)
+				emailStatus := a.Services.User.SendActivation(ctx, userData.Username, template)
 				if emailStatus == types.EMAIL_STATUS_SUCCESS {
-					resData := "account created successfuly. please check your email for activate account"
+					resData := "please check your email for activate account"
 					res.SetData(resData)
 					res.Send(w)
 					return
@@ -66,8 +66,6 @@ func (a *Api) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-
 	res.SetError("internal server error")
 	res.Send(w)
-
 }

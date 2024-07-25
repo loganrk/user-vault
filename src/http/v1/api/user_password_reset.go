@@ -29,13 +29,19 @@ func (a *Api) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		res.Send(w)
 		return
 	}
-
-	tokenData := a.Services.User.GetPasswordResetDataByToken(ctx, req.Token)
-	if tokenData.Id != 0 {
+	tokenData := a.Services.User.GetPasswordResetByToken(ctx, req.Token)
+	if tokenData.Id == 0 {
 		res.SetError("invalid token")
 		res.Send(w)
 		return
 	}
+
+	if tokenData.Status != types.USER_PASSWORD_RESET_STATUS_ACTIVE {
+		res.SetError("activation token already used")
+		res.Send(w)
+		return
+	}
+
 	if tokenData.ExpiredAt.Before(time.Now()) {
 		res.SetError("activation link expired")
 		res.Send(w)
@@ -56,6 +62,7 @@ func (a *Api) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		res.Send(w)
 		return
 	}
+	a.Services.User.UpdatedPasswordResetStatus(ctx, tokenData.Id, types.USER_PASSWORD_RESET_STATUS_INACTIVE)
 
 	success := a.Services.User.UpdatePassword(ctx, userData.Id, req.Password, userData.Salt)
 

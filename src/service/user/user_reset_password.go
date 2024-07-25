@@ -4,7 +4,6 @@ import (
 	"context"
 	"mayilon/src/types"
 	"mayilon/src/utils"
-	"strconv"
 	"strings"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 )
 
 const (
-	USER_PASSWORD_RESET_TOKEN_ID_MACRO = "{{tokenId}}"
 	USER_PASSWORD_RESET_TOKEN_MACRO    = "{{token}}"
 	USER_PASSWORD_RESET_LINK_MACRO     = "{{link}}"
 	USER_PASSWORD_RESET_NAME_MACRO     = "{{name}}"
@@ -20,39 +18,49 @@ const (
 )
 
 func (u *userService) CreatePasswordResetToken(ctx context.Context, userid int) (int, string) {
-	passwordResetToken := utils.GenerateRandomString(25)
-
-	tokenId, err := u.store.GetPasswordResetTokenIdByToken(ctx, passwordResetToken)
+	passwordResetData, err := u.store.GetActivePasswordResetByUserId(ctx, userid)
 	if err != nil {
 		return 0, ""
 	}
 
-	if tokenId != 0 {
+	if passwordResetData.Id != 0 && passwordResetData.Token != "" {
+		return passwordResetData.Id, passwordResetData.Token
+	}
+
+	passwordResetToken := utils.GenerateRandomString(25)
+
+	alreadyExiststData, err := u.store.GetPasswordResetByToken(ctx, passwordResetToken)
+	if err != nil {
+		return 0, ""
+	}
+
+	if alreadyExiststData.Id != 0 {
 		return u.CreatePasswordResetToken(ctx, userid)
 	}
 
-	tokenData := types.UserPasswordReset{
+	passwordResetData = types.UserPasswordReset{
 		UserId:    userid,
 		Token:     passwordResetToken,
+		Status:    types.USER_PASSWORD_RESET_STATUS_ACTIVE,
 		ExpiredAt: time.Now().Add(time.Duration(u.passwordResetLinkExpiry) * time.Second),
 	}
 
-	tokenId, err = u.store.CreatePasswordResetToken(ctx, tokenData)
+	passwordResetId, err := u.store.CreatePasswordReset(ctx, passwordResetData)
 	if err != nil {
 		return 0, ""
 	}
-	return tokenId, passwordResetToken
+	return passwordResetId, passwordResetToken
 }
 
-func (u *userService) GetPasswordResetLink(tokenId int, token string) string {
+func (u *userService) GetPasswordResetLink(token string) string {
 	passwordResetLink := u.passwordResetLink
-	return u.passwordResetLinkMacroReplacement(passwordResetLink, tokenId, token)
+
+	return u.passwordResetLinkMacroReplacement(passwordResetLink, token)
 
 }
 
-func (u *userService) passwordResetLinkMacroReplacement(passwordResetLink string, tokenId int, token string) string {
+func (u *userService) passwordResetLinkMacroReplacement(passwordResetLink string, token string) string {
 	s := strings.NewReplacer(
-		USER_PASSWORD_RESET_TOKEN_ID_MACRO, strconv.Itoa(tokenId),
 		USER_PASSWORD_RESET_TOKEN_MACRO, token)
 
 	return s.Replace(passwordResetLink)
@@ -81,14 +89,21 @@ func (u *userService) SendPasswordReset(ctx context.Context, email string, templ
 	return types.EMAIL_STATUS_FAILED
 }
 
-func (u *userService) GetPasswordResetDataByToken(ctx context.Context, token string) types.UserPasswordReset {
-	tokenData, err := u.store.GetPasswordResetDataByToken(ctx, token)
+func (u *userService) GetPasswordResetByToken(ctx context.Context, token string) types.UserPasswordReset {
+	tokenData, err := u.store.GetPasswordResetByToken(ctx, token)
 	if err != nil {
 		return types.UserPasswordReset{}
 	}
 
 	return tokenData
 
+}
+
+func (u *userService) UpdatedPasswordResetStatus(ctx context.Context, id int, status int) {
+	err := u.store.UpdatedPasswordResetStatus(ctx, id, status)
+	if err != nil {
+
+	}
 }
 
 func (u *userService) UpdatePassword(ctx context.Context, userid int, password string, saltHash string) bool {

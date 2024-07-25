@@ -13,11 +13,14 @@ type User interface {
 	CreateUserLoginAttempt(ctx context.Context, userLoginAttempt types.UserLoginAttempt) (int, error)
 	CreateUser(ctx context.Context, userData types.User) (int, error)
 
-	GetActivationTokenIdByToken(ctx context.Context, token string) (int, error)
-	CreateActivationToken(ctx context.Context, tokenData types.UserActivationToken) (int, error)
+	GetActivationByToken(ctx context.Context, token string) (types.UserActivationToken, error)
+	CreateActivation(ctx context.Context, tokenData types.UserActivationToken) (int, error)
+	UpdatedActivationtatus(ctx context.Context, tokenId int, status int) error
+	UpdateStatus(ctx context.Context, userid int, status int) error
 
-	GetPasswordResetTokenIdByToken(ctx context.Context, token string) (int, error)
-	CreatePasswordResetToken(ctx context.Context, tokenData types.UserPasswordReset) (int, error)
-	GetPasswordResetDataByToken(ctx context.Context, token string) (types.UserPasswordReset, error)
+	CreatePasswordReset(ctx context.Context, tokenData types.UserPasswordReset) (int, error)
+	GetPasswordResetByToken(ctx context.Context, token string) (types.UserPasswordReset, error)
+	UpdatedPasswordResetStatus(ctx context.Context, id int, status int) error
+	GetActivePasswordResetByUserId(ctx context.Context, userid int) (types.UserPasswordReset, error)
 	UpdatePassword(ctx context.Context, userid int, password string) error
 }

@@ -16,7 +16,7 @@ import (
 
 func main() {
 
-	appConfigIns, err := config.StartAppConfig(`C:\xampp\htdocs\pro\mayilon\config\yaml\app.yaml`)
+	appConfigIns, err := config.StartAppConfig(``)
 	if err != nil {
 		log.Println(err)
 		return

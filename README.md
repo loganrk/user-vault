@@ -5,6 +5,5 @@
 #TODO
 -
 - Email Setup 
-- User Activation
-- User Forgot Password
-- User Reset Password
+- File name conversrion changes
+- lib with client setup

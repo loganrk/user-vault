@@ -29,7 +29,7 @@ api:
     method: GET
   user_password_reset:
     enabled: true
-    route: /user/reset-password
+    route: /user/password-reset
     method: GET
 
 store:
@@ -44,6 +44,7 @@ store:
       user: user
       user_login_attempt: user_login_attempt
       user_activation_token: user_activation_token
+      user_password_reset: user_password_reset
   cache:
     heap:
       enabled: true
