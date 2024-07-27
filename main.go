@@ -2,32 +2,65 @@ package main
 
 import (
 	"log"
-	"mayilon/config"
-	"mayilon/src/http/v1/api"
-	"mayilon/src/lib/db"
-	"mayilon/src/lib/router"
-	authnMiddleware "mayilon/src/middleware/authn"
-	authzMiddleware "mayilon/src/middleware/authz"
+	"mayilon/pkg/config"
+	"mayilon/pkg/http/v1/api"
+	chipper "mayilon/pkg/lib/chipper"
+	"mayilon/pkg/lib/db"
+	"mayilon/pkg/lib/router"
+	authnMiddleware "mayilon/pkg/middleware/authn"
+	authzMiddleware "mayilon/pkg/middleware/authz"
 
-	"mayilon/src/service"
-	userSrv "mayilon/src/service/user"
-	userStore "mayilon/src/store/user"
+	"mayilon/pkg/service"
+	userSrv "mayilon/pkg/service/user"
+	userStore "mayilon/pkg/store/user"
 )
 
 func main() {
 
-	appConfigIns, err := config.StartAppConfig(``)
+	appConfigIns, err := config.StartConfig(`C:\xampp\htdocs\pro\mayilon\config\yaml\`, config.File{
+		Name: "app_config",
+		Ext:  "yaml",
+	})
+
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	dbHost, dbPort, dbUsename, dbPasword, dbName := appConfigIns.GetStoreDatabaseProperties()
+	chipperCryptoKey := appConfigIns.GetChipperCryptoKey()
+	chipperIns := chipper.New(chipperCryptoKey)
+
+	encryptDbHost, encryptDbPort, encryptDbUsename, encryptDbPasword, dbName := appConfigIns.GetStoreDatabaseProperties()
+
+	decryptDbHost, decryptErr := chipperIns.Decrypt(encryptDbHost)
+	if decryptErr != nil {
+		log.Println(decryptErr)
+		return
+	}
+
+	decryptdbPort, decryptErr := chipperIns.Decrypt(encryptDbPort)
+	if decryptErr != nil {
+		log.Println(decryptErr)
+		return
+	}
+
+	decryptDbUsename, decryptErr := chipperIns.Decrypt(encryptDbUsename)
+	if decryptErr != nil {
+		log.Println(decryptErr)
+		return
+	}
+
+	decryptDbPasword, decryptErr := chipperIns.Decrypt(encryptDbPasword)
+	if decryptErr != nil {
+		log.Println(decryptErr)
+		return
+	}
+
 	dbIns, err2 := db.New(db.Config{
-		Host:     dbHost,
-		Port:     dbPort,
-		Username: dbUsename,
-		Password: dbPasword,
+		Host:     decryptDbHost,
+		Port:     decryptdbPort,
+		Username: decryptDbUsename,
+		Password: decryptDbPasword,
 		Name:     dbName,
 	})
 
@@ -45,8 +78,8 @@ func main() {
 
 	routerIns := router.New()
 
-	authnMiddlewareSecretKey, authnMiddlewareTokenExpiry := appConfigIns.GetMiddlewareAuthenticationProperties()
-	authnMiddlewareIns := authnMiddleware.New(authnMiddlewareSecretKey, authnMiddlewareTokenExpiry)
+	authnMiddlewareTokenExpiry := appConfigIns.GetMiddlewareAuthenticationProperties()
+	authnMiddlewareIns := authnMiddleware.New(chipperCryptoKey, authnMiddlewareTokenExpiry, chipperIns)
 
 	authzMiddlewareEnabled, authzMiddlewareToken := appConfigIns.GetMiddlewareAuthorizationProperties()
 	if authzMiddlewareEnabled {
