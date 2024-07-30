@@ -14,11 +14,17 @@ import (
 	userStore "mayilon/pkg/store/user"
 )
 
+const (
+	CONFIG_FILE_PATH = ``
+	CONFIG_FILE_NAME = `app_config`
+	CONFIG_FILE_TYPE = `yaml`
+)
+
 func main() {
 
-	appConfigIns, err := config.StartConfig(`C:\xampp\htdocs\pro\mayilon\config\yaml\`, config.File{
-		Name: "app_config",
-		Ext:  "yaml",
+	appConfigIns, err := config.StartConfig(CONFIG_FILE_PATH, config.File{
+		Name: CONFIG_FILE_NAME,
+		Ext:  CONFIG_FILE_TYPE,
 	})
 
 	if err != nil {
