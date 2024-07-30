@@ -16,7 +16,7 @@ func (h *Handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 
 	err := req.Parse(r)
 	if err != nil {
-		// TODO log
+		// TODO logs
 		res.SetError("invalid request parameters")
 		res.Send(w)
 		return
