@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (a *Api) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	req := request.NewUserResetPassword()
@@ -29,7 +29,7 @@ func (a *Api) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		res.Send(w)
 		return
 	}
-	tokenData := a.Services.User.GetPasswordResetByToken(ctx, req.Token)
+	tokenData := h.Services.User.GetPasswordResetByToken(ctx, req.Token)
 	if tokenData.Id == 0 {
 		res.SetError("invalid token")
 		res.Send(w)
@@ -48,7 +48,7 @@ func (a *Api) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData := a.Services.User.GetUserByUserid(ctx, tokenData.UserId)
+	userData := h.Services.User.GetUserByUserid(ctx, tokenData.UserId)
 
 	if userData.Status != types.USER_STATUS_ACTIVE {
 		if userData.Status == types.USER_STATUS_INACTIVE {
@@ -62,9 +62,9 @@ func (a *Api) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		res.Send(w)
 		return
 	}
-	a.Services.User.UpdatedPasswordResetStatus(ctx, tokenData.Id, types.USER_PASSWORD_RESET_STATUS_INACTIVE)
+	h.Services.User.UpdatedPasswordResetStatus(ctx, tokenData.Id, types.USER_PASSWORD_RESET_STATUS_INACTIVE)
 
-	success := a.Services.User.UpdatePassword(ctx, userData.Id, req.Password, userData.Salt)
+	success := h.Services.User.UpdatePassword(ctx, userData.Id, req.Password, userData.Salt)
 
 	if !success {
 

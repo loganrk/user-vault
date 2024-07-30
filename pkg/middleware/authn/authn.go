@@ -2,7 +2,6 @@ package authn
 
 import (
 	"mayilon/pkg/lib/chipper"
-	"mayilon/pkg/middleware"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -14,7 +13,7 @@ type authn struct {
 	tokenExpiry int
 }
 
-func New(cryptoKey string, tokenExpiry int, chipperIns chipper.Chipper) middleware.Authn {
+func New(cryptoKey string, tokenExpiry int, chipperIns chipper.Chipper) *authn {
 	return &authn{
 		chipper:     chipperIns,
 		cryptoKey:   cryptoKey,

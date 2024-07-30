@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func (a *Api) UserRegister(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	req := request.NewUserRegister()
@@ -29,21 +29,21 @@ func (a *Api) UserRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData := a.Services.User.GetUserByUsername(ctx, req.Username)
+	userData := h.Services.User.GetUserByUsername(ctx, req.Username)
 	if userData.Id != 0 {
 		res.SetError("username already exists. try different username")
 		res.Send(w)
 		return
 	}
 
-	userid := a.Services.User.CreateUser(ctx, req.Username, req.Password, req.Name)
+	userid := h.Services.User.CreateUser(ctx, req.Username, req.Password, req.Name)
 	if userid == 0 {
 		res.SetError("internal server error")
 		res.Send(w)
 		return
 	}
 
-	userData = a.Services.User.GetUserByUserid(ctx, userid)
+	userData = h.Services.User.GetUserByUserid(ctx, userid)
 	if userData.Id == 0 {
 		res.SetError("internal server error")
 		res.Send(w)
@@ -51,13 +51,13 @@ func (a *Api) UserRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if userData.Status == types.USER_STATUS_PENDING {
-		tokenId, activationToken := a.Services.User.CreateActivationToken(ctx, userData.Id)
+		tokenId, activationToken := h.Services.User.CreateActivationToken(ctx, userData.Id)
 		if tokenId != 0 && activationToken != "" {
-			activationLink := a.Services.User.GetActivationLink(tokenId, activationToken)
+			activationLink := h.Services.User.GetActivationLink(tokenId, activationToken)
 			if activationLink != "" {
-				template := a.Services.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
+				template := h.Services.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
 				if template != "" {
-					emailStatus := a.Services.User.SendActivation(ctx, userData.Username, template)
+					emailStatus := h.Services.User.SendActivation(ctx, userData.Username, template)
 					if emailStatus == types.EMAIL_STATUS_SUCCESS {
 						resData := "account created successfuly. please check your email for activate account"
 						res.SetData(resData)

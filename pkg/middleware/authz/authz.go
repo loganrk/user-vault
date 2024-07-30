@@ -1,7 +1,6 @@
 package authz
 
 import (
-	"mayilon/pkg/middleware"
 	"net/http"
 )
 
@@ -9,7 +8,7 @@ type authz struct {
 	token string
 }
 
-func New(authzToken string) middleware.Authz {
+func New(authzToken string) *authz {
 	return &authz{
 		token: "Bearer " + authzToken,
 	}

@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-func (a *Api) UserLogin(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	req := request.NewUserLogin()
@@ -31,7 +31,7 @@ func (a *Api) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData := a.Services.User.GetUserByUsername(ctx, req.Username)
+	userData := h.Services.User.GetUserByUsername(ctx, req.Username)
 	if userData.Id == 0 {
 		//res.Status()
 		res.SetError("username or password is incorrect")
@@ -39,7 +39,7 @@ func (a *Api) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	attemptStatus := a.Services.User.CheckLoginFailedAttempt(ctx, userData.Id)
+	attemptStatus := h.Services.User.CheckLoginFailedAttempt(ctx, userData.Id)
 	if attemptStatus == types.LOGIN_ATTEMPT_MAX_REACHED {
 		res.SetError("max login attempt reached. please try after sometime")
 		res.Send(w)
@@ -51,9 +51,9 @@ func (a *Api) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	passwordMatch := a.Services.User.CheckPassword(ctx, req.Password, userData.Password, userData.Salt)
+	passwordMatch := h.Services.User.CheckPassword(ctx, req.Password, userData.Password, userData.Salt)
 	if !passwordMatch {
-		loginAttempId := a.Services.User.CreateLoginAttempt(ctx, userData.Id, false)
+		loginAttempId := h.Services.User.CreateLoginAttempt(ctx, userData.Id, false)
 		if loginAttempId == 0 {
 			res.SetError("internal server error")
 			res.Send(w)
@@ -64,7 +64,7 @@ func (a *Api) UserLogin(w http.ResponseWriter, r *http.Request) {
 		res.Send(w)
 		return
 	} else {
-		loginAttempId := a.Services.User.CreateLoginAttempt(ctx, userData.Id, true)
+		loginAttempId := h.Services.User.CreateLoginAttempt(ctx, userData.Id, true)
 
 		if loginAttempId == 0 {
 			res.SetError("internal server error")
@@ -72,7 +72,7 @@ func (a *Api) UserLogin(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	userData = a.Services.User.GetUserByUserid(ctx, userData.Id)
+	userData = h.Services.User.GetUserByUserid(ctx, userData.Id)
 
 	if userData.Status != types.USER_STATUS_ACTIVE {
 		if userData.Status == types.USER_STATUS_INACTIVE {
@@ -87,7 +87,7 @@ func (a *Api) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := a.Authentication.CreateToken(userData.Id)
+	token, err := h.Authentication.CreateToken(userData.Id)
 
 	if err != nil {
 		res.SetError("internal server error")

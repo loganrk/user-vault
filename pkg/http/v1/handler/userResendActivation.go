@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func (a *Api) UserResendActivation(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	req := request.NewUserResendActivation()
@@ -29,7 +29,7 @@ func (a *Api) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData := a.Services.User.GetUserByUsername(ctx, req.Username)
+	userData := h.Services.User.GetUserByUsername(ctx, req.Username)
 	if userData.Id == 0 {
 		res.SetError("username is incorrect")
 		res.Send(w)
@@ -49,13 +49,13 @@ func (a *Api) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenId, activationToken := a.Services.User.CreateActivationToken(ctx, userData.Id)
+	tokenId, activationToken := h.Services.User.CreateActivationToken(ctx, userData.Id)
 	if tokenId != 0 && activationToken != "" {
-		activationLink := a.Services.User.GetActivationLink(tokenId, activationToken)
+		activationLink := h.Services.User.GetActivationLink(tokenId, activationToken)
 		if activationLink != "" {
-			template := a.Services.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
+			template := h.Services.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
 			if template != "" {
-				emailStatus := a.Services.User.SendActivation(ctx, userData.Username, template)
+				emailStatus := h.Services.User.SendActivation(ctx, userData.Username, template)
 				if emailStatus == types.EMAIL_STATUS_SUCCESS {
 					resData := "please check your email for activate account"
 					res.SetData(resData)

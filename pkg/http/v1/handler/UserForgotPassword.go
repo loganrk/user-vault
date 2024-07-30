@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func (a *Api) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	req := request.NewUserForgotPassword()
@@ -29,7 +29,7 @@ func (a *Api) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData := a.Services.User.GetUserByUsername(ctx, req.Username)
+	userData := h.Services.User.GetUserByUsername(ctx, req.Username)
 	if userData.Id == 0 {
 		res.SetError("username is incorrect")
 		res.Send(w)
@@ -49,13 +49,13 @@ func (a *Api) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenId, passwordResetToken := a.Services.User.CreatePasswordResetToken(ctx, userData.Id)
+	tokenId, passwordResetToken := h.Services.User.CreatePasswordResetToken(ctx, userData.Id)
 	if tokenId != 0 && passwordResetToken != "" {
-		passwordResetLink := a.Services.User.GetPasswordResetLink(passwordResetToken)
+		passwordResetLink := h.Services.User.GetPasswordResetLink(passwordResetToken)
 		if passwordResetLink != "" {
-			template := a.Services.User.GetPasswordResetEmailTemplate(ctx, userData.Name, passwordResetLink)
+			template := h.Services.User.GetPasswordResetEmailTemplate(ctx, userData.Name, passwordResetLink)
 			if template != "" {
-				emailStatus := a.Services.User.SendPasswordReset(ctx, userData.Username, template)
+				emailStatus := h.Services.User.SendPasswordReset(ctx, userData.Username, template)
 				if emailStatus == types.EMAIL_STATUS_SUCCESS {
 					resData := "account created successfuly. please check your email for activate account"
 					res.SetData(resData)

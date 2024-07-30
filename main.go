@@ -3,12 +3,11 @@ package main
 import (
 	"log"
 	"mayilon/pkg/config"
-	"mayilon/pkg/http/v1/api"
+	"mayilon/pkg/http/v1/handler"
 	chipper "mayilon/pkg/lib/chipper"
 	"mayilon/pkg/lib/db"
 	"mayilon/pkg/lib/router"
-	authnMiddleware "mayilon/pkg/middleware/authn"
-	authzMiddleware "mayilon/pkg/middleware/authz"
+	"mayilon/pkg/middleware"
 
 	"mayilon/pkg/service"
 	userSrv "mayilon/pkg/service/user"
@@ -79,40 +78,40 @@ func main() {
 	routerIns := router.New()
 
 	authnMiddlewareTokenExpiry := appConfigIns.GetMiddlewareAuthenticationProperties()
-	authnMiddlewareIns := authnMiddleware.New(chipperCryptoKey, authnMiddlewareTokenExpiry, chipperIns)
+	authnMiddlewareIns := middleware.NewAuthn(chipperCryptoKey, authnMiddlewareTokenExpiry, chipperIns)
 
 	authzMiddlewareEnabled, authzMiddlewareToken := appConfigIns.GetMiddlewareAuthorizationProperties()
 	if authzMiddlewareEnabled {
-		authzMiddlewareIns := authzMiddleware.New(authzMiddlewareToken)
+		authzMiddlewareIns := middleware.NewAuthz(authzMiddlewareToken)
 		routerIns.UseBefore(authzMiddlewareIns.Use())
 	}
 
-	apiIns := api.New(svcList, authnMiddlewareIns)
+	handlerIns := handler.New(svcList, authnMiddlewareIns)
 	apiConfigIns := appConfigIns.GetApi()
 
 	if apiConfigIns.GetUserLoginEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserLoginProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserLogin)
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserLogin)
 	}
 
 	if apiConfigIns.GetUserRegisterEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserRegisterProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserRegister)
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserRegister)
 	}
 
 	if apiConfigIns.GetUserActivationEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserActivationProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserActivation)
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserActivation)
 	}
 
 	if apiConfigIns.GetUserForgotPasswordEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserForgotPasswordProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserForgotPassword)
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserForgotPassword)
 	}
 
 	if apiConfigIns.GetUserPasswordResetEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserPasswordResetProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserPasswordReset)
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserPasswordReset)
 	}
 
 	port := appConfigIns.GetAppPort()
