@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"mayilon/pkg/http/v1/request"
+	request "mayilon/pkg/http/v1/request/user"
 	"mayilon/pkg/http/v1/response"
 	"mayilon/pkg/types"
 	"net/http"

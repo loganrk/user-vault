@@ -1,19 +1,20 @@
-package request
+package user
 
 import (
 	"encoding/json"
+	"mayilon/pkg/http/v1/request"
 	"net/http"
 )
 
-type userForgotPassword struct {
+type userResendActivation struct {
 	Username string `json:"username"`
 }
 
-func NewUserForgotPassword() *userForgotPassword {
-	return &userForgotPassword{}
+func NewUserResendActivation() *userResendActivation {
+	return &userResendActivation{}
 }
 
-func (u *userForgotPassword) Parse(r *http.Request) error {
+func (u *userResendActivation) Parse(r *http.Request) error {
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)
 		err := decoder.Decode(u)
@@ -27,8 +28,8 @@ func (u *userForgotPassword) Parse(r *http.Request) error {
 	return nil
 }
 
-func (u *userForgotPassword) Validate() string {
-	if !emailRegex.MatchString(u.Username) {
+func (u *userResendActivation) Validate() string {
+	if !request.EmailRegex.MatchString(u.Username) {
 
 		return "invalid username"
 	}

@@ -4,5 +4,5 @@ import (
 	"regexp"
 )
 
-var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-var passwordRegex = regexp.MustCompile(`^.{8,12}$`)
+var EmailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+var PasswordRegex = regexp.MustCompile(`^.{8,12}$`)

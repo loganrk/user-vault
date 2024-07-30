@@ -1,21 +1,23 @@
-package request
+package user
 
 import (
 	"encoding/json"
+	"mayilon/pkg/http/v1/request"
 	"mayilon/pkg/utils"
 	"net/http"
 )
 
-type userResetPassword struct {
-	Token    string `json:"token"`
+type userRegister struct {
+	Username string `json:"username"`
 	Password string `json:"password"`
+	Name     string `json:"name"`
 }
 
-func NewUserResetPassword() *userResetPassword {
-	return &userResetPassword{}
+func NewUserRegister() *userRegister {
+	return &userRegister{}
 }
 
-func (u *userResetPassword) Parse(r *http.Request) error {
+func (u *userRegister) Parse(r *http.Request) error {
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)
 		err := decoder.Decode(u)
@@ -23,24 +25,29 @@ func (u *userResetPassword) Parse(r *http.Request) error {
 			return err
 		}
 	} else {
+		u.Username = r.URL.Query().Get("username")
 		u.Password = r.URL.Query().Get("password")
-		u.Token = r.URL.Query().Get("token")
+		u.Name = r.URL.Query().Get("name")
 	}
 
 	return nil
 }
 
-func (u *userResetPassword) Validate() string {
-	if u.Token == "" {
+func (u *userRegister) Validate() string {
+	if !request.EmailRegex.MatchString(u.Username) {
 
-		return "invalid token"
+		return "invalid username"
 	}
 
 	if u.Password == "" {
 		return "invalid password"
 	}
 
-	if !passwordRegex.MatchString(u.Password) {
+	if u.Name == "" {
+		return "invalid name"
+	}
+
+	if !request.PasswordRegex.MatchString(u.Password) {
 
 		return "password must be between 8 and 12 characters long"
 	}

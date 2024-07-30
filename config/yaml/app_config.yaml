@@ -11,6 +11,7 @@ middleware:
     token: c713-kut8-1xkt-qf0a
   authentication:
     token_expiry: 3600
+
 api:
   userLogin:
     enabled: true
@@ -32,6 +33,7 @@ api:
     enabled: true
     route: /user/password-reset
     method: GET
+    
 store:
   database:
     host: PEZZHDsp3DEBn8kVP2a5EmFEQ4WFybE/NN3lhQ==  #encrypted value

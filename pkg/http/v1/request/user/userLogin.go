@@ -1,7 +1,8 @@
-package request
+package user
 
 import (
 	"encoding/json"
+	"mayilon/pkg/http/v1/request"
 	"net/http"
 )
 
@@ -30,12 +31,12 @@ func (u *userLogin) Parse(r *http.Request) error {
 }
 
 func (u *userLogin) Validate() string {
-	if !emailRegex.MatchString(u.Username) {
+	if !request.EmailRegex.MatchString(u.Username) {
 
 		return "invalid username"
 	}
 
-	if !passwordRegex.MatchString(u.Password) {
+	if !request.PasswordRegex.MatchString(u.Password) {
 
 		return "invalid password"
 	}
