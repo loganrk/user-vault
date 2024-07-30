@@ -7,12 +7,6 @@ import (
 	"net/http"
 )
 
-type userRegister struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Name     string `json:"name"`
-}
-
 func NewUserRegister() *userRegister {
 	return &userRegister{}
 }

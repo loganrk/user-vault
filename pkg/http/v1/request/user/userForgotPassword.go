@@ -6,10 +6,6 @@ import (
 	"net/http"
 )
 
-type userForgotPassword struct {
-	Username string `json:"username"`
-}
-
 func NewUserForgotPassword() *userForgotPassword {
 	return &userForgotPassword{}
 }

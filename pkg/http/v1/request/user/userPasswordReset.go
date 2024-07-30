@@ -7,11 +7,6 @@ import (
 	"net/http"
 )
 
-type userResetPassword struct {
-	Token    string `json:"token"`
-	Password string `json:"password"`
-}
-
 func NewUserResetPassword() *userResetPassword {
 	return &userResetPassword{}
 }

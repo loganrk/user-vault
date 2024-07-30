@@ -5,10 +5,6 @@ import (
 	"net/http"
 )
 
-type newUserActivation struct {
-	Token string `json:"token"`
-}
-
 func NewUserActivation() *newUserActivation {
 	return &newUserActivation{}
 }

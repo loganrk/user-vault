@@ -6,10 +6,6 @@ import (
 	"net/http"
 )
 
-type userResendActivation struct {
-	Username string `json:"username"`
-}
-
 func NewUserResendActivation() *userResendActivation {
 	return &userResendActivation{}
 }

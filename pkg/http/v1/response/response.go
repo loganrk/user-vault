@@ -11,22 +11,12 @@ type Response interface {
 	Send(w http.ResponseWriter)
 }
 
-type response struct {
-	Success bool       `json:"success"`
-	Err     []ErrorMsg `json:"error,omitempty"`
-	Data    any        `json:"data,omitempty"`
-}
-
-type ErrorMsg struct {
-	Msg string `json:"msg"`
-}
-
 func New() Response {
 	return &response{}
 }
 
 func (r *response) SetError(err string) {
-	r.Err = append(r.Err, ErrorMsg{
+	r.Err = append(r.Err, errorMsg{
 		Msg: err,
 	})
 }
@@ -41,7 +31,7 @@ func (r *response) Send(w http.ResponseWriter) {
 		r.Data = struct{}{}
 	} else {
 		r.Success = true
-		r.Err = make([]ErrorMsg, 0)
+		r.Err = make([]errorMsg, 0)
 	}
 
 	json.NewEncoder(w).Encode(r)

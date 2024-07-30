@@ -11,19 +11,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type userStore struct {
-	db db.DB
-	//cache heap.Cache
-	tables
-}
-
-type tables struct {
-	user                string
-	userLoginAttempt    string
-	userActivationToken string
-	userPasswordReset   string
-}
-
 func New(tableConfigIns config.Table, dbIns db.DB) store.User {
 	tablePrefix := tableConfigIns.GetPrefix()
 	return &userStore{

@@ -15,23 +15,6 @@ import (
 	"time"
 )
 
-type userService struct {
-	store store.User
-	conf
-}
-type conf struct {
-	appName                   string
-	maxLoginAttempt           int
-	loginAttemptSessionPeriod int
-	passwordHashCost          int
-	activationLink            string
-	activationLinkExpiry      int
-	activationTemplatePath    string
-	passwordResetLink         string
-	passwordResetLinkExpiry   int
-	passwordResetTemplatePath string
-}
-
 func New(userStoreIns store.User, appName string, userConfIns config.User) service.User {
 	return &userService{
 		store: userStoreIns,

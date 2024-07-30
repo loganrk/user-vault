@@ -6,11 +6,6 @@ import (
 	"net/http"
 )
 
-type userLogin struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
 func NewUserLogin() *userLogin {
 	return &userLogin{}
 }
