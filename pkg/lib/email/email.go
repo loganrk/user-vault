@@ -1,6 +1,7 @@
 package email
 
 import (
+	"errors"
 	"mayilon/pkg/lib/email/gomail"
 )
 
@@ -30,4 +31,6 @@ func New(conf config) (Emailer, error) {
 		gomail.New(conf.Hostname, conf.Port, conf.Username, conf.Password)
 
 	}
+
+	return nil, errors.New("type is not avilable")
 }
