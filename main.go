@@ -2,32 +2,70 @@ package main
 
 import (
 	"log"
-	"mayilon/config"
-	"mayilon/src/http/v1/api"
-	"mayilon/src/lib/db"
-	"mayilon/src/lib/router"
-	authnMiddleware "mayilon/src/middleware/authn"
-	authzMiddleware "mayilon/src/middleware/authz"
+	"mayilon/pkg/config"
+	"mayilon/pkg/http/v1/handler"
+	chipper "mayilon/pkg/lib/chipper"
+	"mayilon/pkg/lib/db"
+	"mayilon/pkg/lib/router"
+	"mayilon/pkg/middleware"
 
-	"mayilon/src/service"
-	userSrv "mayilon/src/service/user"
-	userStore "mayilon/src/store/user"
+	"mayilon/pkg/service"
+	userSrv "mayilon/pkg/service/user"
+	userStore "mayilon/pkg/store/user"
+)
+
+const (
+	CONFIG_FILE_PATH = ``
+	CONFIG_FILE_NAME = `app_config`
+	CONFIG_FILE_TYPE = `yaml`
 )
 
 func main() {
 
-	appConfigIns, err := config.StartAppConfig(``)
+	appConfigIns, err := config.StartConfig(CONFIG_FILE_PATH, config.File{
+		Name: CONFIG_FILE_NAME,
+		Ext:  CONFIG_FILE_TYPE,
+	})
+
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	dbHost, dbPort, dbUsename, dbPasword, dbName := appConfigIns.GetStoreDatabaseProperties()
+	chipperCryptoKey := appConfigIns.GetChipperCryptoKey()
+	chipperIns := chipper.New(chipperCryptoKey)
+
+	encryptDbHost, encryptDbPort, encryptDbUsename, encryptDbPasword, dbName := appConfigIns.GetStoreDatabaseProperties()
+
+	decryptDbHost, decryptErr := chipperIns.Decrypt(encryptDbHost)
+	if decryptErr != nil {
+		log.Println(decryptErr)
+		return
+	}
+
+	decryptdbPort, decryptErr := chipperIns.Decrypt(encryptDbPort)
+	if decryptErr != nil {
+		log.Println(decryptErr)
+		return
+	}
+
+	decryptDbUsename, decryptErr := chipperIns.Decrypt(encryptDbUsename)
+	if decryptErr != nil {
+		log.Println(decryptErr)
+		return
+	}
+
+	decryptDbPasword, decryptErr := chipperIns.Decrypt(encryptDbPasword)
+	if decryptErr != nil {
+		log.Println(decryptErr)
+		return
+	}
+
 	dbIns, err2 := db.New(db.Config{
-		Host:     dbHost,
-		Port:     dbPort,
-		Username: dbUsename,
-		Password: dbPasword,
+		Host:     decryptDbHost,
+		Port:     decryptdbPort,
+		Username: decryptDbUsename,
+		Password: decryptDbPasword,
 		Name:     dbName,
 	})
 
@@ -45,42 +83,41 @@ func main() {
 
 	routerIns := router.New()
 
-	authnMiddlewareSecretKey, authnMiddlewareTokenExpiry := appConfigIns.GetMiddlewareAuthenticationProperties()
-	authnMiddlewareIns := authnMiddleware.New(authnMiddlewareSecretKey, authnMiddlewareTokenExpiry)
+	authnMiddlewareTokenExpiry := appConfigIns.GetMiddlewareAuthenticationProperties()
+	authnMiddlewareIns := middleware.NewAuthn(chipperCryptoKey, authnMiddlewareTokenExpiry, chipperIns)
 
 	authzMiddlewareEnabled, authzMiddlewareToken := appConfigIns.GetMiddlewareAuthorizationProperties()
 	if authzMiddlewareEnabled {
-		authzMiddlewareIns := authzMiddleware.New(authzMiddlewareToken)
+		authzMiddlewareIns := middleware.NewAuthz(authzMiddlewareToken)
 		routerIns.UseBefore(authzMiddlewareIns.Use())
 	}
 
-	apiIns := api.New(svcList, authnMiddlewareIns)
+	handlerIns := handler.New(svcList, authnMiddlewareIns)
 	apiConfigIns := appConfigIns.GetApi()
 
 	if apiConfigIns.GetUserLoginEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserLoginProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserLogin)
-
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserLogin)
 	}
 
 	if apiConfigIns.GetUserRegisterEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserRegisterProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserRegister)
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserRegister)
 	}
 
 	if apiConfigIns.GetUserActivationEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserActivationProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserActivation)
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserActivation)
 	}
 
 	if apiConfigIns.GetUserForgotPasswordEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserForgotPasswordProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserForgotPassword)
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserForgotPassword)
 	}
 
 	if apiConfigIns.GetUserPasswordResetEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserPasswordResetProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, apiIns.UserPasswordReset)
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserPasswordReset)
 	}
 
 	port := appConfigIns.GetAppPort()

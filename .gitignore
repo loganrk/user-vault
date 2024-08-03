@@ -2,4 +2,7 @@
 *.log
 
 # ignore ALL .yaml files
-app.yaml
+*.yaml
+
+# ignore ALL .bin files
+*.bin

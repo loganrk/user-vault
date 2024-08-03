@@ -1,0 +1,67 @@
+application:
+  port: 8000
+  name: Mayilon
+
+chipper:
+  cryptoKey: qf0ac7131xktkut8
+  
+middleware:
+  authorization:
+    enabled: true
+    token: c713-kut8-1xkt-qf0a
+  authentication:
+    token_expiry: 3600
+
+api:
+  userLogin:
+    enabled: true
+    route: /user/login
+    method: GET
+  userRegister:
+    enabled: true
+    route: /user/register
+    method: GET
+  userActivation:
+    enabled: true
+    route: /user/activation
+    method: GET
+  userForgotPassword:
+    enabled: true
+    route: /user/forgot-password
+    method: GET
+  userPasswordReset:
+    enabled: true
+    route: /user/password-reset
+    method: GET
+    
+store:
+  database:
+    host: #encrypted value
+    port:  #encrypted value
+    username:  #encrypted value
+    password:  #encrypted value
+    name: test
+    table:
+      prefix: pm_
+      user: user
+      userLoginAttempt: user-login-attempt
+      userActivationToken: user-activation-token
+      userPasswordReset: user-password-reset
+  cache:
+    heap:
+      enabled: true
+      max_capacity: 2000
+      expiry: 3600
+
+user:
+  maxLoginAttempt: 5
+  loginAttemptSessionPeriod: 60 #seconds
+  passwordHashCost: 12
+  activation:
+    templatePath: data/template/activation_email_template.html  # macros :[{{appName}},{{name}},{{Link}}]
+    link: http://localhost:8000/user/activate # macros :[{{tokenId}},{{token}}]
+    linkExpiry: 1800 #seconds
+  passwordReset:
+    templatePath: data/template/password_reset_email_template.html  # macros :[{{appName}},{{name}},{{Link}}]
+    link: http://localhost:8000/user/password_reset?token={{token}} # macros :[{{token}}]
+    linkExpiry: 1800 #seconds
