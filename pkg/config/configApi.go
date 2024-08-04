@@ -10,6 +10,9 @@ type Api interface {
 	GetUserActivationEnabled() bool
 	GetUserActivationProperties() (string, string)
 
+	GetUserResendActivationEnabled() bool
+	GetUserResendActivationProperties() (string, string)
+
 	GetUserForgotPasswordEnabled() bool
 	GetUserForgotPasswordProperties() (string, string)
 
@@ -46,6 +49,17 @@ func (a api) GetUserActivationEnabled() bool {
 
 func (a api) GetUserActivationProperties() (string, string) {
 	apiData := a.UserActivation
+
+	return apiData.Method, apiData.Route
+}
+
+func (a api) GetUserResendActivationEnabled() bool {
+
+	return a.UserResendActivation.Enabled
+}
+
+func (a api) GetUserResendActivationProperties() (string, string) {
+	apiData := a.UserResendActivation
 
 	return apiData.Method, apiData.Route
 }

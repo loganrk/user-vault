@@ -39,11 +39,12 @@ type app struct {
 }
 
 type api struct {
-	UserLogin          apiData `mapstructure:"userLogin"`
-	UserRegister       apiData `mapstructure:"userRegister"`
-	UserActivation     apiData `mapstructure:"userActivation"`
-	UserForgotPassword apiData `mapstructure:"userForgotPassword"`
-	UserPasswordReset  apiData `mapstructure:"userPasswordReset"`
+	UserLogin            apiData `mapstructure:"userLogin"`
+	UserRegister         apiData `mapstructure:"userRegister"`
+	UserActivation       apiData `mapstructure:"userActivation"`
+	UserResendActivation apiData `mapstructure:"userResendActivation"`
+	UserForgotPassword   apiData `mapstructure:"userForgotPassword"`
+	UserPasswordReset    apiData `mapstructure:"userPasswordReset"`
 }
 type apiData struct {
 	Enabled bool   `mapstructure:"enabled"`

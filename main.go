@@ -110,6 +110,11 @@ func main() {
 		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserActivation)
 	}
 
+	if apiConfigIns.GetUserResendActivationEnabled() {
+		userApiMethod, userApiRoute := apiConfigIns.GetUserResendActivationProperties()
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserResendActivation)
+	}
+
 	if apiConfigIns.GetUserForgotPasswordEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserForgotPasswordProperties()
 		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserForgotPassword)

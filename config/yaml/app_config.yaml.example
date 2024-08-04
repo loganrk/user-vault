@@ -25,6 +25,10 @@ api:
     enabled: true
     route: /user/activation
     method: GET
+  userResendActivation:
+    enabled: true
+    route: /user/resend-activation
+    method: GET
   userForgotPassword:
     enabled: true
     route: /user/forgot-password
@@ -33,6 +37,7 @@ api:
     enabled: true
     route: /user/password-reset
     method: GET
+
     
 store:
   database:
