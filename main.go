@@ -4,10 +4,12 @@ import (
 	"log"
 	"mayilon/pkg/config"
 	"mayilon/pkg/http/v1/handler"
-	chipper "mayilon/pkg/lib/chipper"
-	"mayilon/pkg/lib/db"
-	"mayilon/pkg/lib/router"
 	"mayilon/pkg/middleware"
+
+	"github.com/loganrk/go-db"
+	"github.com/loganrk/go-router"
+
+	chipper "github.com/loganrk/go-chipper"
 
 	"mayilon/pkg/service"
 	userSrv "mayilon/pkg/service/user"

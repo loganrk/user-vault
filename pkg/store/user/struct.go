@@ -1,6 +1,6 @@
 package user
 
-import "mayilon/pkg/lib/db"
+import "github.com/loganrk/go-db"
 
 type userStore struct {
 	db db.DB

@@ -4,9 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"mayilon/pkg/lib/chipper"
 	"os"
 	"strings"
+
+	"github.com/loganrk/go-chipper"
 )
 
 func main() {

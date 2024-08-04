@@ -1,8 +1,9 @@
 package authn
 
 import (
-	"mayilon/pkg/lib/chipper"
 	"time"
+
+	"github.com/loganrk/go-chipper"
 
 	"github.com/golang-jwt/jwt/v5"
 )

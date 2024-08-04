@@ -1,9 +1,10 @@
 package middleware
 
 import (
-	"mayilon/pkg/lib/chipper"
 	"mayilon/pkg/middleware/authn"
 	"mayilon/pkg/middleware/authz"
+
+	"github.com/loganrk/go-chipper"
 
 	"net/http"
 )
