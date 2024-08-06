@@ -5,9 +5,9 @@ type app struct {
 		Name string `mapstructure:"name"`
 		Port string `mapstructure:"port"`
 	} `mapstructure:"application"`
-	Chipper struct {
+	Cipher struct {
 		CryptoKey string `mapstructure:"cryptoKey"`
-	} `mapstructure:"chipper"`
+	} `mapstructure:"cipher"`
 	Middleware struct {
 		Authorization struct {
 			Enabled bool   `mapstructure:"enabled"`
@@ -39,11 +39,12 @@ type app struct {
 }
 
 type api struct {
-	UserLogin          apiData `mapstructure:"userLogin"`
-	UserRegister       apiData `mapstructure:"userRegister"`
-	UserActivation     apiData `mapstructure:"userActivation"`
-	UserForgotPassword apiData `mapstructure:"userForgotPassword"`
-	UserPasswordReset  apiData `mapstructure:"userPasswordReset"`
+	UserLogin            apiData `mapstructure:"userLogin"`
+	UserRegister         apiData `mapstructure:"userRegister"`
+	UserActivation       apiData `mapstructure:"userActivation"`
+	UserResendActivation apiData `mapstructure:"userResendActivation"`
+	UserForgotPassword   apiData `mapstructure:"userForgotPassword"`
+	UserPasswordReset    apiData `mapstructure:"userPasswordReset"`
 }
 type apiData struct {
 	Enabled bool   `mapstructure:"enabled"`

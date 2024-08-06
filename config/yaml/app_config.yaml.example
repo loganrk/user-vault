@@ -2,7 +2,7 @@ application:
   port: 8000
   name: Mayilon
 
-chipper:
+cipher:
   cryptoKey: qf0ac7131xktkut8
   
 middleware:
@@ -25,6 +25,10 @@ api:
     enabled: true
     route: /user/activation
     method: GET
+  userResendActivation:
+    enabled: true
+    route: /user/resend-activation
+    method: GET
   userForgotPassword:
     enabled: true
     route: /user/forgot-password
@@ -33,6 +37,7 @@ api:
     enabled: true
     route: /user/password-reset
     method: GET
+
     
 store:
   database:

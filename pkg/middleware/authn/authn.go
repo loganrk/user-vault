@@ -1,21 +1,22 @@
 package authn
 
 import (
-	"mayilon/pkg/lib/chipper"
 	"time"
+
+	cipher "github.com/loganrk/go-cipher"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type authn struct {
-	chipper     chipper.Chipper
+	cipher      cipher.Cipher
 	cryptoKey   string
 	tokenExpiry int
 }
 
-func New(cryptoKey string, tokenExpiry int, chipperIns chipper.Chipper) *authn {
+func New(cryptoKey string, tokenExpiry int, cipherIns cipher.Cipher) *authn {
 	return &authn{
-		chipper:     chipperIns,
+		cipher:      cipherIns,
 		cryptoKey:   cryptoKey,
 		tokenExpiry: tokenExpiry,
 	}
@@ -33,7 +34,7 @@ func (a *authn) CreateToken(uid int) (string, error) {
 		return "", err
 	}
 
-	tokenStringEcr, err := a.chipper.Encrypt(tokenString)
+	tokenStringEcr, err := a.cipher.Encrypt(tokenString)
 	if err != nil {
 		return "", err
 	}

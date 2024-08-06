@@ -3,10 +3,11 @@ package user
 import (
 	"context"
 	"mayilon/pkg/config"
-	"mayilon/pkg/lib/db"
 	"mayilon/pkg/store"
 	"mayilon/pkg/types"
 	"time"
+
+	"github.com/loganrk/go-db"
 
 	"gorm.io/gorm"
 )

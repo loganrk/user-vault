@@ -4,10 +4,12 @@ import (
 	"log"
 	"mayilon/pkg/config"
 	"mayilon/pkg/http/v1/handler"
-	chipper "mayilon/pkg/lib/chipper"
-	"mayilon/pkg/lib/db"
-	"mayilon/pkg/lib/router"
 	"mayilon/pkg/middleware"
+
+	"github.com/loganrk/go-db"
+	"github.com/loganrk/go-router"
+
+	cipher "github.com/loganrk/go-cipher"
 
 	"mayilon/pkg/service"
 	userSrv "mayilon/pkg/service/user"
@@ -32,30 +34,30 @@ func main() {
 		return
 	}
 
-	chipperCryptoKey := appConfigIns.GetChipperCryptoKey()
-	chipperIns := chipper.New(chipperCryptoKey)
+	cipherCryptoKey := appConfigIns.GetCipherCryptoKey()
+	cipherIns := cipher.New(cipherCryptoKey)
 
 	encryptDbHost, encryptDbPort, encryptDbUsename, encryptDbPasword, dbName := appConfigIns.GetStoreDatabaseProperties()
 
-	decryptDbHost, decryptErr := chipperIns.Decrypt(encryptDbHost)
+	decryptDbHost, decryptErr := cipherIns.Decrypt(encryptDbHost)
 	if decryptErr != nil {
 		log.Println(decryptErr)
 		return
 	}
 
-	decryptdbPort, decryptErr := chipperIns.Decrypt(encryptDbPort)
+	decryptdbPort, decryptErr := cipherIns.Decrypt(encryptDbPort)
 	if decryptErr != nil {
 		log.Println(decryptErr)
 		return
 	}
 
-	decryptDbUsename, decryptErr := chipperIns.Decrypt(encryptDbUsename)
+	decryptDbUsename, decryptErr := cipherIns.Decrypt(encryptDbUsename)
 	if decryptErr != nil {
 		log.Println(decryptErr)
 		return
 	}
 
-	decryptDbPasword, decryptErr := chipperIns.Decrypt(encryptDbPasword)
+	decryptDbPasword, decryptErr := cipherIns.Decrypt(encryptDbPasword)
 	if decryptErr != nil {
 		log.Println(decryptErr)
 		return
@@ -84,7 +86,7 @@ func main() {
 	routerIns := router.New()
 
 	authnMiddlewareTokenExpiry := appConfigIns.GetMiddlewareAuthenticationProperties()
-	authnMiddlewareIns := middleware.NewAuthn(chipperCryptoKey, authnMiddlewareTokenExpiry, chipperIns)
+	authnMiddlewareIns := middleware.NewAuthn(cipherCryptoKey, authnMiddlewareTokenExpiry, cipherIns)
 
 	authzMiddlewareEnabled, authzMiddlewareToken := appConfigIns.GetMiddlewareAuthorizationProperties()
 	if authzMiddlewareEnabled {
@@ -108,6 +110,11 @@ func main() {
 	if apiConfigIns.GetUserActivationEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserActivationProperties()
 		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserActivation)
+	}
+
+	if apiConfigIns.GetUserResendActivationEnabled() {
+		userApiMethod, userApiRoute := apiConfigIns.GetUserResendActivationProperties()
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserResendActivation)
 	}
 
 	if apiConfigIns.GetUserForgotPasswordEnabled() {

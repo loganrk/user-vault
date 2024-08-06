@@ -4,9 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"mayilon/pkg/lib/chipper"
 	"os"
 	"strings"
+
+	"github.com/loganrk/go-cipher"
 )
 
 func main() {
@@ -15,14 +16,14 @@ func main() {
 	fmt.Print("Enter the crypto key: ")
 	cryptoKey, _ := reader.ReadString('\n')
 	cryptoKey = strings.TrimSpace(cryptoKey)
-	chipperIns := chipper.New(cryptoKey)
+	cipherIns := cipher.New(cryptoKey)
 
 	for {
 		fmt.Print("Enter text to decrypt: ")
 		ciphertext, _ := reader.ReadString('\n')
 		ciphertext = strings.TrimSpace(ciphertext)
 
-		decrypted, err := chipperIns.Decrypt(ciphertext)
+		decrypted, err := cipherIns.Decrypt(ciphertext)
 		if err != nil {
 			log.Fatalf("Error decrypting: %v", err)
 			return
