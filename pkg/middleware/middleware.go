@@ -4,7 +4,7 @@ import (
 	"mayilon/pkg/middleware/authn"
 	"mayilon/pkg/middleware/authz"
 
-	"github.com/loganrk/go-chipper"
+	"github.com/loganrk/go-cipher"
 
 	"net/http"
 )
@@ -21,6 +21,6 @@ func NewAuthz(authzToken string) Authz {
 	return authz.New(authzToken)
 }
 
-func NewAuthn(cryptoKey string, tokenExpiry int, chipperIns chipper.Chipper) Authn {
-	return authn.New(cryptoKey, tokenExpiry, chipperIns)
+func NewAuthn(cryptoKey string, tokenExpiry int, cipherIns cipher.Cipher) Authn {
+	return authn.New(cryptoKey, tokenExpiry, cipherIns)
 }

@@ -5,9 +5,9 @@ type app struct {
 		Name string `mapstructure:"name"`
 		Port string `mapstructure:"port"`
 	} `mapstructure:"application"`
-	Chipper struct {
+	Cipher struct {
 		CryptoKey string `mapstructure:"cryptoKey"`
-	} `mapstructure:"chipper"`
+	} `mapstructure:"cipher"`
 	Middleware struct {
 		Authorization struct {
 			Enabled bool   `mapstructure:"enabled"`

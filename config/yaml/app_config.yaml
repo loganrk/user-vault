@@ -10,7 +10,10 @@ middleware:
     enabled: true
     token: c713-kut8-1xkt-qf0a
   authentication:
-    token_expiry: 3600
+    refreshToken:
+      expiry: 840000 #10 days
+    accessToken:
+      expirey: 1200
 
 api:
   userLogin:

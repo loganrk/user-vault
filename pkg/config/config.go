@@ -14,7 +14,7 @@ type File struct {
 type App interface {
 	GetAppName() string
 	GetAppPort() string
-	GetChipperCryptoKey() string
+	GetCipherCryptoKey() string
 	GetMiddlewareAuthorizationProperties() (bool, string)
 	GetMiddlewareAuthenticationProperties() int
 	GetStoreDatabaseProperties() (string, string, string, string, string)
@@ -54,8 +54,8 @@ func (a app) GetAppPort() string {
 	return a.Application.Port
 }
 
-func (a app) GetChipperCryptoKey() string {
-	return a.Chipper.CryptoKey
+func (a app) GetCipherCryptoKey() string {
+	return a.Cipher.CryptoKey
 }
 
 func (a app) GetMiddlewareAuthorizationProperties() (bool, string) {

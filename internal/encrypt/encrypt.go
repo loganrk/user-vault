@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/loganrk/go-chipper"
+	"github.com/loganrk/go-cipher"
 )
 
 func main() {
@@ -16,13 +16,13 @@ func main() {
 	fmt.Print("Enter the crypto key: ")
 	cryptoKey, _ := reader.ReadString('\n')
 	cryptoKey = strings.TrimSpace(cryptoKey)
-	chipperIns := chipper.New(cryptoKey)
+	cipherIns := cipher.New(cryptoKey)
 
 	for {
 		fmt.Print("Enter text to encrypt: ")
 		plaintext, _ := reader.ReadString('\n')
 		plaintext = strings.TrimSpace(plaintext)
-		encrypted, err := chipperIns.Encrypt(plaintext)
+		encrypted, err := cipherIns.Encrypt(plaintext)
 		if err != nil {
 			log.Fatalf("Error encrypting: %v", err)
 			return

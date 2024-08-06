@@ -9,7 +9,7 @@ import (
 	"github.com/loganrk/go-db"
 	"github.com/loganrk/go-router"
 
-	chipper "github.com/loganrk/go-chipper"
+	cipher "github.com/loganrk/go-cipher"
 
 	"mayilon/pkg/service"
 	userSrv "mayilon/pkg/service/user"
@@ -34,30 +34,30 @@ func main() {
 		return
 	}
 
-	chipperCryptoKey := appConfigIns.GetChipperCryptoKey()
-	chipperIns := chipper.New(chipperCryptoKey)
+	cipherCryptoKey := appConfigIns.GetCipherCryptoKey()
+	cipherIns := cipher.New(cipherCryptoKey)
 
 	encryptDbHost, encryptDbPort, encryptDbUsename, encryptDbPasword, dbName := appConfigIns.GetStoreDatabaseProperties()
 
-	decryptDbHost, decryptErr := chipperIns.Decrypt(encryptDbHost)
+	decryptDbHost, decryptErr := cipherIns.Decrypt(encryptDbHost)
 	if decryptErr != nil {
 		log.Println(decryptErr)
 		return
 	}
 
-	decryptdbPort, decryptErr := chipperIns.Decrypt(encryptDbPort)
+	decryptdbPort, decryptErr := cipherIns.Decrypt(encryptDbPort)
 	if decryptErr != nil {
 		log.Println(decryptErr)
 		return
 	}
 
-	decryptDbUsename, decryptErr := chipperIns.Decrypt(encryptDbUsename)
+	decryptDbUsename, decryptErr := cipherIns.Decrypt(encryptDbUsename)
 	if decryptErr != nil {
 		log.Println(decryptErr)
 		return
 	}
 
-	decryptDbPasword, decryptErr := chipperIns.Decrypt(encryptDbPasword)
+	decryptDbPasword, decryptErr := cipherIns.Decrypt(encryptDbPasword)
 	if decryptErr != nil {
 		log.Println(decryptErr)
 		return
@@ -86,7 +86,7 @@ func main() {
 	routerIns := router.New()
 
 	authnMiddlewareTokenExpiry := appConfigIns.GetMiddlewareAuthenticationProperties()
-	authnMiddlewareIns := middleware.NewAuthn(chipperCryptoKey, authnMiddlewareTokenExpiry, chipperIns)
+	authnMiddlewareIns := middleware.NewAuthn(cipherCryptoKey, authnMiddlewareTokenExpiry, cipherIns)
 
 	authzMiddlewareEnabled, authzMiddlewareToken := appConfigIns.GetMiddlewareAuthorizationProperties()
 	if authzMiddlewareEnabled {
