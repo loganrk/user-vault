@@ -27,7 +27,7 @@ type UserActivationToken struct {
 	Token     string    `gorm:"token"`
 	Status    int       `gorm:"status"`
 	CreatedAt time.Time `gorm:"created_at"`
-	ExpiredAt time.Time `gorm:"expired_at"`
+	ExpiresAt time.Time `gorm:"expires_at"`
 }
 
 type UserPasswordReset struct {
@@ -36,5 +36,14 @@ type UserPasswordReset struct {
 	Token     string    `gorm:"token"`
 	Status    int       `gorm:"status"`
 	CreatedAt time.Time `gorm:"created_at"`
-	ExpiredAt time.Time `gorm:"expired_at"`
+	ExpiresAt time.Time `gorm:"expires_at"`
+}
+
+type UserRefreshToken struct {
+	Id        int       `gorm:"primarykey;size:16"`
+	UserId    int       `gorm:"user_id"`
+	Token     string    `gorm:"token"`
+	CreatedAt time.Time `gorm:"created_at"`
+	ExpiresAt time.Time `gorm:"expires_at"`
+	Revoked   bool      `gorm:"revoked"`
 }

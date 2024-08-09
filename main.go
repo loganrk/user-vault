@@ -85,8 +85,10 @@ func main() {
 
 	routerIns := router.New()
 
-	authnMiddlewareTokenExpiry := appConfigIns.GetMiddlewareAuthenticationProperties()
-	authnMiddlewareIns := middleware.NewAuthn(cipherCryptoKey, authnMiddlewareTokenExpiry, cipherIns)
+	accessTokenExpiry := appConfigIns.GetMiddlewareAuthnAccessTokenExpiry()
+	refreshTokenExpiry := appConfigIns.GetMiddlewareAuthnRefreshTokenExpiry()
+
+	authnMiddlewareIns := middleware.NewAuthn(cipherCryptoKey, accessTokenExpiry, refreshTokenExpiry, cipherIns)
 
 	authzMiddlewareEnabled, authzMiddlewareToken := appConfigIns.GetMiddlewareAuthorizationProperties()
 	if authzMiddlewareEnabled {
@@ -125,6 +127,16 @@ func main() {
 	if apiConfigIns.GetUserPasswordResetEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserPasswordResetProperties()
 		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserPasswordReset)
+	}
+
+	if apiConfigIns.GetUserRefreshTokenValidateEnabled() {
+		userApiMethod, userApiRoute := apiConfigIns.GetUserRefreshTokenValidateProperties()
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserRefreshTokenValidate)
+	}
+
+	if apiConfigIns.GetUserLogoutEnabled() {
+		userApiMethod, userApiRoute := apiConfigIns.GetUserLogoutProperties()
+		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserLogout)
 	}
 
 	port := appConfigIns.GetAppPort()

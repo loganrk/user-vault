@@ -6,6 +6,7 @@ type Table interface {
 	GetUserLoginAttemp() string
 	GetUserActivationToken() string
 	GetUserPasswordReset() string
+	GetUserRefreshToken() string
 }
 
 func (t table) GetPrefix() string {
@@ -30,4 +31,9 @@ func (t table) GetUserActivationToken() string {
 func (t table) GetUserPasswordReset() string {
 
 	return t.UserPasswordReset
+}
+
+func (t table) GetUserRefreshToken() string {
+
+	return t.UserRefreshToken
 }

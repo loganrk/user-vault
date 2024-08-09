@@ -27,3 +27,7 @@ type userRegister struct {
 type userResendActivation struct {
 	Username string `json:"username"`
 }
+
+type userLogout struct {
+	RefreshToken string `json:"refresh_token"`
+}

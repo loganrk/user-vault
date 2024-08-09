@@ -16,7 +16,7 @@ func (s *userStore) CreatePasswordReset(ctx context.Context, passwordResetData t
 func (s *userStore) GetPasswordResetByToken(ctx context.Context, token string) (types.UserPasswordReset, error) {
 	var passwordResetData types.UserPasswordReset
 
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userPasswordReset).Select("id", "user_id", "expired_at", "status").Where("token = ?", token).First(&passwordResetData)
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userPasswordReset).Select("id", "user_id", "expires_at", "status").Where("token = ?", token).First(&passwordResetData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -27,7 +27,7 @@ func (s *userStore) GetPasswordResetByToken(ctx context.Context, token string) (
 func (s *userStore) GetActivePasswordResetByUserId(ctx context.Context, userid int) (types.UserPasswordReset, error) {
 	var passwordResetData types.UserPasswordReset
 
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userPasswordReset).Select("id", "user_id", "expired_at", "status").Where("userid = ? and expired_at > ? and status = ?", userid, time.Now(), types.USER_PASSWORD_RESET_STATUS_ACTIVE).First(&passwordResetData)
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userPasswordReset).Select("id", "user_id", "expires_at", "status").Where("userid = ? and expires_at > ? and status = ?", userid, time.Now(), types.USER_PASSWORD_RESET_STATUS_ACTIVE).First(&passwordResetData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}

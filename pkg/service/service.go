@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"mayilon/pkg/types"
+	"time"
 )
 
 type List struct {
@@ -32,4 +33,7 @@ type User interface {
 	GetPasswordResetByToken(ctx context.Context, token string) types.UserPasswordReset
 	UpdatedPasswordResetStatus(ctx context.Context, tokenid int, status int)
 	UpdatePassword(ctx context.Context, userid int, password string, saltHash string) bool
+
+	StoreRefreshToken(ctx context.Context, userid int, token string, expiresAt time.Time) int
+	RevokedRefreshToken(ctx context.Context, userid int, refreshToken string) bool
 }

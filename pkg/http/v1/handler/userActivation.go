@@ -43,7 +43,7 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if tokenData.ExpiredAt.Before(time.Now()) {
+	if tokenData.ExpiresAt.Before(time.Now()) {
 		res.SetError("activation link expired")
 		res.Send(w)
 		return
