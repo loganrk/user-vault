@@ -87,7 +87,7 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.Authentication.CreateToken(userData.Id)
+	accessToken, err := h.Authentication.CreateAccessToken(userData.Id)
 
 	if err != nil {
 		res.SetError("internal server error")
@@ -95,10 +95,33 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	refreshToken, err := h.Authentication.CreateRefreshToken(userData.Id)
+
+	if err != nil {
+		res.SetError("internal server error")
+		res.Send(w)
+		return
+	}
+	refreshExpiresAt, err := h.Authentication.GetRefreshTokenExpiry(refreshToken)
+	if err != nil {
+		res.SetError("internal server error")
+		res.Send(w)
+		return
+	}
+
+	tokenId := h.Services.User.StoreRefreshToken(ctx, userData.Id, refreshToken, refreshExpiresAt)
+	if tokenId == 0 {
+		res.SetError("internal server error")
+		res.Send(w)
+		return
+	}
+
 	resData := struct {
-		Token string `json:"token"`
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
 	}{
-		Token: token,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}
 
 	res.SetData(resData)

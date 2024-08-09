@@ -35,6 +35,14 @@ api:
   userPasswordReset:
     enabled: true
     route: /user/password-reset
+    method: 
+  userRefreshTokenValidate:
+    enabled: true
+    route: /user/refresh-token-validate
+    method: GET
+  userLogout:
+    enabled: true
+    route: /user/password-logout
     method: GET
     
 store:
@@ -47,9 +55,10 @@ store:
     table:
       prefix: pm_
       user: user
-      userLoginAttempt: user-login-attempt
-      userActivationToken: user-activation-token
-      userPasswordReset: user-password-reset
+      userLoginAttempt: user_login_attempt
+      userActivationToken: user_activation_token
+      userPasswordReset: user_password_reset
+      userRefreshToken: user_refresh_token
   cache:
     heap:
       enabled: true

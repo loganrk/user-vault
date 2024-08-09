@@ -33,7 +33,7 @@ func (u *userService) CreateActivationToken(ctx context.Context, userid int) (in
 		UserId:    userid,
 		Token:     activationToken,
 		Status:    types.USER_ACTIVATION_TOKEN_STATUS_ACTIVE,
-		ExpiredAt: time.Now().Add(time.Duration(u.activationLinkExpiry) * time.Second),
+		ExpiresAt: time.Now().Add(time.Duration(u.activationLinkExpiry) * time.Second),
 	}
 
 	tokenId, err := u.store.CreateActivation(ctx, tokenData)

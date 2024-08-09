@@ -13,4 +13,5 @@ type tables struct {
 	userLoginAttempt    string
 	userActivationToken string
 	userPasswordReset   string
+	userRefreshToken    string
 }

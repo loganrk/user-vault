@@ -23,4 +23,7 @@ type User interface {
 	UpdatedPasswordResetStatus(ctx context.Context, id int, status int) error
 	GetActivePasswordResetByUserId(ctx context.Context, userid int) (types.UserPasswordReset, error)
 	UpdatePassword(ctx context.Context, userid int, password string) error
+
+	CreateRefreshToken(ctx context.Context, refreshTokenData types.UserRefreshToken) (int, error)
+	RevokedRefreshToken(ctx context.Context, userid int, refreshToken string) error
 }

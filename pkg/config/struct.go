@@ -14,7 +14,12 @@ type app struct {
 			Token   string `mapstructure:"token"`
 		} `mapstructure:"authorization"`
 		Authentication struct {
-			TokenExpiry int `mapstructure:"tokenExpiry"`
+			AccessToken struct {
+				Expiry int `mapstructure:"expiry"`
+			} `mapstructure:"accessToken"`
+			RefreshToken struct {
+				Expiry int `mapstructure:"expiry"`
+			} `mapstructure:"refreshToken"`
 		} `mapstructure:"authentication"`
 	} `mapstructure:"middleware"`
 	Store struct {
@@ -39,12 +44,14 @@ type app struct {
 }
 
 type api struct {
-	UserLogin            apiData `mapstructure:"userLogin"`
-	UserRegister         apiData `mapstructure:"userRegister"`
-	UserActivation       apiData `mapstructure:"userActivation"`
-	UserResendActivation apiData `mapstructure:"userResendActivation"`
-	UserForgotPassword   apiData `mapstructure:"userForgotPassword"`
-	UserPasswordReset    apiData `mapstructure:"userPasswordReset"`
+	UserLogin                apiData `mapstructure:"userLogin"`
+	UserRegister             apiData `mapstructure:"userRegister"`
+	UserActivation           apiData `mapstructure:"userActivation"`
+	UserResendActivation     apiData `mapstructure:"userResendActivation"`
+	UserForgotPassword       apiData `mapstructure:"userForgotPassword"`
+	UserPasswordReset        apiData `mapstructure:"userPasswordReset"`
+	UserRefreshTokenValidate apiData `mapstructure:"userRefreshTokenValidate"`
+	UserLogout               apiData `mapstructure:"userLogout"`
 }
 type apiData struct {
 	Enabled bool   `mapstructure:"enabled"`
@@ -58,6 +65,7 @@ type table struct {
 	UserLoginAttempt    string `mapstructure:"userLoginAttempt"`
 	UserActivationToken string `mapstructure:"userActivationToken"`
 	UserPasswordReset   string `mapstructure:"userPasswordReset"`
+	UserRefreshToken    string `mapstructure:"userRefreshToken"`
 }
 
 type user struct {

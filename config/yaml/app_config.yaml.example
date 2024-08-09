@@ -10,7 +10,10 @@ middleware:
     enabled: true
     token: c713-kut8-1xkt-qf0a
   authentication:
-    token_expiry: 3600
+    access_token:
+      expiry: 1500
+    refresh_token:
+      expiry: 36000
 
 api:
   userLogin:
@@ -37,8 +40,15 @@ api:
     enabled: true
     route: /user/password-reset
     method: GET
-
-    
+  userRefreshTokenValidate:
+    enabled: true
+    route: /user/refresh-token-validate
+    method: GET
+  userLogout:
+    enabled: true
+    route: /user/password-logout
+    method: GET
+      
 store:
   database:
     host: #encrypted value
@@ -49,9 +59,10 @@ store:
     table:
       prefix: pm_
       user: user
-      userLoginAttempt: user-login-attempt
-      userActivationToken: user-activation-token
-      userPasswordReset: user-password-reset
+      userLoginAttempt: user_login_attempt
+      userActivationToken: user_activation_token
+      userPasswordReset: user_password_reset
+      userRefreshToken: user_refresh_token
   cache:
     heap:
       enabled: true

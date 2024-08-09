@@ -18,6 +18,12 @@ type Api interface {
 
 	GetUserPasswordResetEnabled() bool
 	GetUserPasswordResetProperties() (string, string)
+
+	GetUserRefreshTokenValidateEnabled() bool
+	GetUserRefreshTokenValidateProperties() (string, string)
+
+	GetUserLogoutEnabled() bool
+	GetUserLogoutProperties() (string, string)
 }
 
 func (a api) GetUserLoginEnabled() bool {
@@ -80,6 +86,24 @@ func (a api) GetUserPasswordResetEnabled() bool {
 }
 func (a api) GetUserPasswordResetProperties() (string, string) {
 	apiData := a.UserPasswordReset
+
+	return apiData.Method, apiData.Route
+}
+
+func (a api) GetUserRefreshTokenValidateEnabled() bool {
+	return a.UserRefreshTokenValidate.Enabled
+}
+func (a api) GetUserRefreshTokenValidateProperties() (string, string) {
+	apiData := a.UserRefreshTokenValidate
+
+	return apiData.Method, apiData.Route
+}
+
+func (a api) GetUserLogoutEnabled() bool {
+	return a.UserLogout.Enabled
+}
+func (a api) GetUserLogoutProperties() (string, string) {
+	apiData := a.UserLogout
 
 	return apiData.Method, apiData.Route
 }

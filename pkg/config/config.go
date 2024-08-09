@@ -16,7 +16,9 @@ type App interface {
 	GetAppPort() string
 	GetCipherCryptoKey() string
 	GetMiddlewareAuthorizationProperties() (bool, string)
-	GetMiddlewareAuthenticationProperties() int
+	GetMiddlewareAuthnAccessTokenExpiry() int
+	GetMiddlewareAuthnRefreshTokenExpiry() int
+
 	GetStoreDatabaseProperties() (string, string, string, string, string)
 	GetStoreCacheHeapProperties() (bool, int)
 	GetApi() Api
@@ -63,9 +65,12 @@ func (a app) GetMiddlewareAuthorizationProperties() (bool, string) {
 	return authorization.Enabled, authorization.Token
 }
 
-func (a app) GetMiddlewareAuthenticationProperties() int {
-	authentication := a.Middleware.Authentication
-	return authentication.TokenExpiry
+func (a app) GetMiddlewareAuthnAccessTokenExpiry() int {
+	return a.Middleware.Authentication.AccessToken.Expiry
+}
+
+func (a app) GetMiddlewareAuthnRefreshTokenExpiry() int {
+	return a.Middleware.Authentication.RefreshToken.Expiry
 }
 
 /* start of config-store */

@@ -42,7 +42,7 @@ func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if tokenData.ExpiredAt.Before(time.Now()) {
+	if tokenData.ExpiresAt.Before(time.Now()) {
 		res.SetError("activation link expired")
 		res.Send(w)
 		return
@@ -62,16 +62,16 @@ func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		res.Send(w)
 		return
 	}
-	h.Services.User.UpdatedPasswordResetStatus(ctx, tokenData.Id, types.USER_PASSWORD_RESET_STATUS_INACTIVE)
 
-	success := h.Services.User.UpdatePassword(ctx, userData.Id, req.Password, userData.Salt)
-
-	if !success {
-
+	result2 := h.Services.User.UpdatePassword(ctx, userData.Id, req.Password, userData.Salt)
+	if !result2 {
 		res.SetError("internal server error")
 		res.Send(w)
 		return
 	}
+
+	// TODO : need to automatied script when its fail
+	h.Services.User.UpdatedPasswordResetStatus(ctx, tokenData.Id, types.USER_PASSWORD_RESET_STATUS_INACTIVE)
 
 	resData := "password has been reset successfully"
 	res.SetData(resData)

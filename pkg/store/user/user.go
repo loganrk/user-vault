@@ -21,6 +21,7 @@ func New(tableConfigIns config.Table, dbIns db.DB) store.User {
 			userLoginAttempt:    tablePrefix + tableConfigIns.GetUserLoginAttemp(),
 			userActivationToken: tablePrefix + tableConfigIns.GetUserActivationToken(),
 			userPasswordReset:   tablePrefix + tableConfigIns.GetUserPasswordReset(),
+			userRefreshToken:    tablePrefix + tableConfigIns.GetUserRefreshToken(),
 		},
 	}
 }

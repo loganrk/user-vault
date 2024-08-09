@@ -42,7 +42,7 @@ func (u *userService) CreatePasswordResetToken(ctx context.Context, userid int) 
 		UserId:    userid,
 		Token:     passwordResetToken,
 		Status:    types.USER_PASSWORD_RESET_STATUS_ACTIVE,
-		ExpiredAt: time.Now().Add(time.Duration(u.passwordResetLinkExpiry) * time.Second),
+		ExpiresAt: time.Now().Add(time.Duration(u.passwordResetLinkExpiry) * time.Second),
 	}
 
 	passwordResetId, err := u.store.CreatePasswordReset(ctx, passwordResetData)
