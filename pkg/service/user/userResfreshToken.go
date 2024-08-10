@@ -6,6 +6,14 @@ import (
 	"time"
 )
 
+func (u *userService) RefreshTokenEnabled() bool {
+	return u.conf.GetRefreshTokenEnabled()
+}
+
+func (u *userService) RefreshTokenRotationEnabled() bool {
+	return u.conf.GetRefreshTokenRotationEnabled()
+}
+
 func (u *userService) StoreRefreshToken(ctx context.Context, userid int, token string, expiresAt time.Time) int {
 
 	refreshTokenData := types.UserRefreshToken{
@@ -29,4 +37,14 @@ func (u *userService) RevokedRefreshToken(ctx context.Context, userid int, refre
 	}
 
 	return true
+}
+
+func (u *userService) GetRefreshTokenData(ctx context.Context, userid int, refreshToken string) types.UserRefreshToken {
+	tokenData, err := u.store.GetRefreshTokenData(ctx, userid, refreshToken)
+	if err != nil {
+		return types.UserRefreshToken{}
+	}
+
+	return tokenData
+
 }

@@ -81,3 +81,6 @@ user:
     templatePath: data/template/password_reset_email_template.html  # macros :[{{appName}},{{name}},{{Link}}]
     link: http://localhost:8000/user/password_reset?token={{token}} # macros :[{{token}}]
     linkExpiry: 1800 #seconds
+  refreshToken:
+     enabled:true
+     rotation: true

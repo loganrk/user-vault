@@ -33,7 +33,7 @@ func (u *userService) CreateActivationToken(ctx context.Context, userid int) (in
 		UserId:    userid,
 		Token:     activationToken,
 		Status:    types.USER_ACTIVATION_TOKEN_STATUS_ACTIVE,
-		ExpiresAt: time.Now().Add(time.Duration(u.activationLinkExpiry) * time.Second),
+		ExpiresAt: time.Now().Add(time.Duration(u.conf.GetActivationLinkExpiry()) * time.Second),
 	}
 
 	tokenId, err := u.store.CreateActivation(ctx, tokenData)
@@ -44,7 +44,7 @@ func (u *userService) CreateActivationToken(ctx context.Context, userid int) (in
 }
 
 func (u *userService) GetActivationLink(tokenId int, token string) string {
-	activationLink := u.activationLink
+	activationLink := u.conf.GetActivationLink()
 	return u.activationLinkMacroReplacement(activationLink, tokenId, token)
 
 }
@@ -59,7 +59,7 @@ func (u *userService) activationLinkMacroReplacement(activationLink string, toke
 }
 
 func (u *userService) GetActivationEmailTemplate(ctx context.Context, name string, activationLink string) string {
-	templatePath := u.conf.activationTemplatePath
+	templatePath := u.conf.GetActivationEmailTemplate()
 	template, err := utils.FindFileContent(templatePath)
 	if err != nil {
 		return ""
@@ -69,7 +69,7 @@ func (u *userService) GetActivationEmailTemplate(ctx context.Context, name strin
 
 func (u *userService) activationTemplateMacroReplacement(template string, name string, activationLink string) string {
 	s := strings.NewReplacer(
-		USER_ACTIVATION_APP_NAME_MACRO, u.conf.appName,
+		USER_ACTIVATION_APP_NAME_MACRO, u.appName,
 		USER_ACTIVATION_NAME_MACRO, name,
 		USER_ACTIVATION_LINK_MACRO, activationLink)
 

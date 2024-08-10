@@ -42,7 +42,7 @@ func (u *userService) CreatePasswordResetToken(ctx context.Context, userid int) 
 		UserId:    userid,
 		Token:     passwordResetToken,
 		Status:    types.USER_PASSWORD_RESET_STATUS_ACTIVE,
-		ExpiresAt: time.Now().Add(time.Duration(u.passwordResetLinkExpiry) * time.Second),
+		ExpiresAt: time.Now().Add(time.Duration(u.conf.GetPasswordResetLinkExpiry()) * time.Second),
 	}
 
 	passwordResetId, err := u.store.CreatePasswordReset(ctx, passwordResetData)
@@ -53,7 +53,7 @@ func (u *userService) CreatePasswordResetToken(ctx context.Context, userid int) 
 }
 
 func (u *userService) GetPasswordResetLink(token string) string {
-	passwordResetLink := u.passwordResetLink
+	passwordResetLink := u.conf.GetPasswordResetLink()
 
 	return u.passwordResetLinkMacroReplacement(passwordResetLink, token)
 
@@ -68,7 +68,7 @@ func (u *userService) passwordResetLinkMacroReplacement(passwordResetLink string
 }
 
 func (u *userService) GetPasswordResetEmailTemplate(ctx context.Context, name string, passwordResetLink string) string {
-	templatePath := u.conf.passwordResetTemplatePath
+	templatePath := u.conf.GetPasswordResetTemplate()
 	template, err := utils.FindFileContent(templatePath)
 	if err != nil {
 		return ""
@@ -78,7 +78,7 @@ func (u *userService) GetPasswordResetEmailTemplate(ctx context.Context, name st
 
 func (u *userService) passwordResetTemplateMacroReplacement(template string, name string, passwordResetLink string) string {
 	s := strings.NewReplacer(
-		USER_PASSWORD_RESET_APP_NAME_MACRO, u.conf.appName,
+		USER_PASSWORD_RESET_APP_NAME_MACRO, u.appName,
 		USER_PASSWORD_RESET_NAME_MACRO, name,
 		USER_PASSWORD_RESET_LINK_MACRO, passwordResetLink)
 
@@ -107,7 +107,7 @@ func (u *userService) UpdatedPasswordResetStatus(ctx context.Context, id int, st
 }
 
 func (u *userService) UpdatePassword(ctx context.Context, userid int, password string, saltHash string) bool {
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password+saltHash), u.passwordHashCost)
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password+saltHash), u.conf.GetPasswordHashCost())
 	if err != nil {
 		return false
 	}

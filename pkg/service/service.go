@@ -34,6 +34,9 @@ type User interface {
 	UpdatedPasswordResetStatus(ctx context.Context, tokenid int, status int)
 	UpdatePassword(ctx context.Context, userid int, password string, saltHash string) bool
 
+	RefreshTokenEnabled() bool
+	RefreshTokenRotationEnabled() bool
 	StoreRefreshToken(ctx context.Context, userid int, token string, expiresAt time.Time) int
 	RevokedRefreshToken(ctx context.Context, userid int, refreshToken string) bool
+	GetRefreshTokenData(ctx context.Context, userid int, token string) types.UserRefreshToken
 }

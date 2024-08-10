@@ -32,7 +32,7 @@ func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userid, expiresAt, err := h.Authentication.GetRefreshToken(req.RefreshToken)
+	userid, expiresAt, err := h.Authentication.GetRefreshTokenData(req.RefreshToken)
 
 	if err != nil {
 		// TODO log

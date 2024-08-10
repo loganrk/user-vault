@@ -87,7 +87,9 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := h.Authentication.CreateAccessToken(userData.Id)
+	var accessToken, refreshTokenType, refreshToken string
+
+	accessToken, err = h.Authentication.CreateAccessToken(userData.Id)
 
 	if err != nil {
 		res.SetError("internal server error")
@@ -95,33 +97,46 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	refreshToken, err := h.Authentication.CreateRefreshToken(userData.Id)
+	if h.Services.User.RefreshTokenEnabled() {
 
-	if err != nil {
-		res.SetError("internal server error")
-		res.Send(w)
-		return
-	}
-	refreshExpiresAt, err := h.Authentication.GetRefreshTokenExpiry(refreshToken)
-	if err != nil {
-		res.SetError("internal server error")
-		res.Send(w)
-		return
-	}
+		if h.Services.User.RefreshTokenRotationEnabled() {
+			refreshTokenType = types.REFRESH_TOKEN_TYPE_ROTATING
+		} else {
+			refreshTokenType = types.REFRESH_TOKEN_TYPE_STATIC
+		}
 
-	tokenId := h.Services.User.StoreRefreshToken(ctx, userData.Id, refreshToken, refreshExpiresAt)
-	if tokenId == 0 {
-		res.SetError("internal server error")
-		res.Send(w)
-		return
+		refreshToken, err = h.Authentication.CreateRefreshToken(userData.Id)
+
+		if err != nil {
+			res.SetError("internal server error")
+			res.Send(w)
+			return
+		}
+
+		refreshExpiresAt, err := h.Authentication.GetRefreshTokenExpiry(refreshToken)
+		if err != nil {
+			res.SetError("internal server error")
+			res.Send(w)
+			return
+		}
+
+		tokenId := h.Services.User.StoreRefreshToken(ctx, userData.Id, refreshToken, refreshExpiresAt)
+		if tokenId == 0 {
+			res.SetError("internal server error")
+			res.Send(w)
+			return
+		}
+
 	}
 
 	resData := struct {
-		AccessToken  string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
+		AccessToken      string `json:"access_token"`
+		RefreshTokenType string `json:"refresh_token_type,omitempty"`
+		RefreshToken     string `json:"refresh_token,omitempty"`
 	}{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		AccessToken:      accessToken,
+		RefreshTokenType: refreshTokenType,
+		RefreshToken:     refreshToken,
 	}
 
 	res.SetData(resData)

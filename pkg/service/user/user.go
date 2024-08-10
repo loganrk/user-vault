@@ -18,17 +18,7 @@ import (
 func New(userStoreIns store.User, appName string, userConfIns config.User) service.User {
 	return &userService{
 		store: userStoreIns,
-		conf: conf{
-			maxLoginAttempt:           userConfIns.GetMaxLoginAttempt(),
-			loginAttemptSessionPeriod: userConfIns.GetLoginAttemptSessionPeriod(),
-			passwordHashCost:          userConfIns.GetPasswordHashCost(),
-			activationLink:            userConfIns.GetActivationLink(),
-			activationLinkExpiry:      userConfIns.GetActivationLinkExpiry(),
-			activationTemplatePath:    userConfIns.GetActivationEmailTemplate(),
-			passwordResetLink:         userConfIns.GetPasswordResetLink(),
-			passwordResetLinkExpiry:   userConfIns.GetPasswordResetLinkExpiry(),
-			passwordResetTemplatePath: userConfIns.GetPasswordResetTemplate(),
-		},
+		conf:  userConfIns,
 	}
 }
 
@@ -52,14 +42,14 @@ func (u *userService) GetUserByUsername(ctx context.Context, username string) ty
 
 func (u *userService) CheckLoginFailedAttempt(ctx context.Context, userId int) int {
 	// TODO: add client based token
-	sesstionStartTime := time.Now().Add(time.Duration(u.conf.loginAttemptSessionPeriod*-1) * time.Second)
+	sesstionStartTime := time.Now().Add(time.Duration(u.conf.GetLoginAttemptSessionPeriod()*-1) * time.Second)
 	attempCount, err := u.store.GetUserLoginFailedAttemptCount(ctx, userId, sesstionStartTime)
 	if err != nil {
 
 		return types.LOGIN_ATTEMPT_FAILED
 	}
 
-	if attempCount >= u.conf.maxLoginAttempt {
+	if attempCount >= u.conf.GetMaxLoginAttempt() {
 
 		return types.LOGIN_ATTEMPT_MAX_REACHED
 	}
@@ -99,7 +89,7 @@ func (u *userService) CreateUser(ctx context.Context, username, password, name s
 		return 0
 	}
 
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password+saltHash), u.passwordHashCost)
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password+saltHash), u.conf.GetPasswordHashCost())
 	if err != nil {
 		return 0
 	}
