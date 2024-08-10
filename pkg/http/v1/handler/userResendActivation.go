@@ -16,7 +16,7 @@ func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 
 	err := req.Parse(r)
 	if err != nil {
-		// TODO log
+		res.SetStatus(http.StatusBadRequest)
 		res.SetError("invalid request parameters")
 		res.Send(w)
 		return
@@ -24,6 +24,7 @@ func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 
 	result := req.Validate()
 	if result != "" {
+		res.SetStatus(http.StatusUnprocessableEntity)
 		res.SetError(result)
 		res.Send(w)
 		return
@@ -31,12 +32,16 @@ func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 
 	userData := h.Services.User.GetUserByUsername(ctx, req.Username)
 	if userData.Id == 0 {
+		res.SetStatus(http.StatusUnauthorized)
 		res.SetError("username is incorrect")
 		res.Send(w)
 		return
 	}
 
 	if userData.Status != types.USER_STATUS_PENDING {
+
+		res.SetStatus(http.StatusForbidden)
+
 		if userData.Status == types.USER_STATUS_ACTIVE {
 			res.SetError("your account is already activated")
 		} else if userData.Status == types.USER_STATUS_INACTIVE {
@@ -66,6 +71,8 @@ func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
+
+	res.SetStatus(http.StatusInternalServerError)
 	res.SetError("internal server error")
 	res.Send(w)
 }

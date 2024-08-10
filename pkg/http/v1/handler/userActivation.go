@@ -17,7 +17,7 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 
 	err := req.Parse(r)
 	if err != nil {
-		// TODO log
+		res.SetStatus(http.StatusBadRequest)
 		res.SetError("invalid request parameters")
 		res.Send(w)
 		return
@@ -25,6 +25,7 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 
 	result := req.Validate()
 	if result != "" {
+		res.SetStatus(http.StatusUnprocessableEntity)
 		res.SetError(result)
 		res.Send(w)
 		return
@@ -32,18 +33,21 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 
 	tokenData := h.Services.User.GetUserActivationByToken(ctx, req.Token)
 	if tokenData.Id == 0 {
+		res.SetStatus(http.StatusBadRequest)
 		res.SetError("invalid token")
 		res.Send(w)
 		return
 	}
 
 	if tokenData.Status != types.USER_ACTIVATION_TOKEN_STATUS_ACTIVE {
+		res.SetStatus(http.StatusBadRequest)
 		res.SetError("activation token already used")
 		res.Send(w)
 		return
 	}
 
 	if tokenData.ExpiresAt.Before(time.Now()) {
+		res.SetStatus(http.StatusBadRequest)
 		res.SetError("activation link expired")
 		res.Send(w)
 		return
@@ -52,6 +56,8 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 	userData := h.Services.User.GetUserByUserid(ctx, tokenData.UserId)
 
 	if userData.Status != types.USER_STATUS_PENDING {
+
+		res.SetStatus(http.StatusForbidden)
 		if userData.Status == types.USER_STATUS_ACTIVE {
 			res.SetError("your account is already activated")
 		} else if userData.Status == types.USER_STATUS_INACTIVE {
@@ -68,7 +74,7 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 	success := h.Services.User.UpdateStatus(ctx, userData.Id, types.USER_STATUS_ACTIVE)
 
 	if !success {
-
+		res.SetStatus(http.StatusInternalServerError)
 		res.SetError("internal server error")
 		res.Send(w)
 		return

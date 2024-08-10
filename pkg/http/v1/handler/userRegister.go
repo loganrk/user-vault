@@ -16,7 +16,7 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 
 	err := req.Parse(r)
 	if err != nil {
-		// TODO log
+		res.SetStatus(http.StatusBadRequest)
 		res.SetError("invalid request parameters")
 		res.Send(w)
 		return
@@ -24,6 +24,7 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 
 	result := req.Validate()
 	if result != "" {
+		res.SetStatus(http.StatusUnprocessableEntity)
 		res.SetError(result)
 		res.Send(w)
 		return
@@ -31,6 +32,7 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 
 	userData := h.Services.User.GetUserByUsername(ctx, req.Username)
 	if userData.Id != 0 {
+		res.SetStatus(http.StatusConflict)
 		res.SetError("username already exists. try different username")
 		res.Send(w)
 		return
@@ -38,6 +40,7 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 
 	userid := h.Services.User.CreateUser(ctx, req.Username, req.Password, req.Name)
 	if userid == 0 {
+		res.SetStatus(http.StatusInternalServerError)
 		res.SetError("internal server error")
 		res.Send(w)
 		return
@@ -45,6 +48,7 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 
 	userData = h.Services.User.GetUserByUserid(ctx, userid)
 	if userData.Id == 0 {
+		res.SetStatus(http.StatusInternalServerError)
 		res.SetError("internal server error")
 		res.Send(w)
 		return
