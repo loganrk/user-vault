@@ -26,4 +26,5 @@ type User interface {
 
 	CreateRefreshToken(ctx context.Context, refreshTokenData types.UserRefreshToken) (int, error)
 	RevokedRefreshToken(ctx context.Context, userid int, refreshToken string) error
+	GetRefreshTokenData(ctx context.Context, userid int, refreshToken string) (types.UserRefreshToken, error)
 }

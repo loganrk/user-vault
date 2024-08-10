@@ -82,4 +82,8 @@ type user struct {
 		LinkExpiry   int    `mapstructure:"linkExpiry"`
 		TemplatePath string `mapstructure:"templatePath"`
 	} `mapstructure:"passwordReset"`
+	RefreshToken struct {
+		Enabled  bool `mapstructure:"enabled"`
+		Rotation bool `mapstructure:"rotation"`
+	} `mapstructure:"refreshToken"`
 }

@@ -8,14 +8,14 @@ import (
 )
 
 func (s *userStore) CreateActivation(ctx context.Context, tokenData types.UserActivationToken) (int, error) {
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userActivationToken).Create(&tokenData)
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.GetUserActivationToken()).Create(&tokenData)
 	return tokenData.Id, result.Error
 }
 
 func (s *userStore) GetActivationByToken(ctx context.Context, token string) (types.UserActivationToken, error) {
 	var tokenData types.UserActivationToken
 
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userActivationToken).Select("id").Where("token = ?", token).First(&tokenData)
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.GetUserActivationToken()).Select("id").Where("token = ?", token).First(&tokenData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -24,12 +24,12 @@ func (s *userStore) GetActivationByToken(ctx context.Context, token string) (typ
 }
 
 func (s *userStore) UpdatedActivationtatus(ctx context.Context, id int, status int) error {
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userActivationToken).Where("id = ?", id).Update("status", status)
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.GetUserActivationToken()).Where("id = ?", id).Update("status", status)
 	return result.Error
 
 }
 
 func (s *userStore) UpdateStatus(ctx context.Context, userid int, status int) error {
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.user).Where("id = ?", userid).Update("status", status)
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.GetUser()).Where("id = ?", userid).Update("status", status)
 	return result.Error
 }

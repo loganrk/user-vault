@@ -9,14 +9,14 @@ import (
 )
 
 func (s *userStore) CreatePasswordReset(ctx context.Context, passwordResetData types.UserPasswordReset) (int, error) {
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userPasswordReset).Create(&passwordResetData)
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.GetUserPasswordReset()).Create(&passwordResetData)
 	return passwordResetData.Id, result.Error
 }
 
 func (s *userStore) GetPasswordResetByToken(ctx context.Context, token string) (types.UserPasswordReset, error) {
 	var passwordResetData types.UserPasswordReset
 
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userPasswordReset).Select("id", "user_id", "expires_at", "status").Where("token = ?", token).First(&passwordResetData)
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.GetUserPasswordReset()).Select("id", "user_id", "expires_at", "status").Where("token = ?", token).First(&passwordResetData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -27,7 +27,7 @@ func (s *userStore) GetPasswordResetByToken(ctx context.Context, token string) (
 func (s *userStore) GetActivePasswordResetByUserId(ctx context.Context, userid int) (types.UserPasswordReset, error) {
 	var passwordResetData types.UserPasswordReset
 
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userPasswordReset).Select("id", "user_id", "expires_at", "status").Where("userid = ? and expires_at > ? and status = ?", userid, time.Now(), types.USER_PASSWORD_RESET_STATUS_ACTIVE).First(&passwordResetData)
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.GetUserPasswordReset()).Select("id", "user_id", "expires_at", "status").Where("userid = ? and expires_at > ? and status = ?", userid, time.Now(), types.USER_PASSWORD_RESET_STATUS_ACTIVE).First(&passwordResetData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -35,12 +35,12 @@ func (s *userStore) GetActivePasswordResetByUserId(ctx context.Context, userid i
 }
 
 func (s *userStore) UpdatedPasswordResetStatus(ctx context.Context, id int, status int) error {
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.userPasswordReset).Where("id = ?", id).Update("status", status)
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.GetUserPasswordReset()).Where("id = ?", id).Update("status", status)
 	return result.Error
 
 }
 
 func (s *userStore) UpdatePassword(ctx context.Context, userid int, password string) error {
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.user).Where("id = ?", userid).Update("password", password)
+	result := s.db.GetDb().WithContext(ctx).Table(s.tables.GetUser()).Where("id = ?", userid).Update("password", password)
 	return result.Error
 }

@@ -31,3 +31,7 @@ type userResendActivation struct {
 type userLogout struct {
 	RefreshToken string `json:"refresh_token"`
 }
+
+type userRefreshTokenValidate struct {
+	RefreshToken string `json:"refresh_token"`
+}

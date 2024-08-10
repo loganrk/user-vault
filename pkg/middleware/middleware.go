@@ -17,8 +17,9 @@ type Authz interface {
 type Authn interface {
 	CreateAccessToken(uid int) (string, error)
 	CreateRefreshToken(uid int) (string, error)
+	CreateRefreshTokenWithCustomExpiry(uid int, expiry time.Time) (string, error)
 	GetRefreshTokenExpiry(token string) (time.Time, error)
-	GetRefreshToken(tokenStringEcr string) (int, time.Time, error)
+	GetRefreshTokenData(tokenStringEcr string) (int, time.Time, error)
 }
 
 func NewAuthz(authzToken string) Authz {

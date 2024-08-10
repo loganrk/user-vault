@@ -10,6 +10,8 @@ type User interface {
 	GetPasswordResetLink() string
 	GetPasswordResetTemplate() string
 	GetPasswordResetLinkExpiry() int
+	GetRefreshTokenEnabled() bool
+	GetRefreshTokenRotationEnabled() bool
 }
 
 func (u user) GetMaxLoginAttempt() int {
@@ -48,4 +50,12 @@ func (u user) GetPasswordResetTemplate() string {
 
 func (u user) GetPasswordResetLinkExpiry() int {
 	return u.PasswordReset.LinkExpiry
+}
+
+func (u user) GetRefreshTokenEnabled() bool {
+	return u.RefreshToken.Enabled
+}
+
+func (u user) GetRefreshTokenRotationEnabled() bool {
+	return u.RefreshToken.Rotation
 }

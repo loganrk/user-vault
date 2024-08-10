@@ -47,11 +47,20 @@ func (a *authn) CreateAccessToken(uid int) (string, error) {
 }
 
 func (a *authn) CreateRefreshToken(uid int) (string, error) {
+
+	return a.createRefreshToken(uid, time.Now().Add(time.Second*time.Duration(a.refreshTokenExpiry)))
+}
+
+func (a *authn) CreateRefreshTokenWithCustomExpiry(uid int, expiry time.Time) (string, error) {
+	return a.createRefreshToken(uid, expiry)
+}
+
+func (a *authn) createRefreshToken(uid int, expiry time.Time) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"type": "refresh",
 			"uid":  uid,
-			"exp":  time.Now().Add(time.Second * time.Duration(a.refreshTokenExpiry)).Unix(),
+			"exp":  expiry.Unix(),
 		})
 
 	tokenString, err := token.SignedString([]byte(a.cryptoKey))
@@ -67,7 +76,7 @@ func (a *authn) CreateRefreshToken(uid int) (string, error) {
 	return tokenStringEcr, nil
 }
 
-func (a *authn) GetRefreshToken(tokenStringEcr string) (int, time.Time, error) {
+func (a *authn) GetRefreshTokenData(tokenStringEcr string) (int, time.Time, error) {
 	tokenString, err := a.cipher.Decrypt(tokenStringEcr)
 	if err != nil {
 		return 0, time.Time{}, err
