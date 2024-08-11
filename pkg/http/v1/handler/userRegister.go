@@ -30,7 +30,7 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData := h.Services.User.GetUserByUsername(ctx, req.Username)
+	userData := h.services.User.GetUserByUsername(ctx, req.Username)
 	if userData.Id != 0 {
 		res.SetStatus(http.StatusConflict)
 		res.SetError("username already exists. try different username")
@@ -38,7 +38,7 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userid := h.Services.User.CreateUser(ctx, req.Username, req.Password, req.Name)
+	userid := h.services.User.CreateUser(ctx, req.Username, req.Password, req.Name)
 	if userid == 0 {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError("internal server error")
@@ -46,7 +46,7 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData = h.Services.User.GetUserByUserid(ctx, userid)
+	userData = h.services.User.GetUserByUserid(ctx, userid)
 	if userData.Id == 0 {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError("internal server error")
@@ -55,13 +55,13 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if userData.Status == types.USER_STATUS_PENDING {
-		tokenId, activationToken := h.Services.User.CreateActivationToken(ctx, userData.Id)
+		tokenId, activationToken := h.services.User.CreateActivationToken(ctx, userData.Id)
 		if tokenId != 0 && activationToken != "" {
-			activationLink := h.Services.User.GetActivationLink(tokenId, activationToken)
+			activationLink := h.services.User.GetActivationLink(tokenId, activationToken)
 			if activationLink != "" {
-				template := h.Services.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
+				template := h.services.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
 				if template != "" {
-					emailStatus := h.Services.User.SendActivation(ctx, userData.Username, template)
+					emailStatus := h.services.User.SendActivation(ctx, userData.Username, template)
 					if emailStatus == types.EMAIL_STATUS_SUCCESS {
 						resData := "account created successfuly. please check your email for activate account"
 						res.SetData(resData)

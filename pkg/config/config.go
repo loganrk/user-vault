@@ -21,6 +21,7 @@ type App interface {
 
 	GetStoreDatabaseProperties() (string, string, string, string, string)
 	GetStoreCacheHeapProperties() (bool, int)
+	GetLogger() Logger
 	GetApi() Api
 	GetTable() Table
 	GetUser() User
@@ -46,6 +47,10 @@ func StartConfig(path string, file File) (App, error) {
 	}
 
 	return appConfig, nil
+}
+
+func (a app) GetLogger() Logger {
+	return a.Logger
 }
 
 func (a app) GetAppName() string {

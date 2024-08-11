@@ -4,6 +4,7 @@ import (
 	"log"
 	"mayilon/pkg/config"
 	"mayilon/pkg/http/v1/handler"
+	"mayilon/pkg/lib/logger"
 	"mayilon/pkg/middleware"
 
 	"github.com/loganrk/go-db"
@@ -28,6 +29,13 @@ func main() {
 		Name: CONFIG_FILE_NAME,
 		Ext:  CONFIG_FILE_TYPE,
 	})
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	loggerIns, err := createLogger(appConfigIns.GetLogger())
 
 	if err != nil {
 		log.Println(err)
@@ -77,7 +85,7 @@ func main() {
 	}
 
 	userStoreIns := userStore.New(appConfigIns.GetTable(), dbIns)
-	userSrvIns := userSrv.New(userStoreIns, appConfigIns.GetAppName(), appConfigIns.GetUser())
+	userSrvIns := userSrv.New(loggerIns, userStoreIns, appConfigIns.GetAppName(), appConfigIns.GetUser())
 
 	svcList := service.List{
 		User: userSrvIns,
@@ -96,7 +104,7 @@ func main() {
 		routerIns.UseBefore(authzMiddlewareIns.Use())
 	}
 
-	handlerIns := handler.New(svcList, authnMiddlewareIns)
+	handlerIns := handler.New(loggerIns, svcList, authnMiddlewareIns)
 	apiConfigIns := appConfigIns.GetApi()
 
 	if apiConfigIns.GetUserLoginEnabled() {
@@ -145,4 +153,15 @@ func main() {
 		log.Println(err3)
 		return
 	}
+}
+
+func createLogger(logConfigIns config.Logger) (logger.Logger, error) {
+	loggerConfig := logger.Config{
+		Level:           logConfigIns.GetLoggerLevel(),
+		Encoding:        logConfigIns.GetLoggerEncodingMethod(),
+		EncodingCaller:  logConfigIns.GetLoggerEncodingCaller(),
+		OutputPath:      logConfigIns.GetLoggerPath(),
+		ErrorOutputPath: logConfigIns.GetLoggerErrorPath(),
+	}
+	return logger.New(loggerConfig)
 }

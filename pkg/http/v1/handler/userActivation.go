@@ -31,7 +31,7 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenData := h.Services.User.GetUserActivationByToken(ctx, req.Token)
+	tokenData := h.services.User.GetUserActivationByToken(ctx, req.Token)
 	if tokenData.Id == 0 {
 		res.SetStatus(http.StatusBadRequest)
 		res.SetError("invalid token")
@@ -53,7 +53,7 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData := h.Services.User.GetUserByUserid(ctx, tokenData.UserId)
+	userData := h.services.User.GetUserByUserid(ctx, tokenData.UserId)
 
 	if userData.Status != types.USER_STATUS_PENDING {
 
@@ -69,9 +69,9 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 		res.Send(w)
 		return
 	}
-	h.Services.User.UpdatedActivationtatus(ctx, tokenData.Id, types.USER_ACTIVATION_TOKEN_STATUS_INACTIVE)
+	h.services.User.UpdatedActivationtatus(ctx, tokenData.Id, types.USER_ACTIVATION_TOKEN_STATUS_INACTIVE)
 
-	success := h.Services.User.UpdateStatus(ctx, userData.Id, types.USER_STATUS_ACTIVE)
+	success := h.services.User.UpdateStatus(ctx, userData.Id, types.USER_STATUS_ACTIVE)
 
 	if !success {
 		res.SetStatus(http.StatusInternalServerError)

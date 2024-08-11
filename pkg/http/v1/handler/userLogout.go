@@ -33,7 +33,7 @@ func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userid, expiresAt, err := h.Authentication.GetRefreshTokenData(req.RefreshToken)
+	userid, expiresAt, err := h.authentication.GetRefreshTokenData(req.RefreshToken)
 
 	if err != nil {
 		res.SetStatus(http.StatusBadRequest)
@@ -49,7 +49,7 @@ func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result2 := h.Services.User.RevokedRefreshToken(ctx, userid, req.RefreshToken)
+	result2 := h.services.User.RevokedRefreshToken(ctx, userid, req.RefreshToken)
 	if !result2 {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError("internal server error")

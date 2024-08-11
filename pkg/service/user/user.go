@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"mayilon/pkg/config"
+	"mayilon/pkg/lib/logger"
 	"mayilon/pkg/service"
 	"mayilon/pkg/utils"
 
@@ -15,10 +16,11 @@ import (
 	"time"
 )
 
-func New(userStoreIns store.User, appName string, userConfIns config.User) service.User {
+func New(loggerIns logger.Logger, userStoreIns store.User, appName string, userConfIns config.User) service.User {
 	return &userService{
-		store: userStoreIns,
-		conf:  userConfIns,
+		store:  userStoreIns,
+		logger: loggerIns,
+		conf:   userConfIns,
 	}
 }
 
