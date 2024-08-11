@@ -82,11 +82,11 @@ user:
   loginAttemptSessionPeriod: 60 #seconds
   passwordHashCost: 12
   activation:
-    templatePath: data/template/activation_email_template.html  # macros :[{{appName}},{{name}},{{Link}}]
-    link: http://localhost:8000/user/activate # macros :[{{tokenId}},{{token}}]
+    templatePath: data/templates/activation_email_template.html  # macros :[{{appName}},{{name}},{{Link}}]
+    link: http://localhost:8000/user/activate??token={{token}} # macros :[{{tokenId}},{{token}}]
     linkExpiry: 1800 #seconds
   passwordReset:
-    templatePath: data/template/password_reset_email_template.html  # macros :[{{appName}},{{name}},{{Link}}]
+    templatePath: data/templates/password_reset_email_template.html  # macros :[{{appName}},{{name}},{{Link}}]
     link: http://localhost:8000/user/password_reset?token={{token}} # macros :[{{token}}]
     linkExpiry: 1800 #seconds
   refreshToken:
