@@ -23,14 +23,21 @@ func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := req.Validate()
-	if result != "" {
+	err = req.Validate()
+	if err != nil {
 		res.SetStatus(http.StatusUnprocessableEntity)
-		res.SetError(result)
+		res.SetError(err.Error())
 		res.Send(w)
 		return
 	}
-	tokenData := h.services.User.GetPasswordResetByToken(ctx, req.Token)
+	tokenData, err := h.services.User.GetPasswordResetByToken(ctx, req.Token)
+	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError("internal server error")
+		res.Send(w)
+		return
+	}
+
 	if tokenData.Id == 0 {
 		res.SetStatus(http.StatusBadRequest)
 		res.SetError("invalid token")
@@ -52,7 +59,13 @@ func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData := h.services.User.GetUserByUserid(ctx, tokenData.UserId)
+	userData, err := h.services.User.GetUserByUserid(ctx, tokenData.UserId)
+	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError("internal server error")
+		res.Send(w)
+		return
+	}
 
 	if userData.Status != types.USER_STATUS_ACTIVE {
 
@@ -69,16 +82,21 @@ func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result2 := h.services.User.UpdatePassword(ctx, userData.Id, req.Password, userData.Salt)
-	if !result2 {
+	err = h.services.User.UpdatePassword(ctx, userData.Id, req.Password, userData.Salt)
+	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError("internal server error")
 		res.Send(w)
 		return
 	}
-
 	// TODO : need to automatied script when its fail
-	h.services.User.UpdatedPasswordResetStatus(ctx, tokenData.Id, types.USER_PASSWORD_RESET_STATUS_INACTIVE)
+	err = h.services.User.UpdatedPasswordResetStatus(ctx, tokenData.Id, types.USER_PASSWORD_RESET_STATUS_INACTIVE)
+	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError("internal server error")
+		res.Send(w)
+		return
+	}
 
 	resData := "password has been reset successfully"
 	res.SetData(resData)

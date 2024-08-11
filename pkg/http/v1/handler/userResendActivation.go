@@ -22,15 +22,22 @@ func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := req.Validate()
-	if result != "" {
+	err = req.Validate()
+	if err != nil {
 		res.SetStatus(http.StatusUnprocessableEntity)
-		res.SetError(result)
+		res.SetError(err.Error())
 		res.Send(w)
 		return
 	}
 
-	userData := h.services.User.GetUserByUsername(ctx, req.Username)
+	userData, err := h.services.User.GetUserByUsername(ctx, req.Username)
+	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError("internal server error")
+		res.Send(w)
+		return
+	}
+
 	if userData.Id == 0 {
 		res.SetStatus(http.StatusUnauthorized)
 		res.SetError("username is incorrect")
@@ -54,19 +61,36 @@ func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenId, activationToken := h.services.User.CreateActivationToken(ctx, userData.Id)
+	tokenId, activationToken, err := h.services.User.CreateActivationToken(ctx, userData.Id)
+	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError("internal server error")
+		res.Send(w)
+		return
+	}
+
 	if tokenId != 0 && activationToken != "" {
 		activationLink := h.services.User.GetActivationLink(tokenId, activationToken)
 		if activationLink != "" {
-			template := h.services.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
+			template, err := h.services.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
+			if err != nil {
+				res.SetStatus(http.StatusInternalServerError)
+				res.SetError("internal server error")
+				res.Send(w)
+				return
+			}
 			if template != "" {
-				emailStatus := h.services.User.SendActivation(ctx, userData.Username, template)
-				if emailStatus == types.EMAIL_STATUS_SUCCESS {
-					resData := "please check your email for activate account"
-					res.SetData(resData)
+				err = h.services.User.SendActivation(ctx, userData.Username, template)
+				if err != nil {
+					res.SetStatus(http.StatusInternalServerError)
+					res.SetError("internal server error")
 					res.Send(w)
 					return
 				}
+				resData := "please check your email for activate account"
+				res.SetData(resData)
+				res.Send(w)
+				return
 			}
 		}
 

@@ -23,16 +23,24 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := req.Validate()
-	if result != "" {
+	err = req.Validate()
+	if err != nil {
 		res.SetStatus(http.StatusUnprocessableEntity)
-		res.SetError(result)
+		res.SetError(err.Error())
 		res.Send(w)
 		return
 	}
 
-	tokenData := h.services.User.GetUserActivationByToken(ctx, req.Token)
+	tokenData, err := h.services.User.GetUserActivationByToken(ctx, req.Token)
+	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError("internal server error")
+		res.Send(w)
+		return
+	}
+
 	if tokenData.Id == 0 {
+
 		res.SetStatus(http.StatusBadRequest)
 		res.SetError("invalid token")
 		res.Send(w)
@@ -53,7 +61,14 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData := h.services.User.GetUserByUserid(ctx, tokenData.UserId)
+	userData, err := h.services.User.GetUserByUserid(ctx, tokenData.UserId)
+
+	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError("internal server error")
+		res.Send(w)
+		return
+	}
 
 	if userData.Status != types.USER_STATUS_PENDING {
 
@@ -69,11 +84,16 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 		res.Send(w)
 		return
 	}
-	h.services.User.UpdatedActivationtatus(ctx, tokenData.Id, types.USER_ACTIVATION_TOKEN_STATUS_INACTIVE)
+	err = h.services.User.UpdatedActivationtatus(ctx, tokenData.Id, types.USER_ACTIVATION_TOKEN_STATUS_INACTIVE)
+	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError("internal server error")
+		res.Send(w)
+		return
+	}
 
-	success := h.services.User.UpdateStatus(ctx, userData.Id, types.USER_STATUS_ACTIVE)
-
-	if !success {
+	err = h.services.User.UpdateStatus(ctx, userData.Id, types.USER_STATUS_ACTIVE)
+	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError("internal server error")
 		res.Send(w)

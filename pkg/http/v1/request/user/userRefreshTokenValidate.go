@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -23,10 +24,10 @@ func (u *userRefreshTokenValidate) Parse(r *http.Request) error {
 	return nil
 }
 
-func (u *userRefreshTokenValidate) Validate() string {
+func (u *userRefreshTokenValidate) Validate() error {
 	if u.RefreshToken == "" {
-		return "invalid refresh token"
+		return errors.New("invalid refresh token")
 	}
 
-	return ""
+	return nil
 }

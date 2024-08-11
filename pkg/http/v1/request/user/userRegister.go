@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"errors"
 	"mayilon/pkg/http/v1/request"
 	"mayilon/pkg/utils"
 	"net/http"
@@ -27,44 +28,44 @@ func (u *userRegister) Parse(r *http.Request) error {
 	return nil
 }
 
-func (u *userRegister) Validate() string {
+func (u *userRegister) Validate() error {
 	if !request.EmailRegex.MatchString(u.Username) {
 
-		return "invalid username"
+		return errors.New("invalid username")
 	}
 
 	if u.Password == "" {
-		return "invalid password"
+		return errors.New("invalid password")
 	}
 
 	if u.Name == "" {
-		return "invalid name"
+		return errors.New("invalid name")
 	}
 
 	if !request.PasswordRegex.MatchString(u.Password) {
 
-		return "password must be between 8 and 12 characters long"
+		return errors.New("password must be between 8 and 12 characters long")
 	}
 
 	if !utils.HasDigit(u.Password) {
 
-		return "password must contain at least one digit"
+		return errors.New("password must contain at least one digit")
 	}
 
 	if !utils.HasLowercase(u.Password) {
 
-		return "password must contain at least one lowercase letter"
+		return errors.New("password must contain at least one lowercase letter")
 	}
 
 	if !utils.HasUppercase(u.Password) {
 
-		return "password must contain at least one uppercase letter"
+		return errors.New("password must contain at least one uppercase letter")
 	}
 
 	if !utils.HasSpecialChar(u.Password) {
 
-		return "password must contain at least one special character"
+		return errors.New("password must contain at least one special character")
 	}
 
-	return ""
+	return nil
 }

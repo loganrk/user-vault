@@ -25,17 +25,23 @@ func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := req.Validate()
-	if result != "" {
+	err = req.Validate()
+	if err != nil {
 		res.SetStatus(http.StatusUnprocessableEntity)
-		res.SetError(result)
+		res.SetError(err.Error())
 		res.Send(w)
 		return
 	}
 
 	userid, expiresAt, err := h.authentication.GetRefreshTokenData(req.RefreshToken)
-
 	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError("internal server error")
+		res.Send(w)
+		return
+	}
+
+	if userid == 0 {
 		res.SetStatus(http.StatusBadRequest)
 		res.SetError("invalid token")
 		res.Send(w)
@@ -49,8 +55,8 @@ func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result2 := h.services.User.RevokedRefreshToken(ctx, userid, req.RefreshToken)
-	if !result2 {
+	err = h.services.User.RevokedRefreshToken(ctx, userid, req.RefreshToken)
+	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError("internal server error")
 		res.Send(w)

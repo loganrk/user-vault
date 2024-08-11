@@ -17,21 +17,21 @@ const (
 	USER_PASSWORD_RESET_APP_NAME_MACRO = "{{appName}}"
 )
 
-func (u *userService) CreatePasswordResetToken(ctx context.Context, userid int) (int, string) {
+func (u *userService) CreatePasswordResetToken(ctx context.Context, userid int) (int, string, error) {
 	passwordResetData, err := u.store.GetActivePasswordResetByUserId(ctx, userid)
 	if err != nil {
-		return 0, ""
+		return 0, "", err
 	}
 
 	if passwordResetData.Id != 0 && passwordResetData.Token != "" {
-		return passwordResetData.Id, passwordResetData.Token
+		return passwordResetData.Id, passwordResetData.Token, nil
 	}
 
 	passwordResetToken := utils.GenerateRandomString(25)
 
 	alreadyExiststData, err := u.store.GetPasswordResetByToken(ctx, passwordResetToken)
 	if err != nil {
-		return 0, ""
+		return 0, "", err
 	}
 
 	if alreadyExiststData.Id != 0 {
@@ -47,9 +47,9 @@ func (u *userService) CreatePasswordResetToken(ctx context.Context, userid int) 
 
 	passwordResetId, err := u.store.CreatePasswordReset(ctx, passwordResetData)
 	if err != nil {
-		return 0, ""
+		return 0, "", err
 	}
-	return passwordResetId, passwordResetToken
+	return passwordResetId, passwordResetToken, nil
 }
 
 func (u *userService) GetPasswordResetLink(token string) string {
@@ -67,13 +67,13 @@ func (u *userService) passwordResetLinkMacroReplacement(passwordResetLink string
 
 }
 
-func (u *userService) GetPasswordResetEmailTemplate(ctx context.Context, name string, passwordResetLink string) string {
+func (u *userService) GetPasswordResetEmailTemplate(ctx context.Context, name string, passwordResetLink string) (string, error) {
 	templatePath := u.conf.GetPasswordResetTemplate()
 	template, err := utils.FindFileContent(templatePath)
 	if err != nil {
-		return ""
+		return "", err
 	}
-	return u.passwordResetTemplateMacroReplacement(template, name, passwordResetLink)
+	return u.passwordResetTemplateMacroReplacement(template, name, passwordResetLink), nil
 }
 
 func (u *userService) passwordResetTemplateMacroReplacement(template string, name string, passwordResetLink string) string {
@@ -85,36 +85,32 @@ func (u *userService) passwordResetTemplateMacroReplacement(template string, nam
 	return s.Replace(template)
 }
 
-func (u *userService) SendPasswordReset(ctx context.Context, email string, template string) int {
-	return types.EMAIL_STATUS_FAILED
+func (u *userService) SendPasswordReset(ctx context.Context, email string, template string) error {
+	return nil
 }
 
-func (u *userService) GetPasswordResetByToken(ctx context.Context, token string) types.UserPasswordReset {
+func (u *userService) GetPasswordResetByToken(ctx context.Context, token string) (types.UserPasswordReset, error) {
 	tokenData, err := u.store.GetPasswordResetByToken(ctx, token)
-	if err != nil {
-		return types.UserPasswordReset{}
-	}
 
-	return tokenData
+	return tokenData, err
 
 }
 
-func (u *userService) UpdatedPasswordResetStatus(ctx context.Context, id int, status int) {
+func (u *userService) UpdatedPasswordResetStatus(ctx context.Context, id int, status int) error {
 	err := u.store.UpdatedPasswordResetStatus(ctx, id, status)
-	if err != nil {
 
-	}
+	return err
 }
 
-func (u *userService) UpdatePassword(ctx context.Context, userid int, password string, saltHash string) bool {
+func (u *userService) UpdatePassword(ctx context.Context, userid int, password string, saltHash string) error {
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password+saltHash), u.conf.GetPasswordHashCost())
 	if err != nil {
-		return false
+		return err
 	}
 	err = u.store.UpdatePassword(ctx, userid, string(hashPassword))
 	if err != nil {
-		return false
+		return err
 	}
 
-	return true
+	return nil
 }

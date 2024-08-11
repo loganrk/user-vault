@@ -22,15 +22,22 @@ func (h *Handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := req.Validate()
-	if result != "" {
+	err = req.Validate()
+	if err != nil {
 		res.SetStatus(http.StatusUnprocessableEntity)
-		res.SetError(result)
+		res.SetError(err.Error())
 		res.Send(w)
 		return
 	}
 
-	userData := h.services.User.GetUserByUsername(ctx, req.Username)
+	userData, err := h.services.User.GetUserByUsername(ctx, req.Username)
+	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError("internal server error")
+		res.Send(w)
+		return
+	}
+
 	if userData.Id == 0 {
 		res.SetStatus(http.StatusUnauthorized)
 		res.SetError("username is incorrect")
@@ -52,22 +59,39 @@ func (h *Handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenId, passwordResetToken := h.services.User.CreatePasswordResetToken(ctx, userData.Id)
+	tokenId, passwordResetToken, err := h.services.User.CreatePasswordResetToken(ctx, userData.Id)
+	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError("internal server error")
+		res.Send(w)
+		return
+	}
+
 	if tokenId != 0 && passwordResetToken != "" {
 		passwordResetLink := h.services.User.GetPasswordResetLink(passwordResetToken)
 		if passwordResetLink != "" {
-			template := h.services.User.GetPasswordResetEmailTemplate(ctx, userData.Name, passwordResetLink)
+			template, err := h.services.User.GetPasswordResetEmailTemplate(ctx, userData.Name, passwordResetLink)
+			if err != nil {
+				res.SetStatus(http.StatusInternalServerError)
+				res.SetError("internal server error")
+				res.Send(w)
+				return
+			}
+
 			if template != "" {
-				emailStatus := h.services.User.SendPasswordReset(ctx, userData.Username, template)
-				if emailStatus == types.EMAIL_STATUS_SUCCESS {
-					resData := "account created successfuly. please check your email for activate account"
-					res.SetData(resData)
+				err := h.services.User.SendPasswordReset(ctx, userData.Username, template)
+				if err != nil {
+					res.SetStatus(http.StatusInternalServerError)
+					res.SetError("internal server error")
 					res.Send(w)
 					return
 				}
+				resData := "account created successfuly. please check your email for activate account"
+				res.SetData(resData)
+				res.Send(w)
+				return
 			}
 		}
-
 	}
 
 	res.SetStatus(http.StatusInternalServerError)

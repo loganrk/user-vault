@@ -17,12 +17,12 @@ const (
 	USER_ACTIVATION_APP_NAME_MACRO = "{{appName}}"
 )
 
-func (u *userService) CreateActivationToken(ctx context.Context, userid int) (int, string) {
+func (u *userService) CreateActivationToken(ctx context.Context, userid int) (int, string, error) {
 	activationToken := utils.GenerateRandomString(25)
 
 	tokenData, err := u.store.GetActivationByToken(ctx, activationToken)
 	if err != nil {
-		return 0, ""
+		return 0, "", err
 	}
 
 	if tokenData.Id != 0 {
@@ -38,9 +38,9 @@ func (u *userService) CreateActivationToken(ctx context.Context, userid int) (in
 
 	tokenId, err := u.store.CreateActivation(ctx, tokenData)
 	if err != nil {
-		return 0, ""
+		return 0, "", err
 	}
-	return tokenId, activationToken
+	return tokenId, activationToken, nil
 }
 
 func (u *userService) GetActivationLink(tokenId int, token string) string {
@@ -58,13 +58,13 @@ func (u *userService) activationLinkMacroReplacement(activationLink string, toke
 
 }
 
-func (u *userService) GetActivationEmailTemplate(ctx context.Context, name string, activationLink string) string {
+func (u *userService) GetActivationEmailTemplate(ctx context.Context, name string, activationLink string) (string, error) {
 	templatePath := u.conf.GetActivationEmailTemplate()
 	template, err := utils.FindFileContent(templatePath)
 	if err != nil {
-		return ""
+		return "", err
 	}
-	return u.activationTemplateMacroReplacement(template, name, activationLink)
+	return u.activationTemplateMacroReplacement(template, name, activationLink), nil
 }
 
 func (u *userService) activationTemplateMacroReplacement(template string, name string, activationLink string) string {
@@ -77,34 +77,25 @@ func (u *userService) activationTemplateMacroReplacement(template string, name s
 
 }
 
-func (u *userService) SendActivation(ctx context.Context, email string, template string) int {
+func (u *userService) SendActivation(ctx context.Context, email string, template string) error {
 
-	return types.EMAIL_STATUS_FAILED
+	return nil
 }
 
-func (u *userService) GetUserActivationByToken(ctx context.Context, token string) types.UserActivationToken {
+func (u *userService) GetUserActivationByToken(ctx context.Context, token string) (types.UserActivationToken, error) {
 	tokenData, err := u.store.GetActivationByToken(ctx, token)
-	if err != nil {
-		return types.UserActivationToken{}
-	}
-
-	return tokenData
-
+	return tokenData, err
 }
 
-func (u *userService) UpdatedActivationtatus(ctx context.Context, id int, status int) {
+func (u *userService) UpdatedActivationtatus(ctx context.Context, id int, status int) error {
 	err := u.store.UpdatedActivationtatus(ctx, id, status)
-	if err != nil {
 
-	}
+	return err
 }
 
-func (u *userService) UpdateStatus(ctx context.Context, userid int, status int) bool {
+func (u *userService) UpdateStatus(ctx context.Context, userid int, status int) error {
 
 	err := u.store.UpdateStatus(ctx, userid, status)
-	if err != nil {
-		return false
-	}
+	return err
 
-	return true
 }
