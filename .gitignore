@@ -4,5 +4,8 @@
 # ignore ALL .yaml files
 *.yaml
 
+# ignore ALL .yml files
+*.yml
+
 # ignore ALL .bin files
 *.bin
