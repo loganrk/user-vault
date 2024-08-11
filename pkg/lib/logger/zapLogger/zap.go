@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -14,41 +15,55 @@ type zapLog struct {
 	sugar  *zap.SugaredLogger
 }
 
-func New(level int, encoding string, encodingCaller bool, outputPath, errorOutputPath string) (*zapLog, error) {
+func New(level int, encoding string, encodingCaller bool, generalOutputPath, errorOutputPath string) (*zapLog, error) {
 	zapLevel, err := intToZapLevel(level)
 	if err != nil {
 		return nil, err
 	}
 
-	zapConfig := zap.Config{
-		Level:       zap.NewAtomicLevelAt(zapLevel),
-		Development: false,
-		Encoding:    encoding,
-		EncoderConfig: zapcore.EncoderConfig{
-			TimeKey:        "time",
-			LevelKey:       "level",
-			NameKey:        "logger",
-			CallerKey:      "caller",
-			MessageKey:     "msg",
-			StacktraceKey:  "stacktrace",
-			LineEnding:     zapcore.DefaultLineEnding,
-			EncodeLevel:    zapcore.CapitalLevelEncoder,
-			EncodeTime:     zapcore.ISO8601TimeEncoder,
-			EncodeDuration: zapcore.StringDurationEncoder,
-			EncodeCaller:   zapcore.ShortCallerEncoder,
-		},
-		OutputPaths:      []string{outputPath},
-		ErrorOutputPaths: []string{errorOutputPath},
+	encoderConfig := zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.CapitalLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeDuration: zapcore.StringDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
 
 	if encodingCaller {
-		zapConfig.EncoderConfig.EncodeCaller = callerEncoder
+		encoderConfig.EncodeCaller = callerEncoder
 	}
 
-	logger, err := zapConfig.Build()
-	if err != nil {
-		return nil, err
-	}
+	generalCore := zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderConfig),
+		zapcore.AddSync(&lumberjack.Logger{
+			Filename:   generalOutputPath,
+			MaxSize:    100, // megabytes
+			MaxBackups: 3,
+			MaxAge:     28, // days
+		}),
+		zap.NewAtomicLevelAt(zapLevel),
+	)
+
+	errorCore := zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderConfig),
+		zapcore.AddSync(&lumberjack.Logger{
+			Filename:   errorOutputPath,
+			MaxSize:    100, // megabytes
+			MaxBackups: 3,
+			MaxAge:     28, // days
+		}),
+		zap.NewAtomicLevelAt(zapcore.ErrorLevel),
+	)
+
+	core := zapcore.NewTee(generalCore, errorCore)
+
+	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
 
 	return &zapLog{
 		logger: logger,
@@ -122,20 +137,16 @@ func (l *zapLog) Sync(ctx context.Context) error {
 
 func intToZapLevel(level int) (zapcore.Level, error) {
 	switch level {
-	case 0:
-		return zapcore.DebugLevel, nil
 	case 1:
-		return zapcore.InfoLevel, nil
-	case 2:
-		return zapcore.WarnLevel, nil
-	case 3:
-		return zapcore.ErrorLevel, nil
-	case 4:
-		return zapcore.DPanicLevel, nil
-	case 5:
-		return zapcore.PanicLevel, nil
-	case 6:
 		return zapcore.FatalLevel, nil
+	case 2:
+		return zapcore.ErrorLevel, nil
+	case 3:
+		return zapcore.WarnLevel, nil
+	case 4:
+		return zapcore.InfoLevel, nil
+	case 5:
+		return zapcore.DebugLevel, nil
 	default:
 		return zapcore.InfoLevel, fmt.Errorf("invalid log level: %d", level)
 	}
@@ -143,19 +154,19 @@ func intToZapLevel(level int) (zapcore.Level, error) {
 
 // Custom caller encoder to include function name
 func callerEncoder(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
-	functionName := getFunctionName(2) // Get the calling function's name
-	enc.AppendString(fmt.Sprintf("%s:%d %s", caller.TrimmedPath(), caller.Line, functionName))
+	file, line, functionName := getFunctionName(8) // Get the calling function's name
+	enc.AppendString(fmt.Sprintf("%s:%d %s", file, line, functionName))
 }
 
 // Helper function to retrieve the function name
-func getFunctionName(skip int) string {
-	pc, _, _, ok := runtime.Caller(skip)
+func getFunctionName(skip int) (string, int, string) {
+	pc, file, line, ok := runtime.Caller(skip)
 	if !ok {
-		return "unknown"
+		return "unknown", 0, "unknown"
 	}
 	function := runtime.FuncForPC(pc)
 	if function == nil {
-		return "unknown"
+		return "unknown", 0, "unknown"
 	}
-	return function.Name()
+	return file, line, function.Name()
 }

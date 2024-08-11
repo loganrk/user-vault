@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"mayilon/pkg/config"
 	"mayilon/pkg/http/v1/handler"
@@ -71,7 +72,7 @@ func main() {
 		return
 	}
 
-	dbIns, err2 := db.New(db.Config{
+	dbIns, err := db.New(db.Config{
 		Host:     decryptDbHost,
 		Port:     decryptdbPort,
 		Username: decryptDbUsename,
@@ -79,8 +80,8 @@ func main() {
 		Name:     dbName,
 	})
 
-	if err2 != nil {
-		log.Println(err2)
+	if err != nil {
+		log.Println(err)
 		return
 	}
 
@@ -148,11 +149,18 @@ func main() {
 	}
 
 	port := appConfigIns.GetAppPort()
-	err3 := routerIns.StartServer(port)
-	if err3 != nil {
-		log.Println(err3)
+	loggerIns.Infow(context.Background(), "app started", "port", port)
+	loggerIns.Sync(context.Background())
+
+	err = routerIns.StartServer(port)
+	if err != nil {
+		loggerIns.Errorw(context.Background(), "app stoped", "port", port, "error", err)
+		loggerIns.Sync(context.Background())
 		return
 	}
+
+	loggerIns.Infow(context.Background(), "app stoped", "port", port, "error", nil)
+	loggerIns.Sync(context.Background())
 }
 
 func createLogger(logConfigIns config.Logger) (logger.Logger, error) {
