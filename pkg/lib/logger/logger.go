@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	ENCODING_TYPE_STRING = 1
-	ENCODING_TYPE_JSON   = 2
+	ENCODING_TYPE_JSON    = 1
+	ENCODING_TYPE_CONSOLE = 2
 )
 
 type Config struct {
@@ -40,8 +40,8 @@ type Logger interface {
 
 func New(config Config) (Logger, error) {
 	var encodingType string
-	if config.Encoding == ENCODING_TYPE_STRING {
-		encodingType = "string"
+	if config.Encoding == ENCODING_TYPE_CONSOLE {
+		encodingType = "console"
 	} else if config.Encoding == ENCODING_TYPE_JSON {
 		encodingType = "json"
 	}
