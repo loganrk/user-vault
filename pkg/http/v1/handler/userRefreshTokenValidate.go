@@ -18,7 +18,7 @@ func (h *Handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 	err := req.Parse(r)
 	if err != nil {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid request parameters")
+		res.SetError(types.ERROR_CODE_REQUEST_INVALID, "invalid request parameters")
 		res.Send(w)
 		return
 	}
@@ -26,7 +26,7 @@ func (h *Handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 	err = req.Validate()
 	if err != nil {
 		res.SetStatus(http.StatusUnprocessableEntity)
-		res.SetError(err.Error())
+		res.SetError(types.ERROR_CODE_REQUEST_PARAMS_INVALID, err.Error())
 		res.Send(w)
 		return
 	}
@@ -34,21 +34,21 @@ func (h *Handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 	userid, expiresAt, err := h.authentication.GetRefreshTokenData(req.RefreshToken)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
 
 	if userid == 0 {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid token")
+		res.SetError(types.ERROR_CODE_TOKEN_INCORRECT, "incorrect token")
 		res.Send(w)
 		return
 	}
 
 	if expiresAt.Before(time.Now()) {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("token is expired")
+		res.SetError(types.ERROR_CODE_TOKEN_EXPIRED, "token expired")
 		res.Send(w)
 		return
 	}
@@ -56,28 +56,28 @@ func (h *Handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 	refreshTokenData, err := h.services.User.GetRefreshTokenData(ctx, userid, req.RefreshToken)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
 
 	if refreshTokenData.Id == 0 {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
 
 	if refreshTokenData.Revoked {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("token is revoked")
+		res.SetError(types.ERROR_CODE_TOKEN_REVOKED, "token revoked")
 		res.Send(w)
 		return
 	}
 
 	if refreshTokenData.ExpiresAt.Before(time.Now()) {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("token is expired")
+		res.SetError(types.ERROR_CODE_TOKEN_EXPIRED, "token expired")
 		res.Send(w)
 		return
 	}
@@ -87,7 +87,7 @@ func (h *Handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 		accessToken, err = h.authentication.CreateAccessToken(userid)
 		if err != nil {
 			res.SetStatus(http.StatusInternalServerError)
-			res.SetError("internal server error")
+			res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 			res.Send(w)
 			return
 		}
@@ -98,7 +98,7 @@ func (h *Handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 			err = h.services.User.RevokedRefreshToken(ctx, userid, req.RefreshToken)
 			if err != nil {
 				res.SetStatus(http.StatusInternalServerError)
-				res.SetError("internal server error")
+				res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 				res.Send(w)
 				return
 			}
@@ -106,7 +106,7 @@ func (h *Handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 			refreshToken, err := h.authentication.CreateRefreshTokenWithCustomExpiry(userid, refreshTokenData.ExpiresAt)
 			if err != nil {
 				res.SetStatus(http.StatusInternalServerError)
-				res.SetError("internal server error")
+				res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 				res.Send(w)
 				return
 			}
@@ -114,14 +114,14 @@ func (h *Handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 			tokenId, err := h.services.User.StoreRefreshToken(ctx, userid, refreshToken, refreshTokenData.ExpiresAt)
 			if err != nil {
 				res.SetStatus(http.StatusInternalServerError)
-				res.SetError("internal server error")
+				res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 				res.Send(w)
 				return
 			}
 
 			if tokenId == 0 {
 				res.SetStatus(http.StatusInternalServerError)
-				res.SetError("internal server error")
+				res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 				res.Send(w)
 				return
 			}
@@ -134,7 +134,7 @@ func (h *Handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 
 	} else {
 		res.SetStatus(http.StatusForbidden)
-		res.SetError("token not able to generate")
+		res.SetError(types.ERROR_CODE_TOKEN_NOT_AVAILABLE, "token is not available")
 		res.Send(w)
 		return
 	}

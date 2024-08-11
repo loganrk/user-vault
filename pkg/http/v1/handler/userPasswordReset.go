@@ -18,7 +18,7 @@ func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 	err := req.Parse(r)
 	if err != nil {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid request parameters")
+		res.SetError(types.ERROR_CODE_REQUEST_INVALID, "invalid request parameters")
 		res.Send(w)
 		return
 	}
@@ -26,35 +26,35 @@ func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 	err = req.Validate()
 	if err != nil {
 		res.SetStatus(http.StatusUnprocessableEntity)
-		res.SetError(err.Error())
+		res.SetError(types.ERROR_CODE_REQUEST_PARAMS_INVALID, err.Error())
 		res.Send(w)
 		return
 	}
 	tokenData, err := h.services.User.GetPasswordResetByToken(ctx, req.Token)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
 
 	if tokenData.Id == 0 {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid token")
+		res.SetError(types.ERROR_CODE_TOKEN_INCORRECT, "incorrect link")
 		res.Send(w)
 		return
 	}
 
 	if tokenData.Status != types.USER_PASSWORD_RESET_STATUS_ACTIVE {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("activation token already used")
+		res.SetError(types.ERROR_CODE_TOKEN_ALREADY_USED, "link already used")
 		res.Send(w)
 		return
 	}
 
 	if tokenData.ExpiresAt.Before(time.Now()) {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("activation link expired")
+		res.SetError(types.ERROR_CODE_TOKEN_EXPIRED, "link expired")
 		res.Send(w)
 		return
 	}
@@ -62,7 +62,7 @@ func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 	userData, err := h.services.User.GetUserByUserid(ctx, tokenData.UserId)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
@@ -71,11 +71,11 @@ func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 
 		res.SetStatus(http.StatusForbidden)
 		if userData.Status == types.USER_STATUS_INACTIVE {
-			res.SetError("your account is currently inactive")
+			res.SetError(types.ERROR_CODE_ACCOUNT_INACTIVE, "your account is currently inactive")
 		} else if userData.Status == types.USER_STATUS_PENDING {
-			res.SetError("your account verification is pending")
+			res.SetError(types.ERROR_CODE_ACCOUNT_PENDING, "your account verification is pending")
 		} else {
-			res.SetError("your account has been banned")
+			res.SetError(types.ERROR_CODE_ACCOUNT_BANNED, "your account has been banned")
 		}
 
 		res.Send(w)
@@ -85,7 +85,7 @@ func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 	err = h.services.User.UpdatePassword(ctx, userData.Id, req.Password, userData.Salt)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
@@ -93,7 +93,7 @@ func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 	err = h.services.User.UpdatedPasswordResetStatus(ctx, tokenData.Id, types.USER_PASSWORD_RESET_STATUS_INACTIVE)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}

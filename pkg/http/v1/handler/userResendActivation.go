@@ -17,7 +17,7 @@ func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 	err := req.Parse(r)
 	if err != nil {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid request parameters")
+		res.SetError(types.ERROR_CODE_REQUEST_INVALID, "invalid request parameters")
 		res.Send(w)
 		return
 	}
@@ -25,7 +25,7 @@ func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 	err = req.Validate()
 	if err != nil {
 		res.SetStatus(http.StatusUnprocessableEntity)
-		res.SetError(err.Error())
+		res.SetError(types.ERROR_CODE_REQUEST_PARAMS_INVALID, err.Error())
 		res.Send(w)
 		return
 	}
@@ -33,14 +33,14 @@ func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 	userData, err := h.services.User.GetUserByUsername(ctx, req.Username)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
 
 	if userData.Id == 0 {
 		res.SetStatus(http.StatusUnauthorized)
-		res.SetError("username is incorrect")
+		res.SetError(types.ERROR_CODE_USERNAME_INCORRECT, "username is incorrect")
 		res.Send(w)
 		return
 	}
@@ -50,11 +50,11 @@ func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 		res.SetStatus(http.StatusForbidden)
 
 		if userData.Status == types.USER_STATUS_ACTIVE {
-			res.SetError("your account is already activated")
+			res.SetError(types.ERROR_CODE_ACCOUNT_ACTIVE, "your account is already activated")
 		} else if userData.Status == types.USER_STATUS_INACTIVE {
-			res.SetError("your account is currently inactive")
+			res.SetError(types.ERROR_CODE_ACCOUNT_INACTIVE, "your account is currently inactive")
 		} else {
-			res.SetError("your account has been banned")
+			res.SetError(types.ERROR_CODE_ACCOUNT_BANNED, "your account has been banned")
 		}
 
 		res.Send(w)
@@ -64,7 +64,7 @@ func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 	tokenId, activationToken, err := h.services.User.CreateActivationToken(ctx, userData.Id)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
@@ -75,7 +75,7 @@ func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 			template, err := h.services.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
 			if err != nil {
 				res.SetStatus(http.StatusInternalServerError)
-				res.SetError("internal server error")
+				res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 				res.Send(w)
 				return
 			}
@@ -83,7 +83,7 @@ func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 				err = h.services.User.SendActivation(ctx, userData.Username, template)
 				if err != nil {
 					res.SetStatus(http.StatusInternalServerError)
-					res.SetError("internal server error")
+					res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 					res.Send(w)
 					return
 				}
@@ -97,6 +97,6 @@ func (h *Handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res.SetStatus(http.StatusInternalServerError)
-	res.SetError("internal server error")
+	res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 	res.Send(w)
 }

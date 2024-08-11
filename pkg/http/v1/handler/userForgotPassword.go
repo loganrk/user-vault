@@ -17,7 +17,7 @@ func (h *Handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 	err := req.Parse(r)
 	if err != nil {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid request parameters")
+		res.SetError(types.ERROR_CODE_REQUEST_INVALID, "invalid request parameters")
 		res.Send(w)
 		return
 	}
@@ -25,7 +25,7 @@ func (h *Handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 	err = req.Validate()
 	if err != nil {
 		res.SetStatus(http.StatusUnprocessableEntity)
-		res.SetError(err.Error())
+		res.SetError(types.ERROR_CODE_REQUEST_PARAMS_INVALID, err.Error())
 		res.Send(w)
 		return
 	}
@@ -33,14 +33,14 @@ func (h *Handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 	userData, err := h.services.User.GetUserByUsername(ctx, req.Username)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
 
 	if userData.Id == 0 {
 		res.SetStatus(http.StatusUnauthorized)
-		res.SetError("username is incorrect")
+		res.SetError(types.ERROR_CODE_USERNAME_INCORRECT, "username is incorrect")
 		res.Send(w)
 		return
 	}
@@ -48,11 +48,11 @@ func (h *Handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 	if userData.Status != types.USER_STATUS_ACTIVE {
 		res.SetStatus(http.StatusForbidden)
 		if userData.Status == types.USER_STATUS_INACTIVE {
-			res.SetError("your account is currently inactive")
+			res.SetError(types.ERROR_CODE_ACCOUNT_INACTIVE, "your account is currently inactive")
 		} else if userData.Status == types.USER_STATUS_PENDING {
-			res.SetError("your account verification is pending")
+			res.SetError(types.ERROR_CODE_ACCOUNT_PENDING, "your account verification is pending")
 		} else {
-			res.SetError("your account has been banned")
+			res.SetError(types.ERROR_CODE_ACCOUNT_BANNED, "your account has been banned")
 		}
 
 		res.Send(w)
@@ -62,7 +62,7 @@ func (h *Handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 	tokenId, passwordResetToken, err := h.services.User.CreatePasswordResetToken(ctx, userData.Id)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
@@ -73,7 +73,7 @@ func (h *Handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 			template, err := h.services.User.GetPasswordResetEmailTemplate(ctx, userData.Name, passwordResetLink)
 			if err != nil {
 				res.SetStatus(http.StatusInternalServerError)
-				res.SetError("internal server error")
+				res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 				res.Send(w)
 				return
 			}
@@ -82,7 +82,7 @@ func (h *Handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 				err := h.services.User.SendPasswordReset(ctx, userData.Username, template)
 				if err != nil {
 					res.SetStatus(http.StatusInternalServerError)
-					res.SetError("internal server error")
+					res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 					res.Send(w)
 					return
 				}
@@ -95,7 +95,7 @@ func (h *Handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res.SetStatus(http.StatusInternalServerError)
-	res.SetError("internal server error")
+	res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 	res.Send(w)
 
 }

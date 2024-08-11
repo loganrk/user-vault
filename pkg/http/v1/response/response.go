@@ -6,7 +6,7 @@ import (
 )
 
 type Response interface {
-	SetError(err string)
+	SetError(errCode string, errMsg string)
 	SetStatus(status int)
 	SetData(data any)
 	Send(w http.ResponseWriter)
@@ -16,9 +16,10 @@ func New() Response {
 	return &response{}
 }
 
-func (r *response) SetError(err string) {
+func (r *response) SetError(errCode string, errMsg string) {
 	r.Err = append(r.Err, errorMsg{
-		Msg: err,
+		Code: errCode,
+		Msg:  errMsg,
 	})
 }
 

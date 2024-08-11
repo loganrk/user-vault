@@ -18,7 +18,7 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 	err := req.Parse(r)
 	if err != nil {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid request parameters")
+		res.SetError(types.ERROR_CODE_REQUEST_INVALID, "invalid request parameters")
 		res.Send(w)
 		return
 	}
@@ -26,7 +26,7 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 	err = req.Validate()
 	if err != nil {
 		res.SetStatus(http.StatusUnprocessableEntity)
-		res.SetError(err.Error())
+		res.SetError(types.ERROR_CODE_REQUEST_PARAMS_INVALID, err.Error())
 		res.Send(w)
 		return
 	}
@@ -34,7 +34,7 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 	tokenData, err := h.services.User.GetUserActivationByToken(ctx, req.Token)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
@@ -42,21 +42,21 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 	if tokenData.Id == 0 {
 
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid token")
+		res.SetError(types.ERROR_CODE_TOKEN_INCORRECT, "incorrect link")
 		res.Send(w)
 		return
 	}
 
 	if tokenData.Status != types.USER_ACTIVATION_TOKEN_STATUS_ACTIVE {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("activation token already used")
+		res.SetError(types.ERROR_CODE_TOKEN_ALREADY_USED, "link already used")
 		res.Send(w)
 		return
 	}
 
 	if tokenData.ExpiresAt.Before(time.Now()) {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("activation link expired")
+		res.SetError(types.ERROR_CODE_TOKEN_EXPIRED, "link expired")
 		res.Send(w)
 		return
 	}
@@ -65,7 +65,7 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
@@ -74,11 +74,11 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 
 		res.SetStatus(http.StatusForbidden)
 		if userData.Status == types.USER_STATUS_ACTIVE {
-			res.SetError("your account is already activated")
+			res.SetError(types.ERROR_CODE_ACCOUNT_ACTIVE, "your account is already activated")
 		} else if userData.Status == types.USER_STATUS_INACTIVE {
-			res.SetError("your account is currently inactive")
+			res.SetError(types.ERROR_CODE_ACCOUNT_INACTIVE, "your account is currently inactive")
 		} else {
-			res.SetError("your account has been banned")
+			res.SetError(types.ERROR_CODE_ACCOUNT_BANNED, "your account has been banned")
 		}
 
 		res.Send(w)
@@ -87,7 +87,7 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 	err = h.services.User.UpdatedActivationtatus(ctx, tokenData.Id, types.USER_ACTIVATION_TOKEN_STATUS_INACTIVE)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
@@ -95,7 +95,7 @@ func (h *Handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 	err = h.services.User.UpdateStatus(ctx, userData.Id, types.USER_STATUS_ACTIVE)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
