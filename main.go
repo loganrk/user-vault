@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	CONFIG_FILE_PATH = `C:\xampp\htdocs\pro\mayilon\config\yaml\`
+	CONFIG_FILE_PATH = ``
 	CONFIG_FILE_NAME = `app_config`
 	CONFIG_FILE_TYPE = `yaml`
 )
