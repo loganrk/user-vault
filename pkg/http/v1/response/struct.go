@@ -8,5 +8,6 @@ type response struct {
 }
 
 type errorMsg struct {
-	Msg string `json:"msg"`
+	Code string `json:"code"`
+	Msg  string `json:"msg"`
 }

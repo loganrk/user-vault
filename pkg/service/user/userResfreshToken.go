@@ -14,7 +14,7 @@ func (u *userService) RefreshTokenRotationEnabled() bool {
 	return u.conf.GetRefreshTokenRotationEnabled()
 }
 
-func (u *userService) StoreRefreshToken(ctx context.Context, userid int, token string, expiresAt time.Time) int {
+func (u *userService) StoreRefreshToken(ctx context.Context, userid int, token string, expiresAt time.Time) (int, error) {
 
 	refreshTokenData := types.UserRefreshToken{
 		UserId:    userid,
@@ -25,26 +25,20 @@ func (u *userService) StoreRefreshToken(ctx context.Context, userid int, token s
 
 	refreshTokenId, err := u.store.CreateRefreshToken(ctx, refreshTokenData)
 	if err != nil {
-		return 0
+		return 0, err
 	}
-	return refreshTokenId
+	return refreshTokenId, nil
 }
 
-func (u *userService) RevokedRefreshToken(ctx context.Context, userid int, refreshToken string) bool {
+func (u *userService) RevokedRefreshToken(ctx context.Context, userid int, refreshToken string) error {
 	err := u.store.RevokedRefreshToken(ctx, userid, refreshToken)
-	if err != nil {
-		return false
-	}
 
-	return true
+	return err
 }
 
-func (u *userService) GetRefreshTokenData(ctx context.Context, userid int, refreshToken string) types.UserRefreshToken {
+func (u *userService) GetRefreshTokenData(ctx context.Context, userid int, refreshToken string) (types.UserRefreshToken, error) {
 	tokenData, err := u.store.GetRefreshTokenData(ctx, userid, refreshToken)
-	if err != nil {
-		return types.UserRefreshToken{}
-	}
 
-	return tokenData
+	return tokenData, err
 
 }

@@ -19,77 +19,113 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 	err := req.Parse(r)
 	if err != nil {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid request parameters")
+		res.SetError(types.ERROR_CODE_REQUEST_INVALID, "invalid request parameters")
 		res.Send(w)
 		return
 	}
 
-	result := req.Validate()
-	if result != "" {
+	err = req.Validate()
+	if err != nil {
 		res.SetStatus(http.StatusUnprocessableEntity)
-		res.SetError(result)
+		res.SetError(types.ERROR_CODE_REQUEST_PARAMS_INVALID, err.Error())
 		res.Send(w)
 		return
 	}
 
-	userData := h.services.User.GetUserByUsername(ctx, req.Username)
+	userData, err := h.services.User.GetUserByUsername(ctx, req.Username)
+	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
+		res.Send(w)
+		return
+	}
+
 	if userData.Id == 0 {
 		res.SetStatus(http.StatusUnauthorized)
-		res.SetError("username or password is incorrect")
+		res.SetError(types.ERROR_CODE_USERNAME_OR_PASSWORD_INCORRECT, "username or password is incorrect")
 		res.Send(w)
 		return
 	}
 
-	attemptStatus := h.services.User.CheckLoginFailedAttempt(ctx, userData.Id)
+	attemptStatus, err := h.services.User.CheckLoginFailedAttempt(ctx, userData.Id)
+	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
+		res.Send(w)
+		return
+	}
+
 	if attemptStatus == types.LOGIN_ATTEMPT_MAX_REACHED {
 		res.SetStatus(http.StatusTooManyRequests)
-		res.SetError("max login attempt reached. please try after sometime")
+		res.SetError(types.ERROR_CODE_MAX_ATTEMPT_REACHED, "max login attempt reached. please try after sometime")
 		res.Send(w)
 		return
 
-	} else if attemptStatus == types.LOGIN_ATTEMPT_FAILED {
+	}
+
+	passwordMatch, err := h.services.User.CheckPassword(ctx, req.Password, userData.Password, userData.Salt)
+	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
 
-	passwordMatch := h.services.User.CheckPassword(ctx, req.Password, userData.Password, userData.Salt)
 	if !passwordMatch {
-		loginAttempId := h.services.User.CreateLoginAttempt(ctx, userData.Id, false)
+		loginAttempId, err := h.services.User.CreateLoginAttempt(ctx, userData.Id, false)
+
+		if err != nil {
+			res.SetStatus(http.StatusInternalServerError)
+			res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
+			res.Send(w)
+			return
+		}
+
 		if loginAttempId == 0 {
 			res.SetStatus(http.StatusInternalServerError)
-			res.SetError("internal server error")
+			res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 			res.Send(w)
 			return
 		}
 
 		res.SetStatus(http.StatusUnauthorized)
-		res.SetError("username or password is incorrect")
+		res.SetError(types.ERROR_CODE_USERNAME_OR_PASSWORD_INCORRECT, "username or password is incorrect")
 		res.Send(w)
 		return
 	} else {
-		loginAttempId := h.services.User.CreateLoginAttempt(ctx, userData.Id, true)
+		loginAttempId, err := h.services.User.CreateLoginAttempt(ctx, userData.Id, true)
+		if err != nil {
+			res.SetStatus(http.StatusInternalServerError)
+			res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
+			res.Send(w)
+			return
+		}
 
 		if loginAttempId == 0 {
 			res.SetStatus(http.StatusInternalServerError)
-			res.SetError("internal server error")
+			res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 			res.Send(w)
 			return
 		}
 	}
-	userData = h.services.User.GetUserByUserid(ctx, userData.Id)
+	userData, err = h.services.User.GetUserByUserid(ctx, userData.Id)
+	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
+		res.Send(w)
+		return
+	}
 
 	if userData.Status != types.USER_STATUS_ACTIVE {
 
 		res.SetStatus(http.StatusForbidden)
 
 		if userData.Status == types.USER_STATUS_INACTIVE {
-			res.SetError("your account is currently inactive")
+			res.SetError(types.ERROR_CODE_ACCOUNT_INACTIVE, "your account is currently inactive")
 		} else if userData.Status == types.USER_STATUS_PENDING {
-			res.SetError("your account verification is pending")
+			res.SetError(types.ERROR_CODE_ACCOUNT_PENDING, "your account verification is pending")
 		} else {
-			res.SetError("your account has been banned")
+			res.SetError(types.ERROR_CODE_ACCOUNT_BANNED, "your account has been banned")
 		}
 
 		res.Send(w)
@@ -102,7 +138,7 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
-		res.SetError("internal server error")
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 		res.Send(w)
 		return
 	}
@@ -119,7 +155,7 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			res.SetStatus(http.StatusInternalServerError)
-			res.SetError("internal server error")
+			res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 			res.Send(w)
 			return
 		}
@@ -127,15 +163,15 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		refreshExpiresAt, err := h.authentication.GetRefreshTokenExpiry(refreshToken)
 		if err != nil {
 			res.SetStatus(http.StatusInternalServerError)
-			res.SetError("internal server error")
+			res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 			res.Send(w)
 			return
 		}
 
-		tokenId := h.services.User.StoreRefreshToken(ctx, userData.Id, refreshToken, refreshExpiresAt)
-		if tokenId == 0 {
+		_, err = h.services.User.StoreRefreshToken(ctx, userData.Id, refreshToken, refreshExpiresAt)
+		if err != nil {
 			res.SetStatus(http.StatusInternalServerError)
-			res.SetError("internal server error")
+			res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
 			res.Send(w)
 			return
 		}

@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -23,11 +24,11 @@ func (u *newUserActivation) Parse(r *http.Request) error {
 	return nil
 }
 
-func (u *newUserActivation) Validate() string {
+func (u *newUserActivation) Validate() error {
 	if u.Token == "" {
 
-		return "invalid token"
+		return errors.New("invalid token")
 	}
 
-	return ""
+	return nil
 }

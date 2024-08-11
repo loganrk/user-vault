@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"errors"
 	"mayilon/pkg/http/v1/request"
 	"net/http"
 )
@@ -24,10 +25,10 @@ func (u *userForgotPassword) Parse(r *http.Request) error {
 	return nil
 }
 
-func (u *userForgotPassword) Validate() string {
+func (u *userForgotPassword) Validate() error {
 	if !request.EmailRegex.MatchString(u.Username) {
 
-		return "invalid username"
+		return errors.New("invalid username")
 	}
-	return ""
+	return nil
 }
