@@ -63,7 +63,7 @@ func (h *Handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 
 	if refreshTokenData.Id == 0 {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
+		res.SetError(types.ERROR_CODE_TOKEN_INCORRECT, "incorrect token")
 		res.Send(w)
 		return
 	}
