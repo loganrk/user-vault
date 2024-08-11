@@ -19,7 +19,7 @@ func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 
 	err := req.Parse(r)
 	if err != nil {
-		// TODO log
+		res.SetStatus(http.StatusBadRequest)
 		res.SetError("invalid request parameters")
 		res.Send(w)
 		return
@@ -27,28 +27,31 @@ func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 
 	result := req.Validate()
 	if result != "" {
+		res.SetStatus(http.StatusUnprocessableEntity)
 		res.SetError(result)
 		res.Send(w)
 		return
 	}
 
-	userid, expiresAt, err := h.Authentication.GetRefreshTokenData(req.RefreshToken)
+	userid, expiresAt, err := h.authentication.GetRefreshTokenData(req.RefreshToken)
 
 	if err != nil {
-		// TODO log
+		res.SetStatus(http.StatusBadRequest)
 		res.SetError("invalid token")
 		res.Send(w)
 		return
 	}
 
 	if expiresAt.Before(time.Now()) {
+		res.SetStatus(http.StatusBadRequest)
 		res.SetError("token is expired")
 		res.Send(w)
 		return
 	}
 
-	result2 := h.Services.User.RevokedRefreshToken(ctx, userid, req.RefreshToken)
+	result2 := h.services.User.RevokedRefreshToken(ctx, userid, req.RefreshToken)
 	if !result2 {
+		res.SetStatus(http.StatusInternalServerError)
 		res.SetError("internal server error")
 		res.Send(w)
 		return

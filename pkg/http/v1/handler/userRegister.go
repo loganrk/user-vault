@@ -16,7 +16,7 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 
 	err := req.Parse(r)
 	if err != nil {
-		// TODO log
+		res.SetStatus(http.StatusBadRequest)
 		res.SetError("invalid request parameters")
 		res.Send(w)
 		return
@@ -24,40 +24,44 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 
 	result := req.Validate()
 	if result != "" {
+		res.SetStatus(http.StatusUnprocessableEntity)
 		res.SetError(result)
 		res.Send(w)
 		return
 	}
 
-	userData := h.Services.User.GetUserByUsername(ctx, req.Username)
+	userData := h.services.User.GetUserByUsername(ctx, req.Username)
 	if userData.Id != 0 {
+		res.SetStatus(http.StatusConflict)
 		res.SetError("username already exists. try different username")
 		res.Send(w)
 		return
 	}
 
-	userid := h.Services.User.CreateUser(ctx, req.Username, req.Password, req.Name)
+	userid := h.services.User.CreateUser(ctx, req.Username, req.Password, req.Name)
 	if userid == 0 {
+		res.SetStatus(http.StatusInternalServerError)
 		res.SetError("internal server error")
 		res.Send(w)
 		return
 	}
 
-	userData = h.Services.User.GetUserByUserid(ctx, userid)
+	userData = h.services.User.GetUserByUserid(ctx, userid)
 	if userData.Id == 0 {
+		res.SetStatus(http.StatusInternalServerError)
 		res.SetError("internal server error")
 		res.Send(w)
 		return
 	}
 
 	if userData.Status == types.USER_STATUS_PENDING {
-		tokenId, activationToken := h.Services.User.CreateActivationToken(ctx, userData.Id)
+		tokenId, activationToken := h.services.User.CreateActivationToken(ctx, userData.Id)
 		if tokenId != 0 && activationToken != "" {
-			activationLink := h.Services.User.GetActivationLink(tokenId, activationToken)
+			activationLink := h.services.User.GetActivationLink(tokenId, activationToken)
 			if activationLink != "" {
-				template := h.Services.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
+				template := h.services.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
 				if template != "" {
-					emailStatus := h.Services.User.SendActivation(ctx, userData.Username, template)
+					emailStatus := h.services.User.SendActivation(ctx, userData.Username, template)
 					if emailStatus == types.EMAIL_STATUS_SUCCESS {
 						resData := "account created successfuly. please check your email for activate account"
 						res.SetData(resData)

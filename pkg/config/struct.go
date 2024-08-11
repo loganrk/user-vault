@@ -5,6 +5,7 @@ type app struct {
 		Name string `mapstructure:"name"`
 		Port string `mapstructure:"port"`
 	} `mapstructure:"application"`
+	Logger logger `mapstructure:"logger"`
 	Cipher struct {
 		CryptoKey string `mapstructure:"cryptoKey"`
 	} `mapstructure:"cipher"`
@@ -41,6 +42,16 @@ type app struct {
 	} `mapstructure:"store"`
 	Api  api  `mapstructure:"api"`
 	User user `mapstructure:"user"`
+}
+
+type logger struct {
+	Level    int
+	Encoding struct {
+		Method int
+		Caller bool
+	}
+	Path    string
+	ErrPath string
 }
 
 type api struct {

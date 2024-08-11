@@ -17,7 +17,7 @@ func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 
 	err := req.Parse(r)
 	if err != nil {
-		// TODO log
+		res.SetStatus(http.StatusBadRequest)
 		res.SetError("invalid request parameters")
 		res.Send(w)
 		return
@@ -25,32 +25,38 @@ func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 
 	result := req.Validate()
 	if result != "" {
+		res.SetStatus(http.StatusUnprocessableEntity)
 		res.SetError(result)
 		res.Send(w)
 		return
 	}
-	tokenData := h.Services.User.GetPasswordResetByToken(ctx, req.Token)
+	tokenData := h.services.User.GetPasswordResetByToken(ctx, req.Token)
 	if tokenData.Id == 0 {
+		res.SetStatus(http.StatusBadRequest)
 		res.SetError("invalid token")
 		res.Send(w)
 		return
 	}
 
 	if tokenData.Status != types.USER_PASSWORD_RESET_STATUS_ACTIVE {
+		res.SetStatus(http.StatusBadRequest)
 		res.SetError("activation token already used")
 		res.Send(w)
 		return
 	}
 
 	if tokenData.ExpiresAt.Before(time.Now()) {
+		res.SetStatus(http.StatusBadRequest)
 		res.SetError("activation link expired")
 		res.Send(w)
 		return
 	}
 
-	userData := h.Services.User.GetUserByUserid(ctx, tokenData.UserId)
+	userData := h.services.User.GetUserByUserid(ctx, tokenData.UserId)
 
 	if userData.Status != types.USER_STATUS_ACTIVE {
+
+		res.SetStatus(http.StatusForbidden)
 		if userData.Status == types.USER_STATUS_INACTIVE {
 			res.SetError("your account is currently inactive")
 		} else if userData.Status == types.USER_STATUS_PENDING {
@@ -63,15 +69,16 @@ func (h *Handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result2 := h.Services.User.UpdatePassword(ctx, userData.Id, req.Password, userData.Salt)
+	result2 := h.services.User.UpdatePassword(ctx, userData.Id, req.Password, userData.Salt)
 	if !result2 {
+		res.SetStatus(http.StatusInternalServerError)
 		res.SetError("internal server error")
 		res.Send(w)
 		return
 	}
 
 	// TODO : need to automatied script when its fail
-	h.Services.User.UpdatedPasswordResetStatus(ctx, tokenData.Id, types.USER_PASSWORD_RESET_STATUS_INACTIVE)
+	h.services.User.UpdatedPasswordResetStatus(ctx, tokenData.Id, types.USER_PASSWORD_RESET_STATUS_INACTIVE)
 
 	resData := "password has been reset successfully"
 	res.SetData(resData)

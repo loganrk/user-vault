@@ -2,6 +2,14 @@ application:
   port: 8000
   name: Mayilon
 
+logger:
+  level:
+  encoding:
+    method:
+    caller:
+  path:
+  errPath:
+
 cipher:
   cryptoKey: qf0ac7131xktkut8
   
