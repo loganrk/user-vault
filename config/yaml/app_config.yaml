@@ -2,7 +2,15 @@ application:
   port: 8000
   name: Mayilon
 
-chipper:
+logger:
+  level: 4
+  encoding:
+    method: 1
+    caller: true
+  path:  logs\info.log
+  errPath: logs\error.log
+
+cipher:
   cryptoKey: qf0ac7131xktkut8
  
 middleware:
@@ -28,6 +36,10 @@ api:
     enabled: true
     route: /user/activation
     method: GET
+  userResendActivation:
+    enabled: true
+    route: /user/resend-activation
+    method: GET
   userForgotPassword:
     enabled: true
     route: /user/forgot-password
@@ -35,7 +47,7 @@ api:
   userPasswordReset:
     enabled: true
     route: /user/password-reset
-    method: 
+    method: GET
   userRefreshTokenValidate:
     enabled: true
     route: /user/refresh-token-validate
@@ -70,10 +82,10 @@ user:
   loginAttemptSessionPeriod: 60 #seconds
   passwordHashCost: 12
   activation:
-    templatePath: data/template/activation_email_template.html  # macros :[{{appName}},{{name}},{{Link}}]
-    link: http://localhost:8000/user/activate # macros :[{{tokenId}},{{token}}]
+    templatePath: data/templates/activation_email_template.html  # macros :[{{appName}},{{name}},{{Link}}]
+    link: http://localhost:8000/user/activate??token={{token}} # macros :[{{tokenId}},{{token}}]
     linkExpiry: 1800 #seconds
   passwordReset:
-    templatePath: data/template/password_reset_email_template.html  # macros :[{{appName}},{{name}},{{Link}}]
+    templatePath: data/templates/password_reset_email_template.html  # macros :[{{appName}},{{name}},{{Link}}]
     link: http://localhost:8000/user/password_reset?token={{token}} # macros :[{{token}}]
     linkExpiry: 1800 #seconds
