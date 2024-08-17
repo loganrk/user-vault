@@ -25,12 +25,14 @@ func New(cryptoKey string, accessTokenExpiry int, refreshTokenExpiry int, cipher
 	}
 }
 
-func (a *authn) CreateAccessToken(uid int) (string, error) {
+func (a *authn) CreateAccessToken(uid int, uname string, name string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
-			"type": "access",
-			"uid":  uid,
-			"exp":  time.Now().Add(time.Second * time.Duration(a.accessTokenExpiry)).Unix(),
+			"type":  "access",
+			"uid":   uid,
+			"uname": uname,
+			"name":  name,
+			"exp":   time.Now().Add(time.Second * time.Duration(a.accessTokenExpiry)).Unix(),
 		})
 
 	tokenString, err := token.SignedString([]byte(a.cryptoKey))
