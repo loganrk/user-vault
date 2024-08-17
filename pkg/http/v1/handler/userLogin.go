@@ -134,7 +134,7 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	var accessToken, refreshTokenType, refreshToken string
 
-	accessToken, err = h.authentication.CreateAccessToken(userData.Id)
+	accessToken, err = h.authentication.CreateAccessToken(userData.Id, userData.Username, userData.Name)
 
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)

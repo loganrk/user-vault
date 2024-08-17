@@ -63,7 +63,7 @@ func (h *Handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 
 	if refreshTokenData.Id == 0 {
 		res.SetStatus(http.StatusBadRequest)
-		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
+		res.SetError(types.ERROR_CODE_TOKEN_INCORRECT, "incorrect token")
 		res.Send(w)
 		return
 	}
@@ -81,10 +81,35 @@ func (h *Handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 		res.Send(w)
 		return
 	}
+
+	userData, err := h.services.User.GetUserByUserid(ctx, userid)
+	if err != nil {
+		res.SetStatus(http.StatusInternalServerError)
+		res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
+		res.Send(w)
+		return
+	}
+
+	if userData.Status != types.USER_STATUS_ACTIVE {
+
+		res.SetStatus(http.StatusForbidden)
+
+		if userData.Status == types.USER_STATUS_INACTIVE {
+			res.SetError(types.ERROR_CODE_ACCOUNT_INACTIVE, "your account is currently inactive")
+		} else if userData.Status == types.USER_STATUS_PENDING {
+			res.SetError(types.ERROR_CODE_ACCOUNT_PENDING, "your account verification is pending")
+		} else {
+			res.SetError(types.ERROR_CODE_ACCOUNT_BANNED, "your account has been banned")
+		}
+
+		res.Send(w)
+		return
+	}
+
 	var accessToken, refreshTokenType, refreshToken string
 
 	if h.services.User.RefreshTokenEnabled() {
-		accessToken, err = h.authentication.CreateAccessToken(userid)
+		accessToken, err = h.authentication.CreateAccessToken(userData.Id, userData.Username, userData.Name)
 		if err != nil {
 			res.SetStatus(http.StatusInternalServerError)
 			res.SetError(types.ERROR_CODE_INTERNAL_SERVER, "internal server error")
