@@ -57,6 +57,8 @@ github.com/loganrk/go-cipher v1.0.1 h1:OWCDMH3AMPsPVFSLORCgHThsINTjPO4/sXmE2DWaN
 github.com/loganrk/go-cipher v1.0.1/go.mod h1:7pge/+yNaZIOrINzS8GAjLqIL3Fcsd0iTjnIONFZcT0=
 github.com/loganrk/go-db v1.0.0 h1:GzYsOcnwXNUYx6vYObvaj7MFSJmoRmwS4mW06pbcJqo=
 github.com/loganrk/go-db v1.0.0/go.mod h1:37xre+ZjM+/WqFQR9XZ0CN/7dYKCr2O9o+poI3250eM=
+github.com/loganrk/go-db v1.0.1 h1:UugUNVWUsXTFUnaGCfy7ZYQBulsCg2nMJdscJVUpe/c=
+github.com/loganrk/go-db v1.0.1/go.mod h1:37xre+ZjM+/WqFQR9XZ0CN/7dYKCr2O9o+poI3250eM=
 github.com/loganrk/go-router v1.0.0 h1:ZuasizafczyGlsp7ouEuM6ZLV3T22/OpQ9CboHsmGrw=
 github.com/loganrk/go-router v1.0.0/go.mod h1:/IXLrQf4XQNBMNE5swLsy0lAo/r+759s6tlaQO43q60=
 github.com/magiconair/properties v1.8.7 h1:IeQXZAiQcpL9mgcAe1Nu6cX9LLw6ExEHKjN0VQdvPDY=
