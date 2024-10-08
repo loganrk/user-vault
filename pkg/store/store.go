@@ -4,6 +4,8 @@ import (
 	"context"
 	"mayilon/pkg/types"
 	"time"
+
+	"github.com/loganrk/go-db"
 )
 
 type User interface {
@@ -27,4 +29,8 @@ type User interface {
 	CreateRefreshToken(ctx context.Context, refreshTokenData types.UserRefreshToken) (int, error)
 	RevokedRefreshToken(ctx context.Context, userid int, refreshToken string) error
 	GetRefreshTokenData(ctx context.Context, userid int, refreshToken string) (types.UserRefreshToken, error)
+}
+
+func AutoMigrate(dbIns db.DB) {
+	dbIns.GetDb().AutoMigrate(&types.User{}, &types.UserLoginAttempt{}, &types.UserActivationToken{}, &types.UserPasswordReset{}, &types.UserRefreshToken{})
 }

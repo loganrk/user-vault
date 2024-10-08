@@ -30,7 +30,7 @@ type app struct {
 			Username string `mapstructure:"username"`
 			Password string `mapstructure:"password"`
 			Name     string `mapstructure:"name"`
-			Table    table  `mapstructure:"table"`
+			Prefix   string `mapstructure:"prefix"`
 		} `mapstructure:"database"`
 		Cache struct {
 			Heap struct {

@@ -15,6 +15,7 @@ import (
 
 	"mayilon/pkg/service"
 	userSrv "mayilon/pkg/service/user"
+	store "mayilon/pkg/store"
 	userStore "mayilon/pkg/store/user"
 )
 
@@ -46,7 +47,7 @@ func main() {
 	cipherCryptoKey := appConfigIns.GetCipherCryptoKey()
 	cipherIns := cipher.New(cipherCryptoKey)
 
-	encryptDbHost, encryptDbPort, encryptDbUsename, encryptDbPasword, dbName := appConfigIns.GetStoreDatabaseProperties()
+	encryptDbHost, encryptDbPort, encryptDbUsename, encryptDbPasword, dbName, prefix := appConfigIns.GetStoreDatabaseProperties()
 
 	decryptDbHost, decryptErr := cipherIns.Decrypt(encryptDbHost)
 	if decryptErr != nil {
@@ -78,6 +79,7 @@ func main() {
 		Username: decryptDbUsename,
 		Password: decryptDbPasword,
 		Name:     dbName,
+		Prefix:   prefix,
 	})
 
 	if err != nil {
@@ -85,7 +87,10 @@ func main() {
 		return
 	}
 
-	userStoreIns := userStore.New(appConfigIns.GetTable(), dbIns)
+	store.AutoMigrate(dbIns)
+
+	userStoreIns := userStore.New(dbIns)
+
 	userSrvIns := userSrv.New(loggerIns, userStoreIns, appConfigIns.GetAppName(), appConfigIns.GetUser())
 
 	svcList := service.List{

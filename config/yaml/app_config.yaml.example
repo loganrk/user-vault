@@ -64,13 +64,7 @@ store:
     username:  #encrypted value
     password:  #encrypted value
     name: test
-    table:
-      prefix: pm_
-      user: user
-      userLoginAttempt: user_login_attempt
-      userActivationToken: user_activation_token
-      userPasswordReset: user_password_reset
-      userRefreshToken: user_refresh_token
+    prefix: pm_
   cache:
     heap:
       enabled: true
