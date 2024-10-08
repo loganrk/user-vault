@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"mayilon/pkg/config"
 	"mayilon/pkg/store"
 	"mayilon/pkg/types"
 	"time"
@@ -12,21 +11,20 @@ import (
 	"gorm.io/gorm"
 )
 
-func New(tableConfigIns config.Table, dbIns db.DB) store.User {
+func New(dbIns db.DB) store.User {
 	return &userStore{
-		db:     dbIns,
-		tables: tableConfigIns,
+		db: dbIns,
 	}
 }
 
 func (s *userStore) CreateUser(ctx context.Context, userData types.User) (int, error) {
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.GetUser()).Create(&userData)
+	result := s.db.GetDb().WithContext(ctx).Model(&types.User{}).Create(&userData)
 	return userData.Id, result.Error
 }
 
 func (s *userStore) GetUserByUserid(ctx context.Context, userid int) (types.User, error) {
 	var userData types.User
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.GetUser()).Select("id", "username", "name", "state", "status").First(&userData, userid)
+	result := s.db.GetDb().WithContext(ctx).Model(&types.User{}).Select("id", "username", "name", "state", "status").First(&userData, userid)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -35,7 +33,7 @@ func (s *userStore) GetUserByUserid(ctx context.Context, userid int) (types.User
 
 func (s *userStore) GetUserByUsername(ctx context.Context, username string) (types.User, error) {
 	var userData types.User
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.GetUser()).Select("id", "password", "salt", "state", "status").Where("username = ?", username).First(&userData)
+	result := s.db.GetDb().WithContext(ctx).Model(&types.User{}).Select("id", "password", "salt", "state", "status").Where("username = ?", username).First(&userData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -44,7 +42,7 @@ func (s *userStore) GetUserByUsername(ctx context.Context, username string) (typ
 
 func (s *userStore) GetUserLoginFailedAttemptCount(ctx context.Context, userId int, sessionStartTime time.Time) (int, error) {
 	var userLoginAttempt []types.UserLoginAttempt
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.GetUserLoginAttemp()).Select("id").Where("user_id = ? && success = ? && created_at >= ?", userId, types.LOGIN_ATTEMPT_FAILED, sessionStartTime).Find(&userLoginAttempt)
+	result := s.db.GetDb().WithContext(ctx).Model(&types.UserLoginAttempt{}).Select("id").Where("user_id = ? && success = ? && created_at >= ?", userId, types.LOGIN_ATTEMPT_FAILED, sessionStartTime).Find(&userLoginAttempt)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -57,7 +55,7 @@ func (s *userStore) GetUserLoginFailedAttemptCount(ctx context.Context, userId i
 }
 
 func (s *userStore) CreateUserLoginAttempt(ctx context.Context, userLoginAttempt types.UserLoginAttempt) (int, error) {
-	result := s.db.GetDb().WithContext(ctx).Table(s.tables.GetUserLoginAttemp()).Create(&userLoginAttempt)
+	result := s.db.GetDb().WithContext(ctx).Model(&types.UserLoginAttempt{}).Create(&userLoginAttempt)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
