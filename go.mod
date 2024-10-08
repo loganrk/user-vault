@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/loganrk/go-cipher v1.0.1
-	github.com/loganrk/go-db v1.0.0
+	github.com/loganrk/go-db v1.0.1
 	github.com/loganrk/go-router v1.0.0
 	github.com/spf13/viper v1.19.0
 	go.uber.org/zap v1.21.0
