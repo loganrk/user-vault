@@ -26,24 +26,72 @@ const (
 )
 
 func main() {
-
+	/* get the config instance */
 	appConfigIns, err := config.StartConfig(CONFIG_FILE_PATH, config.File{
 		Name: CONFIG_FILE_NAME,
 		Ext:  CONFIG_FILE_TYPE,
 	})
-
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	loggerIns, err := createLogger(appConfigIns.GetLogger())
-
+	/* get the logger instance */
+	loggerIns, err := getLogger(appConfigIns.GetLogger())
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
+	/* get the database instance */
+	dbIns, err := getDatabase(appConfigIns)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	store.AutoMigrate(dbIns)
+
+	/* get the user store instance */
+	userStoreIns := userStore.New(dbIns)
+
+	/* get the user service instance */
+	userSrvIns := userSrv.New(loggerIns, userStoreIns, appConfigIns.GetAppName(), appConfigIns.GetUser())
+
+	svcList := service.List{
+		User: userSrvIns,
+	}
+
+	/* get the router instance */
+	routerIns := getRouter(appConfigIns, loggerIns, svcList)
+
+	/* start the service */
+	port := appConfigIns.GetAppPort()
+	loggerIns.Infow(context.Background(), "app started", "port", port)
+	loggerIns.Sync(context.Background())
+
+	err = routerIns.StartServer(port)
+	if err != nil {
+		loggerIns.Errorw(context.Background(), "app stoped", "port", port, "error", err)
+		loggerIns.Sync(context.Background())
+		return
+	}
+
+	loggerIns.Infow(context.Background(), "app stoped", "port", port, "error", nil)
+	loggerIns.Sync(context.Background())
+}
+
+func getLogger(logConfigIns config.Logger) (logger.Logger, error) {
+	loggerConfig := logger.Config{
+		Level:           logConfigIns.GetLoggerLevel(),
+		Encoding:        logConfigIns.GetLoggerEncodingMethod(),
+		EncodingCaller:  logConfigIns.GetLoggerEncodingCaller(),
+		OutputPath:      logConfigIns.GetLoggerPath(),
+		ErrorOutputPath: logConfigIns.GetLoggerErrorPath(),
+	}
+	return logger.New(loggerConfig)
+}
+
+func getDatabase(appConfigIns config.App) (db.DB, error) {
 	cipherCryptoKey := appConfigIns.GetCipherCryptoKey()
 	cipherIns := cipher.New(cipherCryptoKey)
 
@@ -51,29 +99,25 @@ func main() {
 
 	decryptDbHost, decryptErr := cipherIns.Decrypt(encryptDbHost)
 	if decryptErr != nil {
-		log.Println(decryptErr)
-		return
+		return nil, decryptErr
 	}
 
 	decryptdbPort, decryptErr := cipherIns.Decrypt(encryptDbPort)
 	if decryptErr != nil {
-		log.Println(decryptErr)
-		return
+		return nil, decryptErr
 	}
 
 	decryptDbUsename, decryptErr := cipherIns.Decrypt(encryptDbUsename)
 	if decryptErr != nil {
-		log.Println(decryptErr)
-		return
+		return nil, decryptErr
 	}
 
 	decryptDbPasword, decryptErr := cipherIns.Decrypt(encryptDbPasword)
 	if decryptErr != nil {
-		log.Println(decryptErr)
-		return
+		return nil, decryptErr
 	}
 
-	dbIns, err := db.New(db.Config{
+	return db.New(db.Config{
 		Host:     decryptDbHost,
 		Port:     decryptdbPort,
 		Username: decryptDbUsename,
@@ -82,20 +126,11 @@ func main() {
 		Prefix:   prefix,
 	})
 
-	if err != nil {
-		log.Println(err)
-		return
-	}
+}
 
-	store.AutoMigrate(dbIns)
-
-	userStoreIns := userStore.New(dbIns)
-
-	userSrvIns := userSrv.New(loggerIns, userStoreIns, appConfigIns.GetAppName(), appConfigIns.GetUser())
-
-	svcList := service.List{
-		User: userSrvIns,
-	}
+func getRouter(appConfigIns config.App, loggerIns logger.Logger, svcList service.List) router.Router {
+	cipherCryptoKey := appConfigIns.GetCipherCryptoKey()
+	cipherIns := cipher.New(cipherCryptoKey)
 
 	routerIns := router.New()
 
@@ -153,28 +188,5 @@ func main() {
 		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserLogout)
 	}
 
-	port := appConfigIns.GetAppPort()
-	loggerIns.Infow(context.Background(), "app started", "port", port)
-	loggerIns.Sync(context.Background())
-
-	err = routerIns.StartServer(port)
-	if err != nil {
-		loggerIns.Errorw(context.Background(), "app stoped", "port", port, "error", err)
-		loggerIns.Sync(context.Background())
-		return
-	}
-
-	loggerIns.Infow(context.Background(), "app stoped", "port", port, "error", nil)
-	loggerIns.Sync(context.Background())
-}
-
-func createLogger(logConfigIns config.Logger) (logger.Logger, error) {
-	loggerConfig := logger.Config{
-		Level:           logConfigIns.GetLoggerLevel(),
-		Encoding:        logConfigIns.GetLoggerEncodingMethod(),
-		EncodingCaller:  logConfigIns.GetLoggerEncodingCaller(),
-		OutputPath:      logConfigIns.GetLoggerPath(),
-		ErrorOutputPath: logConfigIns.GetLoggerErrorPath(),
-	}
-	return logger.New(loggerConfig)
+	return routerIns
 }
