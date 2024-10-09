@@ -70,15 +70,6 @@ type apiData struct {
 	Method  string `mapstructure:"method"`
 }
 
-type table struct {
-	Prefix              string `mapstructure:"prefix"`
-	User                string `mapstructure:"user"`
-	UserLoginAttempt    string `mapstructure:"userLoginAttempt"`
-	UserActivationToken string `mapstructure:"userActivationToken"`
-	UserPasswordReset   string `mapstructure:"userPasswordReset"`
-	UserRefreshToken    string `mapstructure:"userRefreshToken"`
-}
-
 type user struct {
 	MaxLoginAttempt           int `mapstructure:"maxLoginAttempt"`
 	LoginAttemptSessionPeriod int `mapstructure:"loginAttemptSessionPeriod"`
