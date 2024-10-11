@@ -2,7 +2,7 @@ package v1
 
 import (
 	"mayilon/internal/adapters"
-	"mayilon/internal/core/service"
+	"mayilon/internal/core/domain"
 )
 
 const (
@@ -29,12 +29,12 @@ const (
 )
 
 type handler struct {
-	services       service.List
+	services       domain.List
 	logger         adapters.Logger
 	tokenEngineIns adapters.Token
 }
 
-func New(loggerIns adapters.Logger, tokenEngineIns adapters.Token, svcList service.List) adapters.Handler {
+func New(loggerIns adapters.Logger, tokenEngineIns adapters.Token, svcList domain.List) adapters.Handler {
 	return &handler{
 		services:       svcList,
 		logger:         loggerIns,

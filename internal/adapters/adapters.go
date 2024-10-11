@@ -43,6 +43,24 @@ type Handler interface {
 	UserResendActivation(w http.ResponseWriter, r *http.Request)
 }
 
+type Router interface {
+	RegisterRoute(method, path string, handlerFunc http.HandlerFunc)
+	StartServer(port string) error
+	UseBefore(middlewares ...http.HandlerFunc)
+	NewGroup(groupName string) RouterGroup
+}
+
+type RouterGroup interface {
+	RegisterRoute(method, path string, handlerFunc http.HandlerFunc)
+	UseBefore(middlewares ...http.HandlerFunc)
+}
+
+type Cipher interface {
+	Encrypt(text string) (string, error)
+	Decrypt(cryptoText string) (string, error)
+	GetKey() string
+}
+
 type Token interface {
 	CreateAccessToken(uid int, uname string, name string) (string, error)
 	CreateRefreshToken(uid int) (string, error)

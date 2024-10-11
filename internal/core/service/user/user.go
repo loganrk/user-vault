@@ -6,7 +6,6 @@ import (
 	"mayilon/internal/adapters"
 	"mayilon/internal/core/constant.go"
 	"mayilon/internal/core/domain"
-	"mayilon/internal/core/service"
 	"mayilon/internal/utils"
 
 	"golang.org/x/crypto/bcrypt"
@@ -14,7 +13,14 @@ import (
 	"time"
 )
 
-func New(loggerIns adapters.Logger, mysqlIns adapters.RepositoryMySQL, appName string, userConfIns config.User) service.User {
+type userService struct {
+	appName string
+	logger  adapters.Logger
+	mysql   adapters.RepositoryMySQL
+	conf    config.User
+}
+
+func New(loggerIns adapters.Logger, mysqlIns adapters.RepositoryMySQL, appName string, userConfIns config.User) domain.UserSvr {
 	return &userService{
 		mysql:  mysqlIns,
 		logger: loggerIns,

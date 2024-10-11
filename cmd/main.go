@@ -5,19 +5,16 @@ import (
 	"log"
 	"mayilon/config"
 	"mayilon/internal/adapters"
-	handler "mayilon/internal/adapters/handler/http/v1"
-	repositoryMysql "mayilon/internal/adapters/repository/mysql"
+	"mayilon/internal/core/domain"
 
+	cipherAes "mayilon/internal/adapters/cipher/aes"
+	handler "mayilon/internal/adapters/handler/http/v1"
 	loggerZap "mayilon/internal/adapters/logger/zapLogger"
 	middlewareAuth "mayilon/internal/adapters/middleware/auth"
+	repositoryMysql "mayilon/internal/adapters/repository/mysql"
+	routerGin "mayilon/internal/adapters/router/gin"
 	tokenEngineJwt "mayilon/internal/adapters/tokenEngine/jwt"
 
-	cipher "github.com/loganrk/go-cipher"
-	"github.com/loganrk/go-db"
-	router "github.com/loganrk/go-router"
-	routerGin "github.com/loganrk/go-router/gin"
-
-	"mayilon/internal/core/service"
 	userSrv "mayilon/internal/core/service/user"
 )
 
@@ -46,20 +43,17 @@ func main() {
 	}
 
 	/* get the database instance */
-	dbIns, err := getDatabase(appConfigIns)
+	mysqlIns, err := getDatabase(appConfigIns)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-
-	/* get the mysql instance */
-	mysqlIns := repositoryMysql.New(dbIns)
 	mysqlIns.AutoMigrate()
 
 	/* get the user service instance */
 	userSrvIns := userSrv.New(loggerIns, mysqlIns, appConfigIns.GetAppName(), appConfigIns.GetUser())
 
-	svcList := service.List{
+	svcList := domain.List{
 		User: userSrvIns,
 	}
 
@@ -93,9 +87,9 @@ func getLogger(logConfigIns config.Logger) (adapters.Logger, error) {
 	return loggerZap.New(loggerConfig)
 }
 
-func getDatabase(appConfigIns config.App) (db.DB, error) {
+func getDatabase(appConfigIns config.App) (adapters.RepositoryMySQL, error) {
 	cipherCryptoKey := appConfigIns.GetCipherCryptoKey()
-	cipherIns := cipher.New(cipherCryptoKey)
+	cipherIns := cipherAes.New(cipherCryptoKey)
 
 	encryptDbHost, encryptDbPort, encryptDbUsename, encryptDbPasword, dbName, prefix := appConfigIns.GetStoreDatabaseProperties()
 
@@ -119,19 +113,13 @@ func getDatabase(appConfigIns config.App) (db.DB, error) {
 		return nil, decryptErr
 	}
 
-	return db.New(db.Config{
-		Host:     decryptDbHost,
-		Port:     decryptdbPort,
-		Username: decryptDbUsename,
-		Password: decryptDbPasword,
-		Name:     dbName,
-		Prefix:   prefix,
-	})
+	return repositoryMysql.New(decryptDbHost, decryptdbPort, decryptDbUsename, decryptDbPasword, dbName, prefix)
+
 }
 
-func getRouter(appConfigIns config.App, loggerIns adapters.Logger, svcList service.List) router.Router {
+func getRouter(appConfigIns config.App, loggerIns adapters.Logger, svcList domain.List) adapters.Router {
 	cipherCryptoKey := appConfigIns.GetCipherCryptoKey()
-	cipherIns := cipher.New(cipherCryptoKey)
+	cipherIns := cipherAes.New(cipherCryptoKey)
 	apiKeys := appConfigIns.GetMiddlewareApiKeys()
 
 	accessTokenExpiry := appConfigIns.GetMiddlewareAccessTokenExpiry()

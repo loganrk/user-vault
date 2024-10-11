@@ -6,35 +6,47 @@ import (
 	"mayilon/internal/core/constant.go"
 	"mayilon/internal/core/domain"
 
+	gormMysql "gorm.io/driver/mysql"
+
 	"time"
 
-	"github.com/loganrk/go-db"
-
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+	"gorm.io/gorm/schema"
 )
 
 type mysql struct {
-	dbIns db.DB
+	dialer *gorm.DB
 }
 
-func New(dbIns db.DB) adapters.RepositoryMySQL {
+func New(hostname, port, username, password, name string, prefix string) (adapters.RepositoryMySQL, error) {
+	dsn := username + ":" + password + "@tcp(" + hostname + ":" + port + ")/" + name + "?charset=utf8mb4&parseTime=True&loc=Local"
+	dialer, err := gorm.Open(gormMysql.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Error),
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix: prefix,
+		},
+	})
+
 	return &mysql{
-		dbIns: dbIns,
-	}
+		dialer: dialer,
+	}, err
+
 }
+
 func (m *mysql) AutoMigrate() {
-	m.dbIns.GetDb().AutoMigrate(&domain.User{}, &domain.UserLoginAttempt{}, &domain.UserActivationToken{}, &domain.UserPasswordReset{}, &domain.UserRefreshToken{})
+	m.dialer.AutoMigrate(&domain.User{}, &domain.UserLoginAttempt{}, &domain.UserActivationToken{}, &domain.UserPasswordReset{}, &domain.UserRefreshToken{})
 
 }
 
 func (m *mysql) CreateUser(ctx context.Context, userData domain.User) (int, error) {
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.User{}).Create(&userData)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Create(&userData)
 	return userData.Id, result.Error
 }
 
 func (m *mysql) GetUserByUserid(ctx context.Context, userid int) (domain.User, error) {
 	var userData domain.User
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.User{}).Select("id", "username", "name", "state", "status").First(&userData, userid)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "username", "name", "state", "status").First(&userData, userid)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -43,7 +55,7 @@ func (m *mysql) GetUserByUserid(ctx context.Context, userid int) (domain.User, e
 
 func (m *mysql) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
 	var userData domain.User
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.User{}).Select("id", "password", "salt", "state", "status").Where("username = ?", username).First(&userData)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "password", "salt", "state", "status").Where("username = ?", username).First(&userData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -52,7 +64,7 @@ func (m *mysql) GetUserByUsername(ctx context.Context, username string) (domain.
 
 func (m *mysql) GetUserLoginFailedAttemptCount(ctx context.Context, userId int, sessionStartTime time.Time) (int, error) {
 	var userLoginAttempt []domain.UserLoginAttempt
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.UserLoginAttempt{}).Select("id").Where("user_id = ? && success = ? && created_at >= ?", userId, constant.LOGIN_ATTEMPT_FAILED, sessionStartTime).Find(&userLoginAttempt)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserLoginAttempt{}).Select("id").Where("user_id = ? && success = ? && created_at >= ?", userId, constant.LOGIN_ATTEMPT_FAILED, sessionStartTime).Find(&userLoginAttempt)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -65,7 +77,7 @@ func (m *mysql) GetUserLoginFailedAttemptCount(ctx context.Context, userId int, 
 }
 
 func (m *mysql) CreateUserLoginAttempt(ctx context.Context, userLoginAttempt domain.UserLoginAttempt) (int, error) {
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.UserLoginAttempt{}).Create(&userLoginAttempt)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserLoginAttempt{}).Create(&userLoginAttempt)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -73,14 +85,14 @@ func (m *mysql) CreateUserLoginAttempt(ctx context.Context, userLoginAttempt dom
 }
 
 func (m *mysql) CreateActivation(ctx context.Context, tokenData domain.UserActivationToken) (int, error) {
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.UserActivationToken{}).Create(&tokenData)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserActivationToken{}).Create(&tokenData)
 	return tokenData.Id, result.Error
 }
 
 func (m *mysql) GetActivationByToken(ctx context.Context, token string) (domain.UserActivationToken, error) {
 	var tokenData domain.UserActivationToken
 
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.UserActivationToken{}).Select("id").Where("token = ?", token).First(&tokenData)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserActivationToken{}).Select("id").Where("token = ?", token).First(&tokenData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -89,30 +101,30 @@ func (m *mysql) GetActivationByToken(ctx context.Context, token string) (domain.
 }
 
 func (m *mysql) UpdatedActivationtatus(ctx context.Context, id int, status int) error {
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.UserActivationToken{}).Where("id = ?", id).Update("status", status)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserActivationToken{}).Where("id = ?", id).Update("status", status)
 	return result.Error
 
 }
 
 func (m *mysql) UpdateStatus(ctx context.Context, userid int, status int) error {
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.UserActivationToken{}).Where("id = ?", userid).Update("status", status)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserActivationToken{}).Where("id = ?", userid).Update("status", status)
 	return result.Error
 }
 
 func (m *mysql) CreateRefreshToken(ctx context.Context, refreshTokenData domain.UserRefreshToken) (int, error) {
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.UserRefreshToken{}).Create(&refreshTokenData)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserRefreshToken{}).Create(&refreshTokenData)
 	return refreshTokenData.Id, result.Error
 }
 
 func (m *mysql) RevokedRefreshToken(ctx context.Context, userid int, refreshToken string) error {
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.UserRefreshToken{}).Where("user_id = ? and token = ?", userid, refreshToken).Update("revoked", true)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserRefreshToken{}).Where("user_id = ? and token = ?", userid, refreshToken).Update("revoked", true)
 	return result.Error
 
 }
 
 func (m *mysql) GetRefreshTokenData(ctx context.Context, userid int, refreshToken string) (domain.UserRefreshToken, error) {
 	var tokenData domain.UserRefreshToken
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.UserRefreshToken{}).Select("id", "expires_at", "revoked").Where("user_id = ? and token = ?", userid, refreshToken).First(&tokenData)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserRefreshToken{}).Select("id", "expires_at", "revoked").Where("user_id = ? and token = ?", userid, refreshToken).First(&tokenData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -121,14 +133,14 @@ func (m *mysql) GetRefreshTokenData(ctx context.Context, userid int, refreshToke
 }
 
 func (m *mysql) CreatePasswordReset(ctx context.Context, passwordResetData domain.UserPasswordReset) (int, error) {
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.UserPasswordReset{}).Create(&passwordResetData)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserPasswordReset{}).Create(&passwordResetData)
 	return passwordResetData.Id, result.Error
 }
 
 func (m *mysql) GetPasswordResetByToken(ctx context.Context, token string) (domain.UserPasswordReset, error) {
 	var passwordResetData domain.UserPasswordReset
 
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.UserPasswordReset{}).Select("id", "user_id", "expires_at", "status").Where("token = ?", token).First(&passwordResetData)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserPasswordReset{}).Select("id", "user_id", "expires_at", "status").Where("token = ?", token).First(&passwordResetData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -139,7 +151,7 @@ func (m *mysql) GetPasswordResetByToken(ctx context.Context, token string) (doma
 func (m *mysql) GetActivePasswordResetByUserId(ctx context.Context, userid int) (domain.UserPasswordReset, error) {
 	var passwordResetData domain.UserPasswordReset
 
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.UserPasswordReset{}).Select("id", "user_id", "expires_at", "status").Where("userid = ? and expires_at > ? and status = ?", userid, time.Now(), constant.USER_PASSWORD_RESET_STATUS_ACTIVE).First(&passwordResetData)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserPasswordReset{}).Select("id", "user_id", "expires_at", "status").Where("userid = ? and expires_at > ? and status = ?", userid, time.Now(), constant.USER_PASSWORD_RESET_STATUS_ACTIVE).First(&passwordResetData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
 	}
@@ -147,12 +159,12 @@ func (m *mysql) GetActivePasswordResetByUserId(ctx context.Context, userid int) 
 }
 
 func (m *mysql) UpdatedPasswordResetStatus(ctx context.Context, id int, status int) error {
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.UserPasswordReset{}).Where("id = ?", id).Update("status", status)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserPasswordReset{}).Where("id = ?", id).Update("status", status)
 	return result.Error
 
 }
 
 func (m *mysql) UpdatePassword(ctx context.Context, userid int, password string) error {
-	result := m.dbIns.GetDb().WithContext(ctx).Model(&domain.User{}).Where("id = ?", userid).Update("password", password)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Where("id = ?", userid).Update("password", password)
 	return result.Error
 }

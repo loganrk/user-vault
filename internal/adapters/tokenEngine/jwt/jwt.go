@@ -6,17 +6,16 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/loganrk/go-cipher"
 )
 
 type token struct {
 	cryptoKey          string
 	accessTokenExpiry  int
 	refreshTokenExpiry int
-	cipher             cipher.Cipher
+	cipher             adapters.Cipher
 }
 
-func New(cryptoKey string, accessTokenExpiry int, refreshTokenExpiry int, cipherIns cipher.Cipher) adapters.Token {
+func New(cryptoKey string, accessTokenExpiry int, refreshTokenExpiry int, cipherIns adapters.Cipher) adapters.Token {
 	return &token{
 		cryptoKey:          cryptoKey,
 		accessTokenExpiry:  accessTokenExpiry,
