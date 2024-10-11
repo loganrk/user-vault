@@ -9,3 +9,6 @@
 
 # ignore ALL .bin files
 *.bin
+
+# ignore ALL .sum files
+*.sum
