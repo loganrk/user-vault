@@ -26,6 +26,7 @@ func (r *response) SetData(data any) {
 }
 
 func (r *response) Send(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
 	if len(r.Err) > 0 {
 		w.WriteHeader(r.Status)
 		r.Success = false

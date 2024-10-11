@@ -43,7 +43,7 @@ type UserPasswordReset struct {
 type UserRefreshToken struct {
 	Id        int       `gorm:"primarykey;size:16"`
 	UserId    int       `gorm:"column:user_id;size:16"`
-	Token     string    `gorm:"column:token;size:255"`
+	Token     string    `gorm:"column:token;size:1055"`
 	Revoked   bool      `gorm:"column:revoked"`
 	ExpiresAt time.Time `gorm:"column:expires_at"`
 	CreatedAt time.Time `gorm:"autoCreateTime;column:created_at"`

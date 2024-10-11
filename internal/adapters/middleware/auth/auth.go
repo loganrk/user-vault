@@ -3,7 +3,6 @@ package auth
 import (
 	"mayilon/internal/port"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -50,7 +49,6 @@ func (a *auth) ValidateAccessToken() http.HandlerFunc {
 		}
 
 		userid, expiresAt, err := a.tokenIns.GetAccessTokenData(token)
-
 		if err != nil {
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
@@ -65,10 +63,10 @@ func (a *auth) ValidateAccessToken() http.HandlerFunc {
 			http.Error(w, "token is expired", http.StatusBadRequest)
 			return
 		}
-		query := r.URL.Query()
-		query.Set("uid", strconv.Itoa(userid))
-		r.URL.RawQuery = query.Encode()
+
+		w.Header().Set("Content-Type", "application/json")
 	})
+
 }
 
 func (a *auth) exactToken(token string) string {

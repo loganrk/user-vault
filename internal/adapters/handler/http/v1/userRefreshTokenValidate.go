@@ -29,8 +29,8 @@ func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 		res.Send(w)
 		return
 	}
-
 	userid, expiresAt, err := h.tokenEngineIns.GetRefreshTokenData(req.GetRefreshToken())
+
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")

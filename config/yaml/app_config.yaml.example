@@ -14,9 +14,9 @@ cipher:
   cryptoKey: qf0ac7131xktkut8
   
 middleware:
-  access_token:
+  accessToken:
     expiry: 1500
-  refresh_token:
+  refreshToken:
     expiry: 36000
   keys:
     - "mhkwuhcL30tq6IuErPfKgRi86BfcRC8vtdQvJa5ILqrDmC2JdNlGlYs05w2KWcyd"
@@ -56,7 +56,7 @@ api:
     method: GET
   userLogout:
     enabled: true
-    route: /user/password-logout
+    route: /user/logout
     method: GET
       
 store:
@@ -70,7 +70,7 @@ store:
   cache:
     heap:
       enabled: true
-      max_capacity: 2000
+      maxCapacity: 2000
       expiry: 3600
 
 user:
@@ -86,5 +86,5 @@ user:
     link: http://localhost:8000/user/password_reset?token={{token}} # macros :[{{token}}]
     linkExpiry: 1800 #seconds
   refreshToken:
-     enabled:true
+     enabled: true
      rotation: true
