@@ -3,7 +3,7 @@ package mysql
 import (
 	"context"
 	"mayilon/internal/adapters"
-	"mayilon/internal/core/constant.go"
+	"mayilon/internal/core/constant"
 	"mayilon/internal/core/domain"
 
 	gormMysql "gorm.io/driver/mysql"
