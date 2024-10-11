@@ -62,7 +62,7 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	passwordMatch, err := h.usecases.User.CheckPassword(ctx, req.GetUsername(), userData.Password, userData.Salt)
+	passwordMatch, err := h.usecases.User.CheckPassword(ctx, req.GetPassword(), userData.Password, userData.Salt)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -134,7 +134,6 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 	var accessToken, refreshTokenType, refreshToken string
 
 	accessToken, err = h.tokenEngineIns.CreateAccessToken(userData.Id, userData.Username, userData.Name)
-
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -160,6 +159,7 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		}
 
 		refreshExpiresAt, err := h.tokenEngineIns.GetRefreshTokenExpiry(refreshToken)
+
 		if err != nil {
 			res.SetStatus(http.StatusInternalServerError)
 			res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")

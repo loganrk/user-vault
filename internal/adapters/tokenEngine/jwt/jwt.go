@@ -2,7 +2,9 @@ package jwt
 
 import (
 	"errors"
+	"fmt"
 	"mayilon/internal/port"
+	"reflect"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -94,10 +96,10 @@ func (t *token) GetRefreshTokenData(tokenStringEcr string) (int, time.Time, erro
 			return 0, time.Time{}, errors.New("token type (`type`) not found or mismatch in token")
 		}
 
-		if uid, ok := claims["uid"].(int); ok {
+		if uid, ok := claims["uid"].(float64); ok {
 			if exp, ok := claims["exp"].(float64); ok {
 				expirationTime := time.Unix(int64(exp), 0)
-				return uid, expirationTime, nil
+				return int(uid), expirationTime, nil
 			}
 			return 0, time.Time{}, errors.New("expiration time (`exp`) not found in token")
 		}
@@ -144,14 +146,17 @@ func (t *token) GetAccessTokenData(encryptedToken string) (int, time.Time, error
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+
 		if tokenType, ok := claims["type"].(string); !ok || tokenType != "access" {
 			return 0, time.Time{}, errors.New("token type (`type`) not found or mismatch in token")
 		}
-
-		if uid, ok := claims["uid"].(int); ok {
+		for key, value := range claims {
+			fmt.Printf("Key: %s, Type: %s, Value: %v\n", key, reflect.TypeOf(value), value)
+		}
+		if uid, ok := claims["uid"].(float64); ok {
 			if exp, ok := claims["exp"].(float64); ok {
 				expirationTime := time.Unix(int64(exp), 0)
-				return uid, expirationTime, nil
+				return int(uid), expirationTime, nil
 			}
 			return 0, time.Time{}, errors.New("expiration time (`exp`) not found in token")
 		}

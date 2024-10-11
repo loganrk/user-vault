@@ -30,7 +30,7 @@ type app struct {
 		Cache struct {
 			Heap struct {
 				Enabled     bool `mapstructure:"enabled"`
-				MaxCapacity int  `mapstructure:"max_capacity"`
+				MaxCapacity int  `mapstructure:"maxCapacity"`
 				Expiry      int  `mapstructure:"expiry"`
 			} `mapstructure:"heap"`
 		} `mapstructure:"cache"`
