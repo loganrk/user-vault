@@ -1,27 +1,25 @@
-package user
+package request
 
 import (
 	"encoding/json"
 	"errors"
+	"mayilon/internal/port"
 	"net/http"
 )
 
-func NewUserActivation() *newUserActivation {
-	return &newUserActivation{}
-}
-
-func (u *newUserActivation) Parse(r *http.Request) error {
+func NewUserActivation(r *http.Request) (port.UserActivationClientRequest, error) {
+	var u newUserActivation
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)
 		err := decoder.Decode(u)
 		if err != nil {
-			return err
+			return &u, err
 		}
 	} else {
 		u.Token = r.URL.Query().Get("token")
 	}
 
-	return nil
+	return &u, nil
 }
 
 func (u *newUserActivation) Validate() error {
@@ -31,4 +29,8 @@ func (u *newUserActivation) Validate() error {
 	}
 
 	return nil
+}
+
+func (u *newUserActivation) GetToken() string {
+	return u.Token
 }

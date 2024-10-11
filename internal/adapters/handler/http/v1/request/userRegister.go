@@ -1,23 +1,20 @@
-package user
+package request
 
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/adapters/handler/http/v1/request"
+	"mayilon/internal/port"
 	"mayilon/internal/utils"
 	"net/http"
 )
 
-func NewUserRegister() *userRegister {
-	return &userRegister{}
-}
-
-func (u *userRegister) Parse(r *http.Request) error {
+func NewUserRegister(r *http.Request) (port.UserRegisterClientRequest, error) {
+	var u userRegister
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)
 		err := decoder.Decode(u)
 		if err != nil {
-			return err
+			return &u, err
 		}
 	} else {
 		u.Username = r.URL.Query().Get("username")
@@ -25,11 +22,11 @@ func (u *userRegister) Parse(r *http.Request) error {
 		u.Name = r.URL.Query().Get("name")
 	}
 
-	return nil
+	return &u, nil
 }
 
 func (u *userRegister) Validate() error {
-	if !request.EmailRegex.MatchString(u.Username) {
+	if !emailRegex.MatchString(u.Username) {
 
 		return errors.New("invalid username")
 	}
@@ -42,7 +39,7 @@ func (u *userRegister) Validate() error {
 		return errors.New("invalid name")
 	}
 
-	if !request.PasswordRegex.MatchString(u.Password) {
+	if !passwordRegex.MatchString(u.Password) {
 
 		return errors.New("password must be between 8 and 12 characters long")
 	}
@@ -68,4 +65,16 @@ func (u *userRegister) Validate() error {
 	}
 
 	return nil
+}
+
+func (u *userRegister) GetUsername() string {
+	return u.Username
+}
+
+func (u *userRegister) GetPassword() string {
+	return u.Password
+}
+
+func (u *userRegister) GetName() string {
+	return u.Name
 }

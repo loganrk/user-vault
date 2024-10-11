@@ -1,41 +1,46 @@
-package user
+package request
 
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/adapters/handler/http/v1/request"
+	"mayilon/internal/port"
 	"net/http"
 )
 
-func NewUserLogin() *userLogin {
-	return &userLogin{}
-}
-
-func (u *userLogin) Parse(r *http.Request) error {
+func NewUserLogin(r *http.Request) (port.UserLoginClientRequest, error) {
+	var u userLogin
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)
 		err := decoder.Decode(u)
 		if err != nil {
-			return err
+			return &u, err
 		}
 	} else {
 		u.Username = r.URL.Query().Get("username")
 		u.Password = r.URL.Query().Get("password")
 	}
 
-	return nil
+	return &u, nil
 }
 
 func (u *userLogin) Validate() error {
-	if !request.EmailRegex.MatchString(u.Username) {
+	if !emailRegex.MatchString(u.Username) {
 
 		return errors.New("invalid username")
 	}
 
-	if !request.PasswordRegex.MatchString(u.Password) {
+	if !passwordRegex.MatchString(u.Password) {
 
 		return errors.New("invalid password")
 	}
 
 	return nil
+}
+
+func (u *userLogin) GetUsername() string {
+	return u.Username
+}
+
+func (u *userLogin) GetPassword() string {
+	return u.Password
 }

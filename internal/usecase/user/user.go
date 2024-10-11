@@ -3,9 +3,9 @@ package user
 import (
 	"context"
 	"mayilon/config"
-	"mayilon/internal/adapters"
-	"mayilon/internal/core/constant"
-	"mayilon/internal/core/domain"
+	"mayilon/internal/constant"
+	"mayilon/internal/domain"
+	"mayilon/internal/port"
 	"mayilon/internal/utils"
 
 	"golang.org/x/crypto/bcrypt"
@@ -13,32 +13,32 @@ import (
 	"time"
 )
 
-type userService struct {
+type userusecase struct {
 	appName string
-	logger  adapters.Logger
-	mysql   adapters.RepositoryMySQL
+	logger  port.Logger
+	mysql   port.RepositoryMySQL
 	conf    config.User
 }
 
-func New(loggerIns adapters.Logger, mysqlIns adapters.RepositoryMySQL, appName string, userConfIns config.User) domain.UserSvr {
-	return &userService{
+func New(loggerIns port.Logger, mysqlIns port.RepositoryMySQL, appName string, userConfIns config.User) domain.UserSvr {
+	return &userusecase{
 		mysql:  mysqlIns,
 		logger: loggerIns,
 		conf:   userConfIns,
 	}
 }
 
-func (u *userService) GetUserByUserid(ctx context.Context, userid int) (domain.User, error) {
+func (u *userusecase) GetUserByUserid(ctx context.Context, userid int) (domain.User, error) {
 	userData, err := u.mysql.GetUserByUserid(ctx, userid)
 	return userData, err
 }
 
-func (u *userService) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
+func (u *userusecase) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
 	userData, err := u.mysql.GetUserByUsername(ctx, username)
 	return userData, err
 }
 
-func (u *userService) CheckLoginFailedAttempt(ctx context.Context, userId int) (int, error) {
+func (u *userusecase) CheckLoginFailedAttempt(ctx context.Context, userId int) (int, error) {
 	// TODO: add client based token
 	sesstionStartTime := time.Now().Add(time.Duration(u.conf.GetLoginAttemptSessionPeriod()*-1) * time.Second)
 	attempCount, err := u.mysql.GetUserLoginFailedAttemptCount(ctx, userId, sesstionStartTime)
@@ -55,7 +55,7 @@ func (u *userService) CheckLoginFailedAttempt(ctx context.Context, userId int) (
 	return constant.LOGIN_ATTEMPT_SUCCESS, nil
 }
 
-func (u *userService) CreateLoginAttempt(ctx context.Context, userId int, success bool) (int, error) {
+func (u *userusecase) CreateLoginAttempt(ctx context.Context, userId int, success bool) (int, error) {
 
 	loginAttemptId, err := u.mysql.CreateUserLoginAttempt(ctx, domain.UserLoginAttempt{
 		UserId:    userId,
@@ -66,7 +66,7 @@ func (u *userService) CreateLoginAttempt(ctx context.Context, userId int, succes
 	return loginAttemptId, err
 }
 
-func (u *userService) CheckPassword(ctx context.Context, password string, passwordHash string, saltHash string) (bool, error) {
+func (u *userusecase) CheckPassword(ctx context.Context, password string, passwordHash string, saltHash string) (bool, error) {
 
 	err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password+saltHash))
 	if err != nil {
@@ -75,7 +75,7 @@ func (u *userService) CheckPassword(ctx context.Context, password string, passwo
 	return true, nil
 }
 
-func (u *userService) CreateUser(ctx context.Context, username, password, name string) (int, error) {
+func (u *userusecase) CreateUser(ctx context.Context, username, password, name string) (int, error) {
 
 	saltHash, err := u.newSaltHash()
 	if err != nil {
@@ -104,7 +104,7 @@ func (u *userService) CreateUser(ctx context.Context, username, password, name s
 	return userid, nil
 }
 
-func (u *userService) newSaltHash() (string, error) {
+func (u *userusecase) newSaltHash() (string, error) {
 	// Generate a random salt (using bcrypt's salt generation function)
 	saltRaw := utils.GenerateRandomString(10)
 

@@ -2,19 +2,18 @@ package v1
 
 import (
 	"context"
-	request "mayilon/internal/adapters/handler/http/v1/request/user"
+	"mayilon/internal/adapters/handler/http/v1/request"
 	"mayilon/internal/adapters/handler/http/v1/response"
-	"mayilon/internal/core/constant"
+	"mayilon/internal/constant"
+	"mayilon/internal/port"
 	"net/http"
 )
 
 func (h *handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-
-	req := request.NewUserResendActivation()
 	res := response.New()
 
-	err := req.Parse(r)
+	req, err := request.NewUserResendActivation(r)
 	if err != nil {
 		res.SetStatus(http.StatusBadRequest)
 		res.SetError(ERROR_CODE_REQUEST_INVALID, "invalid request parameters")
@@ -30,7 +29,7 @@ func (h *handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData, err := h.services.User.GetUserByUsername(ctx, req.Username)
+	userData, err := h.usecases.User.GetUserByUsername(ctx, req.GetUsername())
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -61,7 +60,7 @@ func (h *handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenId, activationToken, err := h.services.User.CreateActivationToken(ctx, userData.Id)
+	tokenId, activationToken, err := h.usecases.User.CreateActivationToken(ctx, userData.Id)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -70,9 +69,9 @@ func (h *handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if tokenId != 0 && activationToken != "" {
-		activationLink := h.services.User.GetActivationLink(tokenId, activationToken)
+		activationLink := h.usecases.User.GetActivationLink(tokenId, activationToken)
 		if activationLink != "" {
-			template, err := h.services.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
+			template, err := h.usecases.User.GetActivationEmailTemplate(ctx, userData.Name, activationLink)
 			if err != nil {
 				res.SetStatus(http.StatusInternalServerError)
 				res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -80,14 +79,17 @@ func (h *handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if template != "" {
-				err = h.services.User.SendActivation(ctx, userData.Username, template)
+				err = h.usecases.User.SendActivation(ctx, userData.Username, template)
 				if err != nil {
 					res.SetStatus(http.StatusInternalServerError)
 					res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
 					res.Send(w)
 					return
 				}
-				resData := "please check your email for activate account"
+
+				resData := port.UserResendActivationClientResponse{
+					Message: "please check your email for activate account",
+				}
 				res.SetData(resData)
 				res.Send(w)
 				return

@@ -1,7 +1,7 @@
 package gin
 
 import (
-	"mayilon/internal/adapters"
+	"mayilon/internal/port"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,14 +15,14 @@ type routeGroup struct {
 	ginGroup *gin.RouterGroup
 }
 
-func New() adapters.Router {
+func New() port.Router {
 	gin.DisableConsoleColor()
 	return &route{
 		gin: gin.Default(),
 	}
 }
 
-func (r *route) NewGroup(groupName string) adapters.RouterGroup {
+func (r *route) NewGroup(groupName string) port.RouterGroup {
 	return &routeGroup{
 		ginGroup: r.gin.Group(groupName),
 	}

@@ -2,20 +2,19 @@ package v1
 
 import (
 	"context"
-	request "mayilon/internal/adapters/handler/http/v1/request/user"
+	"mayilon/internal/adapters/handler/http/v1/request"
 	"mayilon/internal/adapters/handler/http/v1/response"
-	"mayilon/internal/core/constant"
+	"mayilon/internal/constant"
+	"mayilon/internal/port"
 	"net/http"
 	"time"
 )
 
 func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-
-	req := request.NewUserRefreshTokenValidate()
 	res := response.New()
 
-	err := req.Parse(r)
+	req, err := request.NewUserRefreshTokenValidate(r)
 	if err != nil {
 		res.SetStatus(http.StatusBadRequest)
 		res.SetError(ERROR_CODE_REQUEST_INVALID, "invalid request parameters")
@@ -31,7 +30,7 @@ func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	userid, expiresAt, err := h.tokenEngineIns.GetRefreshTokenData(req.RefreshToken)
+	userid, expiresAt, err := h.tokenEngineIns.GetRefreshTokenData(req.GetRefreshToken())
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -53,7 +52,7 @@ func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	refreshTokenData, err := h.services.User.GetRefreshTokenData(ctx, userid, req.RefreshToken)
+	refreshTokenData, err := h.usecases.User.GetRefreshTokenData(ctx, userid, req.GetRefreshToken())
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -82,7 +81,7 @@ func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	userData, err := h.services.User.GetUserByUserid(ctx, userid)
+	userData, err := h.usecases.User.GetUserByUserid(ctx, userid)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -108,7 +107,7 @@ func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 
 	var accessToken, refreshTokenType, refreshToken string
 
-	if h.services.User.RefreshTokenEnabled() {
+	if h.usecases.User.RefreshTokenEnabled() {
 		accessToken, err = h.tokenEngineIns.CreateAccessToken(userData.Id, userData.Username, userData.Name)
 		if err != nil {
 			res.SetStatus(http.StatusInternalServerError)
@@ -117,10 +116,10 @@ func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		if h.services.User.RefreshTokenRotationEnabled() {
+		if h.usecases.User.RefreshTokenRotationEnabled() {
 			refreshTokenType = constant.REFRESH_TOKEN_TYPE_ROTATING
 
-			err = h.services.User.RevokedRefreshToken(ctx, userid, req.RefreshToken)
+			err = h.usecases.User.RevokedRefreshToken(ctx, userid, req.GetRefreshToken())
 			if err != nil {
 				res.SetStatus(http.StatusInternalServerError)
 				res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -136,7 +135,7 @@ func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 				return
 			}
 
-			tokenId, err := h.services.User.StoreRefreshToken(ctx, userid, refreshToken, refreshTokenData.ExpiresAt)
+			tokenId, err := h.usecases.User.StoreRefreshToken(ctx, userid, refreshToken, refreshTokenData.ExpiresAt)
 			if err != nil {
 				res.SetStatus(http.StatusInternalServerError)
 				res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -153,7 +152,7 @@ func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 
 		} else {
 			refreshTokenType = constant.REFRESH_TOKEN_TYPE_STATIC
-			refreshToken = req.RefreshToken
+			refreshToken = req.GetRefreshToken()
 		}
 
 	} else {
@@ -163,11 +162,7 @@ func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	resData := struct {
-		AccessToken      string `json:"access_token"`
-		RefreshTokenType string `json:"refresh_token_type,omitempty"`
-		RefreshToken     string `json:"refresh_token"`
-	}{
+	resData := port.UserRefreshTokenValidateClientResponse{
 		AccessToken:      accessToken,
 		RefreshTokenType: refreshTokenType,
 		RefreshToken:     refreshToken,

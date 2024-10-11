@@ -2,20 +2,19 @@ package v1
 
 import (
 	"context"
-	request "mayilon/internal/adapters/handler/http/v1/request/user"
+	"mayilon/internal/adapters/handler/http/v1/request"
 	"mayilon/internal/adapters/handler/http/v1/response"
-	"mayilon/internal/core/constant"
+	"mayilon/internal/constant"
+	"mayilon/internal/port"
 	"net/http"
 	"time"
 )
 
 func (h *handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-
-	req := request.NewUserActivation()
 	res := response.New()
 
-	err := req.Parse(r)
+	req, err := request.NewUserActivation(r)
 	if err != nil {
 		res.SetStatus(http.StatusBadRequest)
 		res.SetError(ERROR_CODE_REQUEST_INVALID, "invalid request parameters")
@@ -31,7 +30,7 @@ func (h *handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenData, err := h.services.User.GetUserActivationByToken(ctx, req.Token)
+	tokenData, err := h.usecases.User.GetUserActivationByToken(ctx, req.GetToken())
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -61,7 +60,7 @@ func (h *handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData, err := h.services.User.GetUserByUserid(ctx, tokenData.UserId)
+	userData, err := h.usecases.User.GetUserByUserid(ctx, tokenData.UserId)
 
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
@@ -84,7 +83,7 @@ func (h *handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 		res.Send(w)
 		return
 	}
-	err = h.services.User.UpdatedActivationtatus(ctx, tokenData.Id, constant.USER_ACTIVATION_TOKEN_STATUS_INACTIVE)
+	err = h.usecases.User.UpdatedActivationtatus(ctx, tokenData.Id, constant.USER_ACTIVATION_TOKEN_STATUS_INACTIVE)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -92,7 +91,7 @@ func (h *handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.services.User.UpdateStatus(ctx, userData.Id, constant.USER_STATUS_ACTIVE)
+	err = h.usecases.User.UpdateStatus(ctx, userData.Id, constant.USER_STATUS_ACTIVE)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -100,7 +99,9 @@ func (h *handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resData := "account has been activated successfully"
+	resData := port.UserActivationClientResponse{
+		Message: "account has been activated successfully",
+	}
 	res.SetData(resData)
 	res.Send(w)
 }

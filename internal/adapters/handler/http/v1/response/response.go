@@ -2,17 +2,11 @@ package response
 
 import (
 	"encoding/json"
+	"mayilon/internal/port"
 	"net/http"
 )
 
-type Response interface {
-	SetError(errCode string, errMsg string)
-	SetStatus(status int)
-	SetData(data any)
-	Send(w http.ResponseWriter)
-}
-
-func New() Response {
+func New() port.Response {
 	return &response{}
 }
 

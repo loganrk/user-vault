@@ -1,30 +1,27 @@
-package user
+package request
 
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/adapters/handler/http/v1/request"
+	"mayilon/internal/port"
 	"mayilon/internal/utils"
 	"net/http"
 )
 
-func NewUserResetPassword() *userResetPassword {
-	return &userResetPassword{}
-}
-
-func (u *userResetPassword) Parse(r *http.Request) error {
+func NewUserResetPassword(r *http.Request) (port.UserResetPasswordClientRequest, error) {
+	var u userResetPassword
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)
 		err := decoder.Decode(u)
 		if err != nil {
-			return err
+			return &u, err
 		}
 	} else {
 		u.Password = r.URL.Query().Get("password")
 		u.Token = r.URL.Query().Get("token")
 	}
 
-	return nil
+	return &u, nil
 }
 
 func (u *userResetPassword) Validate() error {
@@ -37,7 +34,7 @@ func (u *userResetPassword) Validate() error {
 		return errors.New("invalid password")
 	}
 
-	if !request.PasswordRegex.MatchString(u.Password) {
+	if !passwordRegex.MatchString(u.Password) {
 
 		return errors.New("password must be between 8 and 12 characters long")
 	}
@@ -63,4 +60,13 @@ func (u *userResetPassword) Validate() error {
 	}
 
 	return nil
+}
+
+func (u *userResetPassword) GetPassword() string {
+	return u.Password
+
+}
+
+func (u *userResetPassword) GetToken() string {
+	return u.Token
 }

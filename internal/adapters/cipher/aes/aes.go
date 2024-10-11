@@ -7,14 +7,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
-	"mayilon/internal/adapters"
+	"mayilon/internal/port"
 )
 
 type aesCipher struct {
 	cryptoKey string
 }
 
-func New(cryptoKey string) adapters.Cipher {
+func New(cryptoKey string) port.Cipher {
 	return &aesCipher{
 		cryptoKey: cryptoKey,
 	}
