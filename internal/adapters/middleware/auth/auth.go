@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"mayilon/internal/adapters"
+	"mayilon/internal/port"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,10 +12,10 @@ import (
 
 type auth struct {
 	apiKeys  []string
-	tokenIns adapters.Token
+	tokenIns port.Token
 }
 
-func New(apiKeys []string, tokenIns adapters.Token) adapters.Auth {
+func New(apiKeys []string, tokenIns port.Token) port.Auth {
 	return &auth{
 		apiKeys:  apiKeys,
 		tokenIns: tokenIns,

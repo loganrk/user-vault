@@ -2,7 +2,7 @@ package jwt
 
 import (
 	"errors"
-	"mayilon/internal/adapters"
+	"mayilon/internal/port"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -12,10 +12,10 @@ type token struct {
 	cryptoKey          string
 	accessTokenExpiry  int
 	refreshTokenExpiry int
-	cipher             adapters.Cipher
+	cipher             port.Cipher
 }
 
-func New(cryptoKey string, accessTokenExpiry int, refreshTokenExpiry int, cipherIns adapters.Cipher) adapters.Token {
+func New(cryptoKey string, accessTokenExpiry int, refreshTokenExpiry int, cipherIns port.Cipher) port.Token {
 	return &token{
 		cryptoKey:          cryptoKey,
 		accessTokenExpiry:  accessTokenExpiry,

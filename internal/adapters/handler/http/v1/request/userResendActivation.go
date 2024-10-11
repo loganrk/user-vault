@@ -1,34 +1,35 @@
-package user
+package request
 
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/adapters/handler/http/v1/request"
+	"mayilon/internal/port"
 	"net/http"
 )
 
-func NewUserResendActivation() *userResendActivation {
-	return &userResendActivation{}
-}
-
-func (u *userResendActivation) Parse(r *http.Request) error {
+func NewUserResendActivation(r *http.Request) (port.UserResendActivationClientRequest, error) {
+	var u userResendActivation
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)
 		err := decoder.Decode(u)
 		if err != nil {
-			return err
+			return &u, err
 		}
 	} else {
 		u.Username = r.URL.Query().Get("username")
 	}
 
-	return nil
+	return &u, nil
 }
 
 func (u *userResendActivation) Validate() error {
-	if !request.EmailRegex.MatchString(u.Username) {
+	if !emailRegex.MatchString(u.Username) {
 
 		return errors.New("invalid username")
 	}
 	return nil
+}
+
+func (u *userResendActivation) GetUsername() string {
+	return u.Username
 }

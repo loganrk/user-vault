@@ -2,20 +2,19 @@ package v1
 
 import (
 	"context"
-	request "mayilon/internal/adapters/handler/http/v1/request/user"
+	"mayilon/internal/adapters/handler/http/v1/request"
 	"mayilon/internal/adapters/handler/http/v1/response"
-	"mayilon/internal/core/constant"
+	"mayilon/internal/constant"
+	"mayilon/internal/port"
 	"net/http"
 	"time"
 )
 
 func (h *handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-
-	req := request.NewUserResetPassword()
 	res := response.New()
 
-	err := req.Parse(r)
+	req, err := request.NewUserResetPassword(r)
 	if err != nil {
 		res.SetStatus(http.StatusBadRequest)
 		res.SetError(ERROR_CODE_REQUEST_INVALID, "invalid request parameters")
@@ -30,7 +29,7 @@ func (h *handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		res.Send(w)
 		return
 	}
-	tokenData, err := h.services.User.GetPasswordResetByToken(ctx, req.Token)
+	tokenData, err := h.usecases.User.GetPasswordResetByToken(ctx, req.GetToken())
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -59,7 +58,7 @@ func (h *handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData, err := h.services.User.GetUserByUserid(ctx, tokenData.UserId)
+	userData, err := h.usecases.User.GetUserByUserid(ctx, tokenData.UserId)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -82,7 +81,7 @@ func (h *handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.services.User.UpdatePassword(ctx, userData.Id, req.Password, userData.Salt)
+	err = h.usecases.User.UpdatePassword(ctx, userData.Id, req.GetPassword(), userData.Salt)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -90,7 +89,7 @@ func (h *handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// TODO : need to automatied script when its fail
-	err = h.services.User.UpdatedPasswordResetStatus(ctx, tokenData.Id, constant.USER_PASSWORD_RESET_STATUS_INACTIVE)
+	err = h.usecases.User.UpdatedPasswordResetStatus(ctx, tokenData.Id, constant.USER_PASSWORD_RESET_STATUS_INACTIVE)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -98,7 +97,9 @@ func (h *handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resData := "password has been reset successfully"
+	resData := port.UserResetPasswordClientResponse{
+		Message: "password has been reset successfully",
+	}
 	res.SetData(resData)
 	res.Send(w)
 

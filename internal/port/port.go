@@ -1,11 +1,22 @@
-package adapters
+package port
 
 import (
 	"context"
-	"mayilon/internal/core/domain"
+	"mayilon/internal/domain"
 	"net/http"
 	"time"
 )
+
+type Handler interface {
+	UserLogin(w http.ResponseWriter, r *http.Request)
+	UserLogout(w http.ResponseWriter, r *http.Request)
+	UserActivation(w http.ResponseWriter, r *http.Request)
+	UserPasswordReset(w http.ResponseWriter, r *http.Request)
+	UserForgotPassword(w http.ResponseWriter, r *http.Request)
+	UserRefreshTokenValidate(w http.ResponseWriter, r *http.Request)
+	UserRegister(w http.ResponseWriter, r *http.Request)
+	UserResendActivation(w http.ResponseWriter, r *http.Request)
+}
 
 type RepositoryMySQL interface {
 	AutoMigrate()
@@ -30,17 +41,6 @@ type RepositoryMySQL interface {
 	CreateRefreshToken(ctx context.Context, refreshTokenData domain.UserRefreshToken) (int, error)
 	RevokedRefreshToken(ctx context.Context, userid int, refreshToken string) error
 	GetRefreshTokenData(ctx context.Context, userid int, refreshToken string) (domain.UserRefreshToken, error)
-}
-
-type Handler interface {
-	UserLogin(w http.ResponseWriter, r *http.Request)
-	UserLogout(w http.ResponseWriter, r *http.Request)
-	UserActivation(w http.ResponseWriter, r *http.Request)
-	UserPasswordReset(w http.ResponseWriter, r *http.Request)
-	UserForgotPassword(w http.ResponseWriter, r *http.Request)
-	UserRefreshTokenValidate(w http.ResponseWriter, r *http.Request)
-	UserRegister(w http.ResponseWriter, r *http.Request)
-	UserResendActivation(w http.ResponseWriter, r *http.Request)
 }
 
 type Router interface {

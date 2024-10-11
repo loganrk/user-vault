@@ -3,7 +3,7 @@ package zapLogger
 import (
 	"context"
 	"fmt"
-	"mayilon/internal/adapters"
+	"mayilon/internal/port"
 	"runtime"
 
 	"github.com/natefinch/lumberjack"
@@ -29,7 +29,7 @@ type zapLog struct {
 	sugar  *zap.SugaredLogger
 }
 
-func New(config Config) (adapters.Logger, error) {
+func New(config Config) (port.Logger, error) {
 
 	zapLevel, err := intToZapLevel(config.Level)
 	if err != nil {

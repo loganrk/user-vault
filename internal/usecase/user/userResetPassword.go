@@ -2,8 +2,8 @@ package user
 
 import (
 	"context"
-	"mayilon/internal/core/constant"
-	"mayilon/internal/core/domain"
+	"mayilon/internal/constant"
+	"mayilon/internal/domain"
 	"mayilon/internal/utils"
 	"strings"
 	"time"
@@ -18,7 +18,7 @@ const (
 	USER_PASSWORD_RESET_APP_NAME_MACRO = "{{appName}}"
 )
 
-func (u *userService) CreatePasswordResetToken(ctx context.Context, userid int) (int, string, error) {
+func (u *userusecase) CreatePasswordResetToken(ctx context.Context, userid int) (int, string, error) {
 	passwordResetData, err := u.mysql.GetActivePasswordResetByUserId(ctx, userid)
 	if err != nil {
 		return 0, "", err
@@ -53,14 +53,14 @@ func (u *userService) CreatePasswordResetToken(ctx context.Context, userid int) 
 	return passwordResetId, passwordResetToken, nil
 }
 
-func (u *userService) GetPasswordResetLink(token string) string {
+func (u *userusecase) GetPasswordResetLink(token string) string {
 	passwordResetLink := u.conf.GetPasswordResetLink()
 
 	return u.passwordResetLinkMacroReplacement(passwordResetLink, token)
 
 }
 
-func (u *userService) passwordResetLinkMacroReplacement(passwordResetLink string, token string) string {
+func (u *userusecase) passwordResetLinkMacroReplacement(passwordResetLink string, token string) string {
 	s := strings.NewReplacer(
 		USER_PASSWORD_RESET_TOKEN_MACRO, token)
 
@@ -68,7 +68,7 @@ func (u *userService) passwordResetLinkMacroReplacement(passwordResetLink string
 
 }
 
-func (u *userService) GetPasswordResetEmailTemplate(ctx context.Context, name string, passwordResetLink string) (string, error) {
+func (u *userusecase) GetPasswordResetEmailTemplate(ctx context.Context, name string, passwordResetLink string) (string, error) {
 	templatePath := u.conf.GetPasswordResetTemplate()
 	template, err := utils.FindFileContent(templatePath)
 	if err != nil {
@@ -77,7 +77,7 @@ func (u *userService) GetPasswordResetEmailTemplate(ctx context.Context, name st
 	return u.passwordResetTemplateMacroReplacement(template, name, passwordResetLink), nil
 }
 
-func (u *userService) passwordResetTemplateMacroReplacement(template string, name string, passwordResetLink string) string {
+func (u *userusecase) passwordResetTemplateMacroReplacement(template string, name string, passwordResetLink string) string {
 	s := strings.NewReplacer(
 		USER_PASSWORD_RESET_APP_NAME_MACRO, u.appName,
 		USER_PASSWORD_RESET_NAME_MACRO, name,
@@ -86,24 +86,24 @@ func (u *userService) passwordResetTemplateMacroReplacement(template string, nam
 	return s.Replace(template)
 }
 
-func (u *userService) SendPasswordReset(ctx context.Context, email string, template string) error {
+func (u *userusecase) SendPasswordReset(ctx context.Context, email string, template string) error {
 	return nil
 }
 
-func (u *userService) GetPasswordResetByToken(ctx context.Context, token string) (domain.UserPasswordReset, error) {
+func (u *userusecase) GetPasswordResetByToken(ctx context.Context, token string) (domain.UserPasswordReset, error) {
 	tokenData, err := u.mysql.GetPasswordResetByToken(ctx, token)
 
 	return tokenData, err
 
 }
 
-func (u *userService) UpdatedPasswordResetStatus(ctx context.Context, id int, status int) error {
+func (u *userusecase) UpdatedPasswordResetStatus(ctx context.Context, id int, status int) error {
 	err := u.mysql.UpdatedPasswordResetStatus(ctx, id, status)
 
 	return err
 }
 
-func (u *userService) UpdatePassword(ctx context.Context, userid int, password string, saltHash string) error {
+func (u *userusecase) UpdatePassword(ctx context.Context, userid int, password string, saltHash string) error {
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password+saltHash), u.conf.GetPasswordHashCost())
 	if err != nil {
 		return err

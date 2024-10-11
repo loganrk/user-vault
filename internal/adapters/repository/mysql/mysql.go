@@ -2,9 +2,9 @@ package mysql
 
 import (
 	"context"
-	"mayilon/internal/adapters"
-	"mayilon/internal/core/constant"
-	"mayilon/internal/core/domain"
+	"mayilon/internal/constant"
+	"mayilon/internal/domain"
+	"mayilon/internal/port"
 
 	gormMysql "gorm.io/driver/mysql"
 
@@ -19,7 +19,7 @@ type mysql struct {
 	dialer *gorm.DB
 }
 
-func New(hostname, port, username, password, name string, prefix string) (adapters.RepositoryMySQL, error) {
+func New(hostname, port, username, password, name string, prefix string) (port.RepositoryMySQL, error) {
 	dsn := username + ":" + password + "@tcp(" + hostname + ":" + port + ")/" + name + "?charset=utf8mb4&parseTime=True&loc=Local"
 	dialer, err := gorm.Open(gormMysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Error),

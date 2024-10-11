@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	request "mayilon/internal/adapters/handler/http/v1/request/user"
+	"mayilon/internal/adapters/handler/http/v1/request"
 	"mayilon/internal/adapters/handler/http/v1/response"
+	"mayilon/internal/port"
 
 	"net/http"
 )
@@ -13,11 +14,10 @@ import (
 func (h *handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 
 	ctx := context.Background()
-
-	req := request.NewUserLogout()
 	res := response.New()
 
-	err := req.Parse(r)
+	req, err := request.NewUserLogout(r)
+
 	if err != nil {
 		res.SetStatus(http.StatusBadRequest)
 		res.SetError(ERROR_CODE_REQUEST_INVALID, "invalid request parameters")
@@ -33,7 +33,7 @@ func (h *handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userid, expiresAt, err := h.tokenEngineIns.GetRefreshTokenData(req.RefreshToken)
+	userid, expiresAt, err := h.tokenEngineIns.GetRefreshTokenData(req.GetRefreshToken())
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -55,7 +55,7 @@ func (h *handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.services.User.RevokedRefreshToken(ctx, userid, req.RefreshToken)
+	err = h.usecases.User.RevokedRefreshToken(ctx, userid, req.GetRefreshToken())
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -63,7 +63,9 @@ func (h *handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resData := "logout successfully"
+	resData := port.UserLogoutClientResponse{
+		Message: "logout successfully",
+	}
 	res.SetData(resData)
 	res.Send(w)
 }

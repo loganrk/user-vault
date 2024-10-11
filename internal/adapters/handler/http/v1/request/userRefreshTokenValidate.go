@@ -1,27 +1,25 @@
-package user
+package request
 
 import (
 	"encoding/json"
 	"errors"
+	"mayilon/internal/port"
 	"net/http"
 )
 
-func NewUserRefreshTokenValidate() *userRefreshTokenValidate {
-	return &userRefreshTokenValidate{}
-}
-
-func (u *userRefreshTokenValidate) Parse(r *http.Request) error {
+func NewUserRefreshTokenValidate(r *http.Request) (port.UserRefreshTokenValidateClientRequest, error) {
+	var u userRefreshTokenValidate
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)
 		err := decoder.Decode(u)
 		if err != nil {
-			return err
+			return &u, err
 		}
 	} else {
 		u.RefreshToken = r.URL.Query().Get("refresh_token")
 	}
 
-	return nil
+	return &u, nil
 }
 
 func (u *userRefreshTokenValidate) Validate() error {
@@ -30,4 +28,8 @@ func (u *userRefreshTokenValidate) Validate() error {
 	}
 
 	return nil
+}
+
+func (u *userRefreshTokenValidate) GetRefreshToken() string {
+	return u.RefreshToken
 }

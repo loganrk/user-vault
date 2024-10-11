@@ -2,8 +2,8 @@ package user
 
 import (
 	"context"
-	"mayilon/internal/core/constant"
-	"mayilon/internal/core/domain"
+	"mayilon/internal/constant"
+	"mayilon/internal/domain"
 	"mayilon/internal/utils"
 	"strconv"
 	"strings"
@@ -18,7 +18,7 @@ const (
 	USER_ACTIVATION_APP_NAME_MACRO = "{{appName}}"
 )
 
-func (u *userService) CreateActivationToken(ctx context.Context, userid int) (int, string, error) {
+func (u *userusecase) CreateActivationToken(ctx context.Context, userid int) (int, string, error) {
 	activationToken := utils.GenerateRandomString(25)
 
 	tokenData, err := u.mysql.GetActivationByToken(ctx, activationToken)
@@ -44,13 +44,13 @@ func (u *userService) CreateActivationToken(ctx context.Context, userid int) (in
 	return tokenId, activationToken, nil
 }
 
-func (u *userService) GetActivationLink(tokenId int, token string) string {
+func (u *userusecase) GetActivationLink(tokenId int, token string) string {
 	activationLink := u.conf.GetActivationLink()
 	return u.activationLinkMacroReplacement(activationLink, tokenId, token)
 
 }
 
-func (u *userService) activationLinkMacroReplacement(activationLink string, tokenId int, token string) string {
+func (u *userusecase) activationLinkMacroReplacement(activationLink string, tokenId int, token string) string {
 	s := strings.NewReplacer(
 		USER_ACTIVATION_TOKEN_ID_MACRO, strconv.Itoa(tokenId),
 		USER_ACTIVATION_TOKEN_MACRO, token)
@@ -59,7 +59,7 @@ func (u *userService) activationLinkMacroReplacement(activationLink string, toke
 
 }
 
-func (u *userService) GetActivationEmailTemplate(ctx context.Context, name string, activationLink string) (string, error) {
+func (u *userusecase) GetActivationEmailTemplate(ctx context.Context, name string, activationLink string) (string, error) {
 	templatePath := u.conf.GetActivationEmailTemplate()
 	template, err := utils.FindFileContent(templatePath)
 	if err != nil {
@@ -68,7 +68,7 @@ func (u *userService) GetActivationEmailTemplate(ctx context.Context, name strin
 	return u.activationTemplateMacroReplacement(template, name, activationLink), nil
 }
 
-func (u *userService) activationTemplateMacroReplacement(template string, name string, activationLink string) string {
+func (u *userusecase) activationTemplateMacroReplacement(template string, name string, activationLink string) string {
 	s := strings.NewReplacer(
 		USER_ACTIVATION_APP_NAME_MACRO, u.appName,
 		USER_ACTIVATION_NAME_MACRO, name,
@@ -78,23 +78,23 @@ func (u *userService) activationTemplateMacroReplacement(template string, name s
 
 }
 
-func (u *userService) SendActivation(ctx context.Context, email string, template string) error {
+func (u *userusecase) SendActivation(ctx context.Context, email string, template string) error {
 
 	return nil
 }
 
-func (u *userService) GetUserActivationByToken(ctx context.Context, token string) (domain.UserActivationToken, error) {
+func (u *userusecase) GetUserActivationByToken(ctx context.Context, token string) (domain.UserActivationToken, error) {
 	tokenData, err := u.mysql.GetActivationByToken(ctx, token)
 	return tokenData, err
 }
 
-func (u *userService) UpdatedActivationtatus(ctx context.Context, id int, status int) error {
+func (u *userusecase) UpdatedActivationtatus(ctx context.Context, id int, status int) error {
 	err := u.mysql.UpdatedActivationtatus(ctx, id, status)
 
 	return err
 }
 
-func (u *userService) UpdateStatus(ctx context.Context, userid int, status int) error {
+func (u *userusecase) UpdateStatus(ctx context.Context, userid int, status int) error {
 
 	err := u.mysql.UpdateStatus(ctx, userid, status)
 	return err

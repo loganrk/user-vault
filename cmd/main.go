@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 	"mayilon/config"
-	"mayilon/internal/adapters"
-	"mayilon/internal/core/domain"
+	"mayilon/internal/domain"
+	"mayilon/internal/port"
 
 	cipherAes "mayilon/internal/adapters/cipher/aes"
 	handler "mayilon/internal/adapters/handler/http/v1"
@@ -15,7 +15,7 @@ import (
 	routerGin "mayilon/internal/adapters/router/gin"
 	tokenEngineJwt "mayilon/internal/adapters/tokenEngine/jwt"
 
-	userSrv "mayilon/internal/core/service/user"
+	userSrv "mayilon/internal/usecase/user"
 )
 
 const (
@@ -50,7 +50,7 @@ func main() {
 	}
 	mysqlIns.AutoMigrate()
 
-	/* get the user service instance */
+	/* get the user usecase instance */
 	userSrvIns := userSrv.New(loggerIns, mysqlIns, appConfigIns.GetAppName(), appConfigIns.GetUser())
 
 	svcList := domain.List{
@@ -60,7 +60,7 @@ func main() {
 	/* get the router instance */
 	routerIns := getRouter(appConfigIns, loggerIns, svcList)
 
-	/* start the service */
+	/* start the usecase */
 	port := appConfigIns.GetAppPort()
 	loggerIns.Infow(context.Background(), "app started", "port", port)
 	loggerIns.Sync(context.Background())
@@ -76,7 +76,7 @@ func main() {
 	loggerIns.Sync(context.Background())
 }
 
-func getLogger(logConfigIns config.Logger) (adapters.Logger, error) {
+func getLogger(logConfigIns config.Logger) (port.Logger, error) {
 	loggerConfig := loggerZap.Config{
 		Level:           logConfigIns.GetLoggerLevel(),
 		Encoding:        logConfigIns.GetLoggerEncodingMethod(),
@@ -87,7 +87,7 @@ func getLogger(logConfigIns config.Logger) (adapters.Logger, error) {
 	return loggerZap.New(loggerConfig)
 }
 
-func getDatabase(appConfigIns config.App) (adapters.RepositoryMySQL, error) {
+func getDatabase(appConfigIns config.App) (port.RepositoryMySQL, error) {
 	cipherCryptoKey := appConfigIns.GetCipherCryptoKey()
 	cipherIns := cipherAes.New(cipherCryptoKey)
 
@@ -117,7 +117,7 @@ func getDatabase(appConfigIns config.App) (adapters.RepositoryMySQL, error) {
 
 }
 
-func getRouter(appConfigIns config.App, loggerIns adapters.Logger, svcList domain.List) adapters.Router {
+func getRouter(appConfigIns config.App, loggerIns port.Logger, svcList domain.List) port.Router {
 	cipherCryptoKey := appConfigIns.GetCipherCryptoKey()
 	cipherIns := cipherAes.New(cipherCryptoKey)
 	apiKeys := appConfigIns.GetMiddlewareApiKeys()

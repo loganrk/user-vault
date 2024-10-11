@@ -2,19 +2,18 @@ package v1
 
 import (
 	"context"
-	request "mayilon/internal/adapters/handler/http/v1/request/user"
+	"mayilon/internal/adapters/handler/http/v1/request"
 	"mayilon/internal/adapters/handler/http/v1/response"
-	"mayilon/internal/core/constant"
+	"mayilon/internal/constant"
+	"mayilon/internal/port"
 	"net/http"
 )
 
 func (h *handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-
-	req := request.NewUserForgotPassword()
 	res := response.New()
 
-	err := req.Parse(r)
+	req, err := request.NewUserForgotPassword(r)
 	if err != nil {
 		res.SetStatus(http.StatusBadRequest)
 		res.SetError(ERROR_CODE_REQUEST_INVALID, "invalid request parameters")
@@ -30,7 +29,7 @@ func (h *handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData, err := h.services.User.GetUserByUsername(ctx, req.Username)
+	userData, err := h.usecases.User.GetUserByUsername(ctx, req.GetUsername())
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -59,7 +58,7 @@ func (h *handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenId, passwordResetToken, err := h.services.User.CreatePasswordResetToken(ctx, userData.Id)
+	tokenId, passwordResetToken, err := h.usecases.User.CreatePasswordResetToken(ctx, userData.Id)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -68,9 +67,9 @@ func (h *handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if tokenId != 0 && passwordResetToken != "" {
-		passwordResetLink := h.services.User.GetPasswordResetLink(passwordResetToken)
+		passwordResetLink := h.usecases.User.GetPasswordResetLink(passwordResetToken)
 		if passwordResetLink != "" {
-			template, err := h.services.User.GetPasswordResetEmailTemplate(ctx, userData.Name, passwordResetLink)
+			template, err := h.usecases.User.GetPasswordResetEmailTemplate(ctx, userData.Name, passwordResetLink)
 			if err != nil {
 				res.SetStatus(http.StatusInternalServerError)
 				res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -79,14 +78,16 @@ func (h *handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if template != "" {
-				err := h.services.User.SendPasswordReset(ctx, userData.Username, template)
+				err := h.usecases.User.SendPasswordReset(ctx, userData.Username, template)
 				if err != nil {
 					res.SetStatus(http.StatusInternalServerError)
 					res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
 					res.Send(w)
 					return
 				}
-				resData := "account created successfuly. please check your email for activate account"
+				resData := port.UserForgotPasswordClientResponse{
+					Message: "account created successfuly. please check your email for activate account",
+				}
 				res.SetData(resData)
 				res.Send(w)
 				return

@@ -3,20 +3,19 @@ package v1
 import (
 	"context"
 
-	request "mayilon/internal/adapters/handler/http/v1/request/user"
+	"mayilon/internal/adapters/handler/http/v1/request"
 	"mayilon/internal/adapters/handler/http/v1/response"
-	"mayilon/internal/core/constant"
+	"mayilon/internal/constant"
+	"mayilon/internal/port"
 
 	"net/http"
 )
 
 func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-
-	req := request.NewUserLogin()
 	res := response.New()
 
-	err := req.Parse(r)
+	req, err := request.NewUserLogin(r)
 	if err != nil {
 		res.SetStatus(http.StatusBadRequest)
 		res.SetError(ERROR_CODE_REQUEST_INVALID, "invalid request parameters")
@@ -32,7 +31,7 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData, err := h.services.User.GetUserByUsername(ctx, req.Username)
+	userData, err := h.usecases.User.GetUserByUsername(ctx, req.GetUsername())
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -47,7 +46,7 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	attemptStatus, err := h.services.User.CheckLoginFailedAttempt(ctx, userData.Id)
+	attemptStatus, err := h.usecases.User.CheckLoginFailedAttempt(ctx, userData.Id)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -63,7 +62,7 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	passwordMatch, err := h.services.User.CheckPassword(ctx, req.Password, userData.Password, userData.Salt)
+	passwordMatch, err := h.usecases.User.CheckPassword(ctx, req.GetUsername(), userData.Password, userData.Salt)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -72,7 +71,7 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !passwordMatch {
-		loginAttempId, err := h.services.User.CreateLoginAttempt(ctx, userData.Id, false)
+		loginAttempId, err := h.usecases.User.CreateLoginAttempt(ctx, userData.Id, false)
 
 		if err != nil {
 			res.SetStatus(http.StatusInternalServerError)
@@ -93,7 +92,7 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		res.Send(w)
 		return
 	} else {
-		loginAttempId, err := h.services.User.CreateLoginAttempt(ctx, userData.Id, true)
+		loginAttempId, err := h.usecases.User.CreateLoginAttempt(ctx, userData.Id, true)
 		if err != nil {
 			res.SetStatus(http.StatusInternalServerError)
 			res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -108,7 +107,7 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	userData, err = h.services.User.GetUserByUserid(ctx, userData.Id)
+	userData, err = h.usecases.User.GetUserByUserid(ctx, userData.Id)
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -143,9 +142,9 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.services.User.RefreshTokenEnabled() {
+	if h.usecases.User.RefreshTokenEnabled() {
 
-		if h.services.User.RefreshTokenRotationEnabled() {
+		if h.usecases.User.RefreshTokenRotationEnabled() {
 			refreshTokenType = constant.REFRESH_TOKEN_TYPE_ROTATING
 		} else {
 			refreshTokenType = constant.REFRESH_TOKEN_TYPE_STATIC
@@ -168,7 +167,7 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, err = h.services.User.StoreRefreshToken(ctx, userData.Id, refreshToken, refreshExpiresAt)
+		_, err = h.usecases.User.StoreRefreshToken(ctx, userData.Id, refreshToken, refreshExpiresAt)
 		if err != nil {
 			res.SetStatus(http.StatusInternalServerError)
 			res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -178,11 +177,7 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	resData := struct {
-		AccessToken      string `json:"access_token"`
-		RefreshTokenType string `json:"refresh_token_type,omitempty"`
-		RefreshToken     string `json:"refresh_token,omitempty"`
-	}{
+	resData := port.UserLoginClientResponse{
 		AccessToken:      accessToken,
 		RefreshTokenType: refreshTokenType,
 		RefreshToken:     refreshToken,
