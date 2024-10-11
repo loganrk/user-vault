@@ -3,20 +3,19 @@ package main
 import (
 	"context"
 	"log"
-	"mayilon/pkg/config"
-	"mayilon/pkg/http/v1/handler"
-	"mayilon/pkg/lib/logger"
-	"mayilon/pkg/middleware"
+	"mayilon/config"
+	"mayilon/internal/adapters"
+	"mayilon/internal/core/domain"
 
-	"github.com/loganrk/go-db"
-	"github.com/loganrk/go-router"
+	cipherAes "mayilon/internal/adapters/cipher/aes"
+	handler "mayilon/internal/adapters/handler/http/v1"
+	loggerZap "mayilon/internal/adapters/logger/zapLogger"
+	middlewareAuth "mayilon/internal/adapters/middleware/auth"
+	repositoryMysql "mayilon/internal/adapters/repository/mysql"
+	routerGin "mayilon/internal/adapters/router/gin"
+	tokenEngineJwt "mayilon/internal/adapters/tokenEngine/jwt"
 
-	cipher "github.com/loganrk/go-cipher"
-
-	"mayilon/pkg/service"
-	userSrv "mayilon/pkg/service/user"
-	store "mayilon/pkg/store"
-	userStore "mayilon/pkg/store/user"
+	userSrv "mayilon/internal/core/service/user"
 )
 
 const (
@@ -44,20 +43,17 @@ func main() {
 	}
 
 	/* get the database instance */
-	dbIns, err := getDatabase(appConfigIns)
+	mysqlIns, err := getDatabase(appConfigIns)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	store.AutoMigrate(dbIns)
-
-	/* get the user store instance */
-	userStoreIns := userStore.New(dbIns)
+	mysqlIns.AutoMigrate()
 
 	/* get the user service instance */
-	userSrvIns := userSrv.New(loggerIns, userStoreIns, appConfigIns.GetAppName(), appConfigIns.GetUser())
+	userSrvIns := userSrv.New(loggerIns, mysqlIns, appConfigIns.GetAppName(), appConfigIns.GetUser())
 
-	svcList := service.List{
+	svcList := domain.List{
 		User: userSrvIns,
 	}
 
@@ -80,20 +76,20 @@ func main() {
 	loggerIns.Sync(context.Background())
 }
 
-func getLogger(logConfigIns config.Logger) (logger.Logger, error) {
-	loggerConfig := logger.Config{
+func getLogger(logConfigIns config.Logger) (adapters.Logger, error) {
+	loggerConfig := loggerZap.Config{
 		Level:           logConfigIns.GetLoggerLevel(),
 		Encoding:        logConfigIns.GetLoggerEncodingMethod(),
 		EncodingCaller:  logConfigIns.GetLoggerEncodingCaller(),
 		OutputPath:      logConfigIns.GetLoggerPath(),
 		ErrorOutputPath: logConfigIns.GetLoggerErrorPath(),
 	}
-	return logger.New(loggerConfig)
+	return loggerZap.New(loggerConfig)
 }
 
-func getDatabase(appConfigIns config.App) (db.DB, error) {
+func getDatabase(appConfigIns config.App) (adapters.RepositoryMySQL, error) {
 	cipherCryptoKey := appConfigIns.GetCipherCryptoKey()
-	cipherIns := cipher.New(cipherCryptoKey)
+	cipherIns := cipherAes.New(cipherCryptoKey)
 
 	encryptDbHost, encryptDbPort, encryptDbUsename, encryptDbPasword, dbName, prefix := appConfigIns.GetStoreDatabaseProperties()
 
@@ -117,75 +113,69 @@ func getDatabase(appConfigIns config.App) (db.DB, error) {
 		return nil, decryptErr
 	}
 
-	return db.New(db.Config{
-		Host:     decryptDbHost,
-		Port:     decryptdbPort,
-		Username: decryptDbUsename,
-		Password: decryptDbPasword,
-		Name:     dbName,
-		Prefix:   prefix,
-	})
+	return repositoryMysql.New(decryptDbHost, decryptdbPort, decryptDbUsename, decryptDbPasword, dbName, prefix)
 
 }
 
-func getRouter(appConfigIns config.App, loggerIns logger.Logger, svcList service.List) router.Router {
+func getRouter(appConfigIns config.App, loggerIns adapters.Logger, svcList domain.List) adapters.Router {
 	cipherCryptoKey := appConfigIns.GetCipherCryptoKey()
-	cipherIns := cipher.New(cipherCryptoKey)
+	cipherIns := cipherAes.New(cipherCryptoKey)
+	apiKeys := appConfigIns.GetMiddlewareApiKeys()
 
-	routerIns := router.New()
+	accessTokenExpiry := appConfigIns.GetMiddlewareAccessTokenExpiry()
+	refreshTokenExpiry := appConfigIns.GetMiddlewareRefreshTokenExpiry()
 
-	accessTokenExpiry := appConfigIns.GetMiddlewareAuthnAccessTokenExpiry()
-	refreshTokenExpiry := appConfigIns.GetMiddlewareAuthnRefreshTokenExpiry()
+	tokenEngineIns := tokenEngineJwt.New(cipherCryptoKey, accessTokenExpiry, refreshTokenExpiry, cipherIns)
 
-	authnMiddlewareIns := middleware.NewAuthn(cipherCryptoKey, accessTokenExpiry, refreshTokenExpiry, cipherIns)
+	middlewareAuthIns := middlewareAuth.New(apiKeys, tokenEngineIns)
 
-	authzMiddlewareEnabled, authzMiddlewareToken := appConfigIns.GetMiddlewareAuthorizationProperties()
-	if authzMiddlewareEnabled {
-		authzMiddlewareIns := middleware.NewAuthz(authzMiddlewareToken)
-		routerIns.UseBefore(authzMiddlewareIns.Use())
-	}
-
-	handlerIns := handler.New(loggerIns, svcList, authnMiddlewareIns)
+	handlerIns := handler.New(loggerIns, tokenEngineIns, svcList)
 	apiConfigIns := appConfigIns.GetApi()
+
+	routerIns := routerGin.New()
+	generalGr := routerIns.NewGroup("")
+	generalGr.UseBefore(middlewareAuthIns.ValidateApiKey())
 
 	if apiConfigIns.GetUserLoginEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserLoginProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserLogin)
+		generalGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserLogin)
 	}
 
 	if apiConfigIns.GetUserRegisterEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserRegisterProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserRegister)
+		generalGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserRegister)
 	}
 
 	if apiConfigIns.GetUserActivationEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserActivationProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserActivation)
+		generalGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserActivation)
 	}
 
 	if apiConfigIns.GetUserResendActivationEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserResendActivationProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserResendActivation)
+		generalGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserResendActivation)
 	}
 
 	if apiConfigIns.GetUserForgotPasswordEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserForgotPasswordProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserForgotPassword)
+		generalGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserForgotPassword)
 	}
 
 	if apiConfigIns.GetUserPasswordResetEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserPasswordResetProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserPasswordReset)
+		generalGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserPasswordReset)
 	}
 
 	if apiConfigIns.GetUserRefreshTokenValidateEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserRefreshTokenValidateProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserRefreshTokenValidate)
+		generalGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserRefreshTokenValidate)
 	}
 
+	accessTokenGr := routerIns.NewGroup("")
+	accessTokenGr.UseBefore(middlewareAuthIns.ValidateAccessToken())
 	if apiConfigIns.GetUserLogoutEnabled() {
 		userApiMethod, userApiRoute := apiConfigIns.GetUserLogoutProperties()
-		routerIns.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserLogout)
+		accessTokenGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserLogout)
 	}
 
 	return routerIns

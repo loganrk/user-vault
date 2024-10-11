@@ -14,14 +14,16 @@ cipher:
   cryptoKey: qf0ac7131xktkut8
   
 middleware:
-  authorization:
-    enabled: true
-    token: c713-kut8-1xkt-qf0a
-  authentication:
-    access_token:
-      expiry: 1500
-    refresh_token:
-      expiry: 36000
+  access_token:
+    expiry: 1500
+  refresh_token:
+    expiry: 36000
+  keys:
+    - "mhkwuhcL30tq6IuErPfKgRi86BfcRC8vtdQvJa5ILqrDmC2JdNlGlYs05w2KWcyd"
+    - "f97bTqnEWXcSKQ4wtMwFf2vDCdUjnCrZDS6voQNZbf5s0a18j8uOWuS41Uwj6Jhv"
+    - "bLiaBYhfYGr1ZXp6VfIEeaipGXWFAqxtw7LgaYaDcNMmHyz73BBnxMgK78YcfpUp"
+    - "qIAJeZ7qzrUZ2CjsR2vvmhfnDOz8hMnKH2BwlpvCHkmc7TP0poxeqrCmU8ZV7q9q"
+
 
 api:
   userLogin:
