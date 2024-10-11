@@ -4,7 +4,7 @@ import (
 	"context"
 	request "mayilon/internal/adapters/handler/http/v1/request/user"
 	"mayilon/internal/adapters/handler/http/v1/response"
-	"mayilon/internal/core/constant.go"
+	"mayilon/internal/core/constant"
 	"net/http"
 )
 

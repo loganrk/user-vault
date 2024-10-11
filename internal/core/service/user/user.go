@@ -4,7 +4,7 @@ import (
 	"context"
 	"mayilon/config"
 	"mayilon/internal/adapters"
-	"mayilon/internal/core/constant.go"
+	"mayilon/internal/core/constant"
 	"mayilon/internal/core/domain"
 	"mayilon/internal/utils"
 

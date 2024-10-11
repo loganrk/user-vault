@@ -2,7 +2,7 @@ package user
 
 import (
 	"context"
-	"mayilon/internal/core/constant.go"
+	"mayilon/internal/core/constant"
 	"mayilon/internal/core/domain"
 	"mayilon/internal/utils"
 	"strings"
