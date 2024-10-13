@@ -10,13 +10,7 @@ type app struct {
 		CryptoKey string `mapstructure:"cryptoKey"`
 	} `mapstructure:"cipher"`
 	Middleware struct {
-		Keys        []string `mapstructure:"keys"`
-		AccessToken struct {
-			Expiry int `mapstructure:"expiry"`
-		} `mapstructure:"accessToken"`
-		RefreshToken struct {
-			Expiry int `mapstructure:"expiry"`
-		} `mapstructure:"refreshToken"`
+		Keys []string `mapstructure:"keys"`
 	} `mapstructure:"middleware"`
 	Store struct {
 		Database struct {
@@ -82,5 +76,9 @@ type user struct {
 	RefreshToken struct {
 		Enabled  bool `mapstructure:"enabled"`
 		Rotation bool `mapstructure:"rotation"`
+		Expiry   int  `mapstructure:"expiry"`
 	} `mapstructure:"refreshToken"`
+	AccessToken struct {
+		Expiry int `mapstructure:"expiry"`
+	} `mapstructure:"accessToken"`
 }

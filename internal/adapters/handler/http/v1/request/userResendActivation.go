@@ -11,7 +11,7 @@ func NewUserResendActivation(r *http.Request) (port.UserResendActivationClientRe
 	var u userResendActivation
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)
-		err := decoder.Decode(u)
+		err := decoder.Decode(&u)
 		if err != nil {
 			return &u, err
 		}

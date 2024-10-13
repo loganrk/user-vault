@@ -16,9 +16,6 @@ type App interface {
 	GetAppPort() string
 	GetCipherCryptoKey() string
 	GetMiddlewareApiKeys() []string
-	GetMiddlewareAccessTokenExpiry() int
-	GetMiddlewareRefreshTokenExpiry() int
-
 	GetStoreDatabaseProperties() (string, string, string, string, string, string)
 	GetStoreCacheHeapProperties() (bool, int)
 	GetLogger() Logger
@@ -66,14 +63,6 @@ func (a app) GetCipherCryptoKey() string {
 
 func (a app) GetMiddlewareApiKeys() []string {
 	return a.Middleware.Keys
-}
-
-func (a app) GetMiddlewareAccessTokenExpiry() int {
-	return a.Middleware.AccessToken.Expiry
-}
-
-func (a app) GetMiddlewareRefreshTokenExpiry() int {
-	return a.Middleware.RefreshToken.Expiry
 }
 
 /* start of config-store */

@@ -11,7 +11,7 @@ func NewUserActivation(r *http.Request) (port.UserActivationClientRequest, error
 	var u newUserActivation
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)
-		err := decoder.Decode(u)
+		err := decoder.Decode(&u)
 		if err != nil {
 			return &u, err
 		}

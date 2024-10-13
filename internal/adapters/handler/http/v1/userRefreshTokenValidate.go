@@ -108,7 +108,7 @@ func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 	var accessToken, refreshTokenType, refreshToken string
 
 	if h.usecases.User.RefreshTokenEnabled() {
-		accessToken, err = h.tokenEngineIns.CreateAccessToken(userData.Id, userData.Username, userData.Name)
+		accessToken, err = h.tokenEngineIns.CreateAccessToken(userData.Id, userData.Username, userData.Name, h.usecases.User.GetAccessTokenExpiry())
 		if err != nil {
 			res.SetStatus(http.StatusInternalServerError)
 			res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -127,7 +127,7 @@ func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 				return
 			}
 
-			refreshToken, err := h.tokenEngineIns.CreateRefreshTokenWithCustomExpiry(userid, refreshTokenData.ExpiresAt)
+			refreshToken, err := h.tokenEngineIns.CreateRefreshToken(userid, refreshTokenData.ExpiresAt)
 			if err != nil {
 				res.SetStatus(http.StatusInternalServerError)
 				res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")

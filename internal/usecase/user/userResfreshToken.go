@@ -14,6 +14,14 @@ func (u *userusecase) RefreshTokenRotationEnabled() bool {
 	return u.conf.GetRefreshTokenRotationEnabled()
 }
 
+func (u *userusecase) GetRefreshTokenExpiry() time.Time {
+	return time.Now().Add(time.Second * time.Duration(u.conf.GetRefreshTokenExpiry()))
+}
+
+func (u *userusecase) GetAccessTokenExpiry() time.Time {
+	return time.Now().Add(time.Second * time.Duration(u.conf.GetAccessTokenExpiry()))
+}
+
 func (u *userusecase) StoreRefreshToken(ctx context.Context, userid int, token string, expiresAt time.Time) (int, error) {
 
 	refreshTokenData := domain.UserRefreshToken{
