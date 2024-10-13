@@ -11,7 +11,7 @@ func NewUserLogout(r *http.Request) (port.UserLogoutClientRequest, error) {
 	var u userLogout
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)
-		err := decoder.Decode(u)
+		err := decoder.Decode(&u)
 		if err != nil {
 			return &u, err
 		}

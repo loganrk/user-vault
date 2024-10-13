@@ -133,7 +133,7 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	var accessToken, refreshTokenType, refreshToken string
 
-	accessToken, err = h.tokenEngineIns.CreateAccessToken(userData.Id, userData.Username, userData.Name)
+	accessToken, err = h.tokenEngineIns.CreateAccessToken(userData.Id, userData.Username, userData.Name, h.usecases.User.GetAccessTokenExpiry())
 	if err != nil {
 		res.SetStatus(http.StatusInternalServerError)
 		res.SetError(ERROR_CODE_INTERNAL_SERVER, "internal server error")
@@ -149,7 +149,7 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 			refreshTokenType = constant.REFRESH_TOKEN_TYPE_STATIC
 		}
 
-		refreshToken, err = h.tokenEngineIns.CreateRefreshToken(userData.Id)
+		refreshToken, err = h.tokenEngineIns.CreateRefreshToken(userData.Id, h.usecases.User.GetRefreshTokenExpiry())
 
 		if err != nil {
 			res.SetStatus(http.StatusInternalServerError)

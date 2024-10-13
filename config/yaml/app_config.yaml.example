@@ -14,10 +14,6 @@ cipher:
   cryptoKey: qf0ac7131xktkut8
   
 middleware:
-  accessToken:
-    expiry: 1500
-  refreshToken:
-    expiry: 36000
   keys:
     - "mhkwuhcL30tq6IuErPfKgRi86BfcRC8vtdQvJa5ILqrDmC2JdNlGlYs05w2KWcyd"
     - "f97bTqnEWXcSKQ4wtMwFf2vDCdUjnCrZDS6voQNZbf5s0a18j8uOWuS41Uwj6Jhv"
@@ -87,4 +83,7 @@ user:
     linkExpiry: 1800 #seconds
   refreshToken:
      enabled: true
-     rotation: true
+     rotation: false
+     expiry: 36000
+  accessToken:
+    expiry: 1500

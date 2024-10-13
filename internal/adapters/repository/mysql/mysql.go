@@ -69,10 +69,6 @@ func (m *mysql) GetUserLoginFailedAttemptCount(ctx context.Context, userId int, 
 		result.Error = nil
 	}
 
-	if result.Error != nil {
-
-	}
-
 	return int(result.RowsAffected), nil
 }
 

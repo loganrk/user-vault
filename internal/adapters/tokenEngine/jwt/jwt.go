@@ -11,29 +11,25 @@ import (
 )
 
 type token struct {
-	cryptoKey          string
-	accessTokenExpiry  int
-	refreshTokenExpiry int
-	cipher             port.Cipher
+	cryptoKey string
+	cipher    port.Cipher
 }
 
-func New(cryptoKey string, accessTokenExpiry int, refreshTokenExpiry int, cipherIns port.Cipher) port.Token {
+func New(cryptoKey string, cipherIns port.Cipher) port.Token {
 	return &token{
-		cryptoKey:          cryptoKey,
-		accessTokenExpiry:  accessTokenExpiry,
-		refreshTokenExpiry: refreshTokenExpiry,
-		cipher:             cipherIns,
+		cryptoKey: cryptoKey,
+		cipher:    cipherIns,
 	}
 }
 
-func (t *token) CreateAccessToken(uid int, uname string, name string) (string, error) {
+func (t *token) CreateAccessToken(uid int, uname string, name string, expiry time.Time) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"type":  "access",
 			"uid":   uid,
 			"uname": uname,
 			"name":  name,
-			"exp":   time.Now().Add(time.Second * time.Duration(t.accessTokenExpiry)).Unix(),
+			"exp":   expiry.Unix(),
 		})
 
 	tokenString, err := token.SignedString([]byte(t.cipher.GetKey()))
@@ -49,16 +45,7 @@ func (t *token) CreateAccessToken(uid int, uname string, name string) (string, e
 	return tokenStringEcr, nil
 }
 
-func (t *token) CreateRefreshToken(uid int) (string, error) {
-
-	return t.createRefreshToken(uid, time.Now().Add(time.Second*time.Duration(t.refreshTokenExpiry)))
-}
-
-func (t *token) CreateRefreshTokenWithCustomExpiry(uid int, expiry time.Time) (string, error) {
-	return t.createRefreshToken(uid, expiry)
-}
-
-func (t *token) createRefreshToken(uid int, expiry time.Time) (string, error) {
+func (t *token) CreateRefreshToken(uid int, expiry time.Time) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"type": "refresh",

@@ -35,6 +35,9 @@ type UserSvr interface {
 
 	RefreshTokenEnabled() bool
 	RefreshTokenRotationEnabled() bool
+	GetRefreshTokenExpiry() time.Time
+	GetAccessTokenExpiry() time.Time
+
 	StoreRefreshToken(ctx context.Context, userid int, token string, expiresAt time.Time) (int, error)
 	RevokedRefreshToken(ctx context.Context, userid int, refreshToken string) error
 	GetRefreshTokenData(ctx context.Context, userid int, token string) (UserRefreshToken, error)

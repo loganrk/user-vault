@@ -62,9 +62,8 @@ type Cipher interface {
 }
 
 type Token interface {
-	CreateAccessToken(uid int, uname string, name string) (string, error)
-	CreateRefreshToken(uid int) (string, error)
-	CreateRefreshTokenWithCustomExpiry(uid int, expiry time.Time) (string, error)
+	CreateAccessToken(uid int, uname string, name string, expiry time.Time) (string, error)
+	CreateRefreshToken(uid int, expiry time.Time) (string, error)
 	GetRefreshTokenData(tokenStringEcr string) (int, time.Time, error)
 	GetRefreshTokenExpiry(tokenStringEcr string) (time.Time, error)
 	GetAccessTokenData(encryptedToken string) (int, time.Time, error)
