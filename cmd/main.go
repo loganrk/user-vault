@@ -122,11 +122,7 @@ func getRouter(appConfigIns config.App, loggerIns port.Logger, svcList domain.Li
 	cipherIns := cipherAes.New(cipherCryptoKey)
 	apiKeys := appConfigIns.GetMiddlewareApiKeys()
 
-	accessTokenExpiry := appConfigIns.GetMiddlewareAccessTokenExpiry()
-	refreshTokenExpiry := appConfigIns.GetMiddlewareRefreshTokenExpiry()
-
-	tokenEngineIns := tokenEngineJwt.New(cipherCryptoKey, accessTokenExpiry, refreshTokenExpiry, cipherIns)
-
+	tokenEngineIns := tokenEngineJwt.New(cipherCryptoKey, cipherIns)
 	middlewareAuthIns := middlewareAuth.New(apiKeys, tokenEngineIns)
 
 	handlerIns := handler.New(loggerIns, tokenEngineIns, svcList)
