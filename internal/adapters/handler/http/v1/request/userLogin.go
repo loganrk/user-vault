@@ -3,8 +3,8 @@ package request
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/domain"
 	"net/http"
+	"userVault/internal/domain"
 )
 
 func NewUserLogin(r *http.Request) (domain.UserLoginClientRequest, error) {

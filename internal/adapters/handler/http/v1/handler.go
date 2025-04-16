@@ -1,8 +1,8 @@
 package v1
 
 import (
-	"mayilon/internal/domain"
-	"mayilon/internal/port"
+	"userVault/internal/domain"
+	"userVault/internal/port"
 )
 
 type handler struct {

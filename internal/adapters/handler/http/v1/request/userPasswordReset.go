@@ -3,9 +3,9 @@ package request
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/domain"
-	"mayilon/internal/utils"
 	"net/http"
+	"userVault/internal/domain"
+	"userVault/internal/utils"
 )
 
 func NewUserResetPassword(r *http.Request) (domain.UserResetPasswordClientRequest, error) {

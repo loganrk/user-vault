@@ -3,8 +3,8 @@ package request
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/domain"
 	"net/http"
+	"userVault/internal/domain"
 )
 
 func NewUserRefreshTokenValidate(r *http.Request) (domain.UserRefreshTokenValidateClientRequest, error) {

@@ -2,12 +2,12 @@ package user
 
 import (
 	"context"
-	"mayilon/internal/constant"
-	"mayilon/internal/domain"
-	"mayilon/internal/utils"
 	"strconv"
 	"strings"
 	"time"
+	"userVault/internal/constant"
+	"userVault/internal/domain"
+	"userVault/internal/utils"
 
 	"golang.org/x/crypto/bcrypt"
 )

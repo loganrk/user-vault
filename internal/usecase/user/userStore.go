@@ -2,8 +2,8 @@ package user
 
 import (
 	"context"
-	"mayilon/internal/domain"
 	"time"
+	"userVault/internal/domain"
 )
 
 func (u *userusecase) getUserByUsername(ctx context.Context, username string) (domain.User, error) {

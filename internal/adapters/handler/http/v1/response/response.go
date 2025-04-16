@@ -2,8 +2,8 @@ package response
 
 import (
 	"encoding/json"
-	"mayilon/internal/port"
 	"net/http"
+	"userVault/internal/port"
 )
 
 func New() port.Response {

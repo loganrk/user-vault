@@ -3,8 +3,8 @@ package v1
 import (
 	"context"
 
-	"mayilon/internal/adapters/handler/http/v1/request"
-	"mayilon/internal/adapters/handler/http/v1/response"
+	"userVault/internal/adapters/handler/http/v1/request"
+	"userVault/internal/adapters/handler/http/v1/response"
 
 	"net/http"
 )

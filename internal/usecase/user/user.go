@@ -2,12 +2,12 @@ package user
 
 import (
 	"context"
-	"mayilon/config"
-	"mayilon/internal/constant"
-	"mayilon/internal/domain"
-	"mayilon/internal/port"
-	"mayilon/internal/utils"
 	"net/http"
+	"userVault/config"
+	"userVault/internal/constant"
+	"userVault/internal/domain"
+	"userVault/internal/port"
+	"userVault/internal/utils"
 
 	"time"
 

@@ -3,19 +3,19 @@ package main
 import (
 	"context"
 	"log"
-	"mayilon/config"
-	"mayilon/internal/domain"
-	"mayilon/internal/port"
+	"userVault/config"
+	"userVault/internal/domain"
+	"userVault/internal/port"
 
-	cipherAes "mayilon/internal/adapters/cipher/aes"
-	handler "mayilon/internal/adapters/handler/http/v1"
-	loggerZap "mayilon/internal/adapters/logger/zapLogger"
-	middlewareAuth "mayilon/internal/adapters/middleware/auth"
-	repositoryMysql "mayilon/internal/adapters/repository/mysql"
-	routerGin "mayilon/internal/adapters/router/gin"
-	tokenEngineJwt "mayilon/internal/adapters/tokenEngine/jwt"
+	cipherAes "userVault/internal/adapters/cipher/aes"
+	handler "userVault/internal/adapters/handler/http/v1"
+	loggerZap "userVault/internal/adapters/logger/zapLogger"
+	middlewareAuth "userVault/internal/adapters/middleware/auth"
+	repositoryMysql "userVault/internal/adapters/repository/mysql"
+	routerGin "userVault/internal/adapters/router/gin"
+	tokenJwt "userVault/internal/adapters/token/jwt"
 
-	userSrv "mayilon/internal/usecase/user"
+	userSrv "userVault/internal/usecase/user"
 )
 
 const (
@@ -122,10 +122,10 @@ func getRouter(appConfigIns config.App, loggerIns port.Logger, svcList domain.Li
 	cipherIns := cipherAes.New(cipherCryptoKey)
 	apiKeys := appConfigIns.GetMiddlewareApiKeys()
 
-	tokenEngineIns := tokenEngineJwt.New(cipherCryptoKey, cipherIns)
-	middlewareAuthIns := middlewareAuth.New(apiKeys, tokenEngineIns)
+	tokenIns := tokenJwt.New(cipherCryptoKey, cipherIns)
+	middlewareAuthIns := middlewareAuth.New(apiKeys, tokenIns)
 
-	handlerIns := handler.New(loggerIns, tokenEngineIns, svcList)
+	handlerIns := handler.New(loggerIns, tokenIns, svcList)
 	apiConfigIns := appConfigIns.GetApi()
 
 	routerIns := routerGin.New()

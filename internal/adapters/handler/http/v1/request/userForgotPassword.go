@@ -3,8 +3,8 @@ package request
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/domain"
 	"net/http"
+	"userVault/internal/domain"
 )
 
 func NewUserForgotPassword(r *http.Request) (domain.UserForgotPasswordClientRequest, error) {

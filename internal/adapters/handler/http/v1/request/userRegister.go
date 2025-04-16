@@ -3,9 +3,9 @@ package request
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/domain"
-	"mayilon/internal/utils"
 	"net/http"
+	"userVault/internal/domain"
+	"userVault/internal/utils"
 )
 
 func NewUserRegister(r *http.Request) (domain.UserRegisterClientRequest, error) {

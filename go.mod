@@ -1,4 +1,4 @@
-module mayilon
+module userVault
 
 go 1.20
 

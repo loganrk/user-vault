@@ -3,9 +3,9 @@ package jwt
 import (
 	"errors"
 	"fmt"
-	"mayilon/internal/port"
 	"reflect"
 	"time"
+	"userVault/internal/port"
 
 	"github.com/golang-jwt/jwt/v5"
 )
