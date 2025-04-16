@@ -2,9 +2,9 @@ package mysql
 
 import (
 	"context"
-	"mayilon/internal/constant"
-	"mayilon/internal/domain"
-	"mayilon/internal/port"
+	"userVault/internal/constant"
+	"userVault/internal/domain"
+	"userVault/internal/port"
 
 	gormMysql "gorm.io/driver/mysql"
 

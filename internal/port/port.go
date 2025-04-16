@@ -2,9 +2,9 @@ package port
 
 import (
 	"context"
-	"mayilon/internal/domain"
 	"net/http"
 	"time"
+	"userVault/internal/domain"
 )
 
 type Handler interface {
@@ -16,6 +16,13 @@ type Handler interface {
 	UserRefreshTokenValidate(w http.ResponseWriter, r *http.Request)
 	UserRegister(w http.ResponseWriter, r *http.Request)
 	UserResendActivation(w http.ResponseWriter, r *http.Request)
+}
+
+type Response interface {
+	SetError(errMsg string)
+	SetStatus(status int)
+	SetData(data any)
+	Send(w http.ResponseWriter)
 }
 
 type RepositoryMySQL interface {

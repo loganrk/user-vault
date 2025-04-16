@@ -3,11 +3,11 @@ package request
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/port"
 	"net/http"
+	"userVault/internal/domain"
 )
 
-func NewUserLogout(r *http.Request) (port.UserLogoutClientRequest, error) {
+func NewUserLogout(r *http.Request) (domain.UserLogoutClientRequest, error) {
 	var u userLogout
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)

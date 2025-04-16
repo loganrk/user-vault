@@ -3,11 +3,11 @@ package request
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/port"
 	"net/http"
+	"userVault/internal/domain"
 )
 
-func NewUserLogin(r *http.Request) (port.UserLoginClientRequest, error) {
+func NewUserLogin(r *http.Request) (domain.UserLoginClientRequest, error) {
 	var u userLogin
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)

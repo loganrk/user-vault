@@ -1,6 +1,6 @@
 application:
   port: 8000
-  name: Mayilon
+  name: userVault
 
 logger:
   level:

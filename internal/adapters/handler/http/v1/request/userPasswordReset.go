@@ -3,12 +3,12 @@ package request
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/port"
-	"mayilon/internal/utils"
 	"net/http"
+	"userVault/internal/domain"
+	"userVault/internal/utils"
 )
 
-func NewUserResetPassword(r *http.Request) (port.UserResetPasswordClientRequest, error) {
+func NewUserResetPassword(r *http.Request) (domain.UserResetPasswordClientRequest, error) {
 	var u userResetPassword
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)

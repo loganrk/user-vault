@@ -1,4 +1,4 @@
-package port
+package domain
 
 type UserLoginClientRequest interface {
 	Validate() error

@@ -3,11 +3,11 @@ package request
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/port"
 	"net/http"
+	"userVault/internal/domain"
 )
 
-func NewUserResendActivation(r *http.Request) (port.UserResendActivationClientRequest, error) {
+func NewUserResendActivation(r *http.Request) (domain.UserResendActivationClientRequest, error) {
 	var u userResendActivation
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)

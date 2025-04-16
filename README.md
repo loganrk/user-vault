@@ -14,8 +14,8 @@ This project provides a user login system with encryption and JWT token authenti
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/loganrk/mayilon
-    cd mayilonn
+    git clone https://github.com/loganrk/userVault
+    cd userVaultn
     ```
 
 2. Initialize and download the dependencies:

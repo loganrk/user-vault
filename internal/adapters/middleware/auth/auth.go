@@ -1,10 +1,10 @@
 package auth
 
 import (
-	"mayilon/internal/port"
 	"net/http"
 	"strings"
 	"time"
+	"userVault/internal/port"
 
 	"golang.org/x/exp/slices"
 )

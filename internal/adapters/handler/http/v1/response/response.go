@@ -2,18 +2,17 @@ package response
 
 import (
 	"encoding/json"
-	"mayilon/internal/port"
 	"net/http"
+	"userVault/internal/port"
 )
 
 func New() port.Response {
 	return &response{}
 }
 
-func (r *response) SetError(errCode string, errMsg string) {
+func (r *response) SetError(errMsg string) {
 	r.Err = append(r.Err, errorMsg{
-		Code: errCode,
-		Msg:  errMsg,
+		Msg: errMsg,
 	})
 }
 

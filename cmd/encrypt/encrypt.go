@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	cipherAes "mayilon/internal/adapters/cipher/aes"
+	cipherAes "userVault/internal/adapters/cipher/aes"
 )
 
 func main() {
