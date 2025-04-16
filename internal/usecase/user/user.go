@@ -28,11 +28,11 @@ const (
 )
 
 type userusecase struct {
-	appName     string
-	logger      port.Logger
-	mysql       port.RepositoryMySQL
-	conf        config.User
-	tokenEngine port.Token
+	appName string
+	logger  port.Logger
+	mysql   port.RepositoryMySQL
+	conf    config.User
+	token   port.Token
 }
 
 func New(loggerIns port.Logger, mysqlIns port.RepositoryMySQL, appName string, userConfIns config.User) domain.UserSvr {
@@ -148,7 +148,7 @@ func (u *userusecase) Login(ctx context.Context, username, password string) (dom
 		}
 	}
 
-	accessToken, err := u.tokenEngine.CreateAccessToken(userData.Id, userData.Username, userData.Name, u.getAccessTokenExpiry())
+	accessToken, err := u.token.CreateAccessToken(userData.Id, userData.Username, userData.Name, u.getAccessTokenExpiry())
 	if err != nil {
 		u.logger.Errorw(ctx, "failed to create access token",
 			"event", "access_token_generation_failed",
@@ -170,7 +170,7 @@ func (u *userusecase) Login(ctx context.Context, username, password string) (dom
 			refreshTokenType = constant.REFRESH_TOKEN_TYPE_STATIC
 		}
 
-		refreshToken, err = u.tokenEngine.CreateRefreshToken(userData.Id, u.getRefreshTokenExpiry())
+		refreshToken, err = u.token.CreateRefreshToken(userData.Id, u.getRefreshTokenExpiry())
 		if err != nil {
 			u.logger.Errorw(ctx, "failed to create refresh token",
 				"event", "refresh_token_generation_failed",
@@ -184,7 +184,7 @@ func (u *userusecase) Login(ctx context.Context, username, password string) (dom
 			}
 		}
 
-		expiresAt, err := u.tokenEngine.GetRefreshTokenExpiry(refreshToken)
+		expiresAt, err := u.token.GetRefreshTokenExpiry(refreshToken)
 		if err != nil {
 			u.logger.Errorw(ctx, "failed to get refresh token expiry",
 				"event", "refresh_token_expiry_parse_failed",
@@ -223,7 +223,7 @@ func (u *userusecase) Login(ctx context.Context, username, password string) (dom
 
 func (u *userusecase) Logout(ctx context.Context, refreshToken string) (domain.UserLogoutClientResponse, domain.HTTPError) {
 	// Attempt to get user data from refresh token
-	userid, expiresAt, err := u.tokenEngine.GetRefreshTokenData(refreshToken)
+	userid, expiresAt, err := u.token.GetRefreshTokenData(refreshToken)
 	if err != nil {
 		u.logger.Errorw(ctx, "unable to parse refresh token",
 			"event", "logout_failed",
@@ -882,7 +882,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, token, newPassword stri
 
 func (u *userusecase) ValidateRefreshToken(ctx context.Context, refreshToken string) (domain.UserRefreshTokenValidateClientResponse, domain.HTTPError) {
 	// Fetch token data
-	userID, expiresAt, err := u.tokenEngine.GetRefreshTokenData(refreshToken)
+	userID, expiresAt, err := u.token.GetRefreshTokenData(refreshToken)
 	if err != nil {
 		u.logger.Errorw(ctx, "unable to parse token",
 			"event", "user_refresh_token_validation_failed",
@@ -939,7 +939,7 @@ func (u *userusecase) ValidateRefreshToken(ctx context.Context, refreshToken str
 	}
 
 	// Token creation
-	accessToken, err := u.tokenEngine.CreateAccessToken(userData.Id, userData.Username, userData.Name, u.getAccessTokenExpiry())
+	accessToken, err := u.token.CreateAccessToken(userData.Id, userData.Username, userData.Name, u.getAccessTokenExpiry())
 	if err != nil {
 		return domain.UserRefreshTokenValidateClientResponse{}, HTTPError{
 			Code:    http.StatusInternalServerError,
@@ -961,7 +961,7 @@ func (u *userusecase) ValidateRefreshToken(ctx context.Context, refreshToken str
 			}
 		}
 
-		finalRefreshToken, err = u.tokenEngine.CreateRefreshToken(userID, u.getRefreshTokenExpiry())
+		finalRefreshToken, err = u.token.CreateRefreshToken(userID, u.getRefreshTokenExpiry())
 		if err != nil {
 			return domain.UserRefreshTokenValidateClientResponse{}, HTTPError{
 				Code:    http.StatusInternalServerError,
