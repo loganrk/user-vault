@@ -1,12 +1,10 @@
-package port
+package domain
 
-import "net/http"
-
-type Response interface {
-	SetError(errCode string, errMsg string)
-	SetStatus(status int)
-	SetData(data any)
-	Send(w http.ResponseWriter)
+type HTTPError interface {
+	error
+	StatusCode() int
+	MessageText() string
+	Unwrap() error
 }
 
 type UserLoginClientResponse struct {

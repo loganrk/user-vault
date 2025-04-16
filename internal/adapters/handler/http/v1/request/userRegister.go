@@ -3,12 +3,12 @@ package request
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/port"
+	"mayilon/internal/domain"
 	"mayilon/internal/utils"
 	"net/http"
 )
 
-func NewUserRegister(r *http.Request) (port.UserRegisterClientRequest, error) {
+func NewUserRegister(r *http.Request) (domain.UserRegisterClientRequest, error) {
 	var u userRegister
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)

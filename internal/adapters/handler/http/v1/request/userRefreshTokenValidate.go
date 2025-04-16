@@ -3,11 +3,11 @@ package request
 import (
 	"encoding/json"
 	"errors"
-	"mayilon/internal/port"
+	"mayilon/internal/domain"
 	"net/http"
 )
 
-func NewUserRefreshTokenValidate(r *http.Request) (port.UserRefreshTokenValidateClientRequest, error) {
+func NewUserRefreshTokenValidate(r *http.Request) (domain.UserRefreshTokenValidateClientRequest, error) {
 	var u userRefreshTokenValidate
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)

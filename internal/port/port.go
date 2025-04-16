@@ -18,6 +18,13 @@ type Handler interface {
 	UserResendActivation(w http.ResponseWriter, r *http.Request)
 }
 
+type Response interface {
+	SetError(errMsg string)
+	SetStatus(status int)
+	SetData(data any)
+	Send(w http.ResponseWriter)
+}
+
 type RepositoryMySQL interface {
 	AutoMigrate()
 
