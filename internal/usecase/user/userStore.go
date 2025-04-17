@@ -23,7 +23,7 @@ func (u *userusecase) getUserLoginFailedAttemptCount(ctx context.Context, userid
 
 func (u *userusecase) createLoginAttempt(ctx context.Context, userId int, success bool) (int, error) {
 
-	loginAttemptId, err := u.mysql.CreateUserLoginAttempt(ctx, domain.UserLoginAttempt{
+	loginAttemptId, err := u.mysql.NewUserLoginAttempt(ctx, domain.UserLoginAttempt{
 		UserId:    userId,
 		Success:   success,
 		CreatedAt: time.Now(),
@@ -33,7 +33,7 @@ func (u *userusecase) createLoginAttempt(ctx context.Context, userId int, succes
 }
 
 func (u *userusecase) createUser(ctx context.Context, userData domain.User) (int, error) {
-	userid, err := u.mysql.CreateUser(ctx, userData)
+	userid, err := u.mysql.NewUser(ctx, userData)
 	return userid, err
 }
 
@@ -61,9 +61,9 @@ func (u *userusecase) updatePassword(ctx context.Context, userid int, hashPasswo
 
 }
 
-func (u *userusecase) createRefreshToken(ctx context.Context, refreshTokenData domain.UserRefreshToken) (int, error) {
+func (u *userusecase) storeRefreshToken(ctx context.Context, refreshTokenData domain.UserRefreshToken) (int, error) {
 
-	refreshTokenId, err := u.mysql.CreateRefreshToken(ctx, refreshTokenData)
+	refreshTokenId, err := u.mysql.NewRefreshToken(ctx, refreshTokenData)
 	return refreshTokenId, err
 
 }
@@ -88,7 +88,7 @@ func (u *userusecase) getActivationByToken(ctx context.Context, activationToken 
 }
 
 func (u *userusecase) createActivation(ctx context.Context, tokenData domain.UserActivationToken) (int, error) {
-	tokenId, err := u.mysql.CreateActivation(ctx, tokenData)
+	tokenId, err := u.mysql.NewActivation(ctx, tokenData)
 	return tokenId, err
 
 }

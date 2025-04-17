@@ -38,7 +38,7 @@ func (u *userusecase) createActivationToken(ctx context.Context, userid int) (in
 	return tokenId, activationToken, nil
 }
 
-func (u *userusecase) storeRefreshToken(ctx context.Context, userid int, token string, expiresAt time.Time) (int, error) {
+func (u *userusecase) createRefreshToken(ctx context.Context, userid int, token string, expiresAt time.Time) (int, error) {
 
 	refreshTokenData := domain.UserRefreshToken{
 		UserId:    userid,
@@ -47,7 +47,7 @@ func (u *userusecase) storeRefreshToken(ctx context.Context, userid int, token s
 		Revoked:   false,
 	}
 
-	refreshTokenId, err := u.createRefreshToken(ctx, refreshTokenData)
+	refreshTokenId, err := u.storeRefreshToken(ctx, refreshTokenData)
 	if err != nil {
 		return 0, err
 	}
@@ -82,15 +82,14 @@ func (u *userusecase) createPasswordResetToken(ctx context.Context, userid int) 
 		ExpiresAt: u.getPasswordResetLinkExpiry(),
 	}
 
-	passwordResetId, err := u.mysql.CreatePasswordReset(ctx, passwordResetData)
+	passwordResetId, err := u.mysql.NewPasswordReset(ctx, passwordResetData)
 	if err != nil {
 		return 0, "", err
 	}
 	return passwordResetId, passwordResetToken, nil
 }
 
-func (u *userusecase) checkLoginFailedAttempt(ctx context.Context, userId int) (int, error) {
-	// TODO: add client based token
+func (u *userusecase) checkLoginFailedAttemptLimitReached(ctx context.Context, userId int) (int, error) {
 	attempCount, err := u.getUserLoginFailedAttemptCount(ctx, userId, u.getLoginAttemptSessionPeriod())
 	if err != nil {
 
@@ -105,7 +104,7 @@ func (u *userusecase) checkLoginFailedAttempt(ctx context.Context, userId int) (
 	return constant.LOGIN_ATTEMPT_SUCCESS, nil
 }
 
-func (u *userusecase) checkPassword(ctx context.Context, password string, passwordHash string, saltHash string) (bool, error) {
+func (u *userusecase) comparePassword(ctx context.Context, password string, passwordHash string, saltHash string) (bool, error) {
 
 	err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password+saltHash))
 	if err != nil {

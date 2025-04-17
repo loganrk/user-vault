@@ -39,7 +39,7 @@ func (m *mysql) AutoMigrate() {
 
 }
 
-func (m *mysql) CreateUser(ctx context.Context, userData domain.User) (int, error) {
+func (m *mysql) NewUser(ctx context.Context, userData domain.User) (int, error) {
 	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Create(&userData)
 	return userData.Id, result.Error
 }
@@ -72,7 +72,7 @@ func (m *mysql) GetUserLoginFailedAttemptCount(ctx context.Context, userId int, 
 	return int(result.RowsAffected), nil
 }
 
-func (m *mysql) CreateUserLoginAttempt(ctx context.Context, userLoginAttempt domain.UserLoginAttempt) (int, error) {
+func (m *mysql) NewUserLoginAttempt(ctx context.Context, userLoginAttempt domain.UserLoginAttempt) (int, error) {
 	result := m.dialer.WithContext(ctx).Model(&domain.UserLoginAttempt{}).Create(&userLoginAttempt)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil
@@ -80,7 +80,7 @@ func (m *mysql) CreateUserLoginAttempt(ctx context.Context, userLoginAttempt dom
 	return userLoginAttempt.Id, result.Error
 }
 
-func (m *mysql) CreateActivation(ctx context.Context, tokenData domain.UserActivationToken) (int, error) {
+func (m *mysql) NewActivation(ctx context.Context, tokenData domain.UserActivationToken) (int, error) {
 	result := m.dialer.WithContext(ctx).Model(&domain.UserActivationToken{}).Create(&tokenData)
 	return tokenData.Id, result.Error
 }
@@ -107,7 +107,7 @@ func (m *mysql) UpdateStatus(ctx context.Context, userid int, status int) error 
 	return result.Error
 }
 
-func (m *mysql) CreateRefreshToken(ctx context.Context, refreshTokenData domain.UserRefreshToken) (int, error) {
+func (m *mysql) NewRefreshToken(ctx context.Context, refreshTokenData domain.UserRefreshToken) (int, error) {
 	result := m.dialer.WithContext(ctx).Model(&domain.UserRefreshToken{}).Create(&refreshTokenData)
 	return refreshTokenData.Id, result.Error
 }
@@ -128,7 +128,7 @@ func (m *mysql) GetRefreshTokenData(ctx context.Context, userid int, refreshToke
 	return tokenData, result.Error
 }
 
-func (m *mysql) CreatePasswordReset(ctx context.Context, passwordResetData domain.UserPasswordReset) (int, error) {
+func (m *mysql) NewPasswordReset(ctx context.Context, passwordResetData domain.UserPasswordReset) (int, error) {
 	result := m.dialer.WithContext(ctx).Model(&domain.UserPasswordReset{}).Create(&passwordResetData)
 	return passwordResetData.Id, result.Error
 }

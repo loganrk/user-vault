@@ -31,21 +31,21 @@ type RepositoryMySQL interface {
 	GetUserByUserid(ctx context.Context, id int) (domain.User, error)
 	GetUserByUsername(ctx context.Context, username string) (domain.User, error)
 	GetUserLoginFailedAttemptCount(ctx context.Context, userId int, sessionStartTime time.Time) (int, error)
-	CreateUserLoginAttempt(ctx context.Context, userLoginAttempt domain.UserLoginAttempt) (int, error)
-	CreateUser(ctx context.Context, userData domain.User) (int, error)
+	NewUserLoginAttempt(ctx context.Context, userLoginAttempt domain.UserLoginAttempt) (int, error)
+	NewUser(ctx context.Context, userData domain.User) (int, error)
 
 	GetActivationByToken(ctx context.Context, token string) (domain.UserActivationToken, error)
-	CreateActivation(ctx context.Context, tokenData domain.UserActivationToken) (int, error)
+	NewActivation(ctx context.Context, tokenData domain.UserActivationToken) (int, error)
 	UpdatedActivationtatus(ctx context.Context, tokenId int, status int) error
 	UpdateStatus(ctx context.Context, userid int, status int) error
 
-	CreatePasswordReset(ctx context.Context, tokenData domain.UserPasswordReset) (int, error)
+	NewPasswordReset(ctx context.Context, tokenData domain.UserPasswordReset) (int, error)
 	GetPasswordResetByToken(ctx context.Context, token string) (domain.UserPasswordReset, error)
 	UpdatedPasswordResetStatus(ctx context.Context, id int, status int) error
 	GetActivePasswordResetByUserId(ctx context.Context, userid int) (domain.UserPasswordReset, error)
 	UpdatePassword(ctx context.Context, userid int, password string) error
 
-	CreateRefreshToken(ctx context.Context, refreshTokenData domain.UserRefreshToken) (int, error)
+	NewRefreshToken(ctx context.Context, refreshTokenData domain.UserRefreshToken) (int, error)
 	RevokedRefreshToken(ctx context.Context, userid int, refreshToken string) error
 	GetRefreshTokenData(ctx context.Context, userid int, refreshToken string) (domain.UserRefreshToken, error)
 }

@@ -80,7 +80,7 @@ func (u *userusecase) Login(ctx context.Context, username, password string) (dom
 		}
 	}
 
-	attemptStatus, err := u.checkLoginFailedAttempt(ctx, userData.Id)
+	attemptStatus, err := u.checkLoginFailedAttemptLimitReached(ctx, userData.Id)
 	if err != nil {
 		u.logger.Errorw(ctx, "error checking failed login attempts",
 			"event", "login_attempt_check_failed",
@@ -106,7 +106,7 @@ func (u *userusecase) Login(ctx context.Context, username, password string) (dom
 		}
 	}
 
-	passwordMatch, err := u.checkPassword(ctx, password, userData.Password, userData.Salt)
+	passwordMatch, err := u.comparePassword(ctx, password, userData.Password, userData.Salt)
 	if err != nil || !passwordMatch {
 		_, _ = u.createLoginAttempt(ctx, userData.Id, false)
 		u.logger.Warnw(ctx, "password did not match",
@@ -198,7 +198,7 @@ func (u *userusecase) Login(ctx context.Context, username, password string) (dom
 			}
 		}
 
-		_, err = u.storeRefreshToken(ctx, userData.Id, refreshToken, expiresAt)
+		_, err = u.createRefreshToken(ctx, userData.Id, refreshToken, expiresAt)
 
 		if err != nil {
 			return domain.UserLoginClientResponse{}, HTTPError{
@@ -970,7 +970,7 @@ func (u *userusecase) ValidateRefreshToken(ctx context.Context, refreshToken str
 			}
 		}
 
-		_, err = u.storeRefreshToken(ctx, userID, finalRefreshToken, u.getRefreshTokenExpiry())
+		_, err = u.createRefreshToken(ctx, userID, finalRefreshToken, u.getRefreshTokenExpiry())
 		if err != nil {
 			return domain.UserRefreshTokenValidateClientResponse{}, HTTPError{
 				Code:    http.StatusInternalServerError,
