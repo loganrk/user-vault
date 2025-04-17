@@ -15,10 +15,10 @@ cipher:
 
 token:
   jwt:
-   method:
-   hmacKey:
-   rsaPrivateKeyPath:
-   rsaPublicKeyPath:
+    method: "RS256"   # Could be either "HS256" for HMAC or "RS256" for RSA
+    hmacKey: "supersecretkeyforhmac"  # HMAC key used for signing (only if method is "HS256")
+    rsaPrivateKeyPath: "/path/to/rsa_private_key.pem"  # Path to your RSA private key (only if method is "RS256")
+    rsaPublicKeyPath: "/path/to/rsa_public_key.pem"    # Path to your RSA public key (only if method is "RS256")
   
 middleware:
   keys:
