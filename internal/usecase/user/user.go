@@ -184,7 +184,7 @@ func (u *userusecase) Login(ctx context.Context, username, password string) (dom
 			}
 		}
 
-		expiresAt, err := u.token.GetRefreshTokenExpiry(refreshToken)
+		_, expiresAt, err := u.token.GetRefreshTokenData(refreshToken)
 		if err != nil {
 			u.logger.Errorw(ctx, "failed to get refresh token expiry",
 				"event", "refresh_token_expiry_parse_failed",

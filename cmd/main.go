@@ -6,6 +6,7 @@ import (
 	"userVault/config"
 	"userVault/internal/domain"
 	"userVault/internal/port"
+	"userVault/internal/utils"
 
 	cipherAes "userVault/internal/adapters/cipher/aes"
 	handler "userVault/internal/adapters/handler/http/v1"
@@ -14,7 +15,6 @@ import (
 	repositoryMysql "userVault/internal/adapters/repository/mysql"
 	routerGin "userVault/internal/adapters/router/gin"
 	tokenJwt "userVault/internal/adapters/token/jwt"
-
 	userSrv "userVault/internal/usecase/user"
 )
 
@@ -57,8 +57,14 @@ func main() {
 		User: userSrvIns,
 	}
 
+	tokenIns, err := getToken(appConfigIns.GetJWTToken())
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	/* get the router instance */
-	routerIns := getRouter(appConfigIns, loggerIns, svcList)
+	routerIns := getRouter(appConfigIns, loggerIns, tokenIns, svcList)
 
 	/* start the usecase */
 	port := appConfigIns.GetAppPort()
@@ -117,12 +123,29 @@ func getDatabase(appConfigIns config.App) (port.RepositoryMySQL, error) {
 
 }
 
-func getRouter(appConfigIns config.App, loggerIns port.Logger, svcList domain.List) port.Router {
-	cipherCryptoKey := appConfigIns.GetCipherCryptoKey()
-	cipherIns := cipherAes.New(cipherCryptoKey)
+func getToken(jwtConfigIns config.Jwt) (port.Token, error) {
+	rsaPrivateKey, err := utils.LoadRSAPrivKeyFromFile(jwtConfigIns.GetRsaPublicKeyPath())
+	if err != nil {
+		return nil, err
+	}
+
+	rsaPublicKey, err := utils.LoadRSAPubKeyFromFile(jwtConfigIns.GetRsaPublicKeyPath())
+	if err != nil {
+		return nil, err
+	}
+
+	return tokenJwt.New(
+		jwtConfigIns.GetMethod(),
+		[]byte(jwtConfigIns.GetHmacKey()),
+		rsaPrivateKey,
+		rsaPublicKey,
+	), nil
+
+}
+
+func getRouter(appConfigIns config.App, loggerIns port.Logger, tokenIns port.Token, svcList domain.List) port.Router {
 	apiKeys := appConfigIns.GetMiddlewareApiKeys()
 
-	tokenIns := tokenJwt.New(cipherCryptoKey, cipherIns)
 	middlewareAuthIns := middlewareAuth.New(apiKeys, tokenIns)
 
 	handlerIns := handler.New(loggerIns, tokenIns, svcList)

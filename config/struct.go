@@ -29,6 +29,9 @@ type app struct {
 			} `mapstructure:"heap"`
 		} `mapstructure:"cache"`
 	} `mapstructure:"store"`
+	Token struct {
+		JWT tokenJWT `mapstructure:"jwt"`
+	} `mapstructure:"token"`
 	Api  api  `mapstructure:"api"`
 	User user `mapstructure:"user"`
 }
@@ -81,4 +84,11 @@ type user struct {
 	AccessToken struct {
 		Expiry int `mapstructure:"expiry"`
 	} `mapstructure:"accessToken"`
+}
+
+type tokenJWT struct {
+	Method            string `mapstructure:"method"`
+	HmacKey           string `mapstructure:"hmacKey"`
+	RsaPrivateKeyPath string `mapstructure:"rsaPrivateKeyPath"`
+	RsaPublicKeyPath  string `mapstructure:"rsaPublicKeyPath"`
 }

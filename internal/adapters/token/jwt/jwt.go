@@ -1,9 +1,8 @@
 package jwt
 
 import (
+	"crypto/rsa"
 	"errors"
-	"fmt"
-	"reflect"
 	"time"
 	"userVault/internal/port"
 
@@ -11,143 +10,119 @@ import (
 )
 
 type token struct {
-	cryptoKey string
-	cipher    port.Cipher
+	method     string // "HS256" or "RS256"
+	hmacKey    []byte
+	rsaPrivKey *rsa.PrivateKey
+	rsaPubKey  *rsa.PublicKey
 }
 
-func New(cryptoKey string, cipherIns port.Cipher) port.Token {
+func New(method string, hmacKey []byte, rsaPrivKey *rsa.PrivateKey, rsaPubKey *rsa.PublicKey) port.Token {
 	return &token{
-		cryptoKey: cryptoKey,
-		cipher:    cipherIns,
+		method:     method,
+		hmacKey:    hmacKey,
+		rsaPrivKey: rsaPrivKey,
+		rsaPubKey:  rsaPubKey,
 	}
 }
 
-func (t *token) CreateAccessToken(uid int, uname string, name string, expiry time.Time) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
-		jwt.MapClaims{
-			"type":  "access",
-			"uid":   uid,
-			"uname": uname,
-			"name":  name,
-			"exp":   expiry.Unix(),
-		})
+func (t *token) signToken(claims jwt.Claims) (string, error) {
+	var signingMethod jwt.SigningMethod
+	var signedToken string
+	var err error
 
-	tokenString, err := token.SignedString([]byte(t.cipher.GetKey()))
+	switch t.method {
+	case "HS256":
+		signingMethod = jwt.SigningMethodHS256
+		signedToken, err = jwt.NewWithClaims(signingMethod, claims).SignedString(t.hmacKey)
+	case "RS256":
+		signingMethod = jwt.SigningMethodRS256
+		signedToken, err = jwt.NewWithClaims(signingMethod, claims).SignedString(t.rsaPrivKey)
+	default:
+		return "", errors.New("unsupported signing method")
+	}
+
 	if err != nil {
 		return "", err
 	}
 
-	tokenStringEcr, err := t.cipher.Encrypt(tokenString)
-	if err != nil {
-		return "", err
-	}
+	return signedToken, nil
+}
 
-	return tokenStringEcr, nil
+func (t *token) CreateAccessToken(uid int, uname, name string, expiry time.Time) (string, error) {
+	claims := jwt.MapClaims{
+		"type":  "access",
+		"uid":   uid,
+		"uname": uname,
+		"name":  name,
+		"exp":   expiry.Unix(),
+	}
+	return t.signToken(claims)
 }
 
 func (t *token) CreateRefreshToken(uid int, expiry time.Time) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
-		jwt.MapClaims{
-			"type": "refresh",
-			"uid":  uid,
-			"exp":  expiry.Unix(),
-		})
-
-	tokenString, err := token.SignedString([]byte(t.cipher.GetKey()))
-	if err != nil {
-		return "", err
+	claims := jwt.MapClaims{
+		"type": "refresh",
+		"uid":  uid,
+		"exp":  expiry.Unix(),
 	}
-
-	tokenStringEcr, err := t.cipher.Encrypt(tokenString)
-	if err != nil {
-		return "", err
-	}
-
-	return tokenStringEcr, nil
+	return t.signToken(claims)
 }
 
-func (t *token) GetRefreshTokenData(tokenStringEcr string) (int, time.Time, error) {
-	tokenString, err := t.cipher.Decrypt(tokenStringEcr)
+func (t *token) parseTokenWithoutVerification(encryptedToken string) (jwt.MapClaims, error) {
+	token, _, err := jwt.NewParser().ParseUnverified(encryptedToken, jwt.MapClaims{})
 	if err != nil {
-		return 0, time.Time{}, err
-	}
-
-	token, _, err := jwt.NewParser().ParseUnverified(tokenString, jwt.MapClaims{})
-	if err != nil {
-		return 0, time.Time{}, err
-
+		return nil, err
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		if tokenType, ok := claims["type"].(string); !ok || tokenType != "refresh" {
-			return 0, time.Time{}, errors.New("token type (`type`) not found or mismatch in token")
-		}
-
-		if uid, ok := claims["uid"].(float64); ok {
-			if exp, ok := claims["exp"].(float64); ok {
-				expirationTime := time.Unix(int64(exp), 0)
-				return int(uid), expirationTime, nil
-			}
-			return 0, time.Time{}, errors.New("expiration time (`exp`) not found in token")
-		}
-		return 0, time.Time{}, errors.New("user id (`uid`) not found in token")
-	}
-	return 0, time.Time{}, errors.New("invalid token claims")
-}
-
-func (t *token) GetRefreshTokenExpiry(tokenStringEcr string) (time.Time, error) {
-	tokenString, err := t.cipher.Decrypt(tokenStringEcr)
-	if err != nil {
-		return time.Time{}, err
+		return claims, nil
 	}
 
-	token, _, err := jwt.NewParser().ParseUnverified(tokenString, jwt.MapClaims{})
-	if err != nil {
-		return time.Time{}, err
-
-	}
-
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		if tokenType, ok := claims["type"].(string); !ok || tokenType != "refresh" {
-			return time.Time{}, errors.New("token type (`type`) not found or mismatch in token")
-		}
-		if exp, ok := claims["exp"].(float64); ok {
-			expirationTime := time.Unix(int64(exp), 0)
-			return expirationTime, nil
-		}
-		return time.Time{}, errors.New("expiration time (`exp`) not found in token")
-	}
-	return time.Time{}, errors.New("invalid token claims")
+	return nil, errors.New("invalid token claims")
 }
 
 func (t *token) GetAccessTokenData(encryptedToken string) (int, time.Time, error) {
-	tokenString, err := t.cipher.Decrypt(encryptedToken)
+	claims, err := t.parseTokenWithoutVerification(encryptedToken)
 	if err != nil {
 		return 0, time.Time{}, err
 	}
 
-	token, _, err := jwt.NewParser().ParseUnverified(tokenString, jwt.MapClaims{})
-	if err != nil {
-		return 0, time.Time{}, err
-
+	if tokenType, ok := claims["type"].(string); !ok || tokenType != "access" {
+		return 0, time.Time{}, errors.New("token type (`type`) not found or mismatch in token")
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-
-		if tokenType, ok := claims["type"].(string); !ok || tokenType != "access" {
-			return 0, time.Time{}, errors.New("token type (`type`) not found or mismatch in token")
-		}
-		for key, value := range claims {
-			fmt.Printf("Key: %s, Type: %s, Value: %v\n", key, reflect.TypeOf(value), value)
-		}
-		if uid, ok := claims["uid"].(float64); ok {
-			if exp, ok := claims["exp"].(float64); ok {
-				expirationTime := time.Unix(int64(exp), 0)
-				return int(uid), expirationTime, nil
-			}
-			return 0, time.Time{}, errors.New("expiration time (`exp`) not found in token")
-		}
+	uid, ok := claims["uid"].(float64)
+	if !ok {
 		return 0, time.Time{}, errors.New("user id (`uid`) not found in token")
 	}
-	return 0, time.Time{}, errors.New("invalid token claims")
+
+	exp, ok := claims["exp"].(float64)
+	if !ok {
+		return 0, time.Time{}, errors.New("expiration time (`exp`) not found in token")
+	}
+
+	return int(uid), time.Unix(int64(exp), 0), nil
+}
+
+func (t *token) GetRefreshTokenData(encryptedToken string) (int, time.Time, error) {
+	claims, err := t.parseTokenWithoutVerification(encryptedToken)
+	if err != nil {
+		return 0, time.Time{}, err
+	}
+
+	if tokenType, ok := claims["type"].(string); !ok || tokenType != "refresh" {
+		return 0, time.Time{}, errors.New("token type (`type`) not found or mismatch in token")
+	}
+
+	uid, ok := claims["uid"].(float64)
+	if !ok {
+		return 0, time.Time{}, errors.New("user id (`uid`) not found in token")
+	}
+
+	exp, ok := claims["exp"].(float64)
+	if !ok {
+		return 0, time.Time{}, errors.New("expiration time (`exp`) not found in token")
+	}
+
+	return int(uid), time.Unix(int64(exp), 0), nil
 }
