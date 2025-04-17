@@ -12,6 +12,13 @@ logger:
 
 cipher:
   cryptoKey: qf0ac7131xktkut8
+
+token:
+  jwt:
+   method:
+   hmacKey:
+   rsaPrivateKeyPath:
+   rsaPublicKeyPath:
   
 middleware:
   keys:

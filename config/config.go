@@ -21,6 +21,7 @@ type App interface {
 	GetLogger() Logger
 	GetApi() Api
 	GetUser() User
+	GetJWTToken() Jwt
 }
 
 func StartConfig(path string, file File) (App, error) {
@@ -84,4 +85,8 @@ func (a app) GetApi() Api {
 
 func (a app) GetUser() User {
 	return a.User
+}
+
+func (a app) GetJWTToken() Jwt {
+	return a.Token.JWT
 }
