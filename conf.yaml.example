@@ -1,14 +1,14 @@
 application:
   port: 8000  # Port the application will run on
-  name: userVault  # Name of the application
+  name: "userVault"  # Name of the application
 
 logger:
-  level: debug  # Options: debug, info, warn, error
-  encoding: json  # Options: json, console
+  level: "debug"  # Options: debug, info, warn, error
+  encoding: "json"  # Options: json, console
   method: true  # Log HTTP method
   caller: true  # Include caller information in logs
-  path: logs/app.log  # Path to the application log file
-  errPath: logs/error.log  # Path to the error log file
+  path: "/path/to/app.log"  # Path to the application log file
+  errPath: "logs/error.log"  # Path to the error log file
 
 middleware:
   keys:
@@ -20,43 +20,43 @@ middleware:
 api:
   userLogin:
     enabled: true
-    route: /api/v1/login
-    method: POST
+    route: "/api/v1/login"
+    method: "POST"
   userRegister:
     enabled: true
-    route: /api/v1/register
-    method: POST
+    route: "/api/v1/register"
+    method: "POST"
   userActivation:
     enabled: true
-    route: /api/v1/activate
-    method: POST
+    route: "/api/v1/activate"
+    method: "POST"
   userLogout:
     enabled: true
-    route: /api/v1/logout
-    method: POST
+    route: "/api/v1/logout"
+    method: "POST"
   userForgotPassword:
     enabled: true
-    route: /api/v1/forgot-password
-    method: POST
+    route: "/api/v1/forgot-password"
+    method: "POST"
   userPasswordReset:
     enabled: true
-    route: /api/v1/reset-password
-    method: POST
+    route: "/api/v1/reset-password"
+    method: "POST"
   userRefreshTokenValidate:
     enabled: true
-    route: /api/v1/refresh-token
-    method: POST
+    route: "/api/v1/refresh-token"
+    method: "POST"
   userResendActivation:
     enabled: true
-    route: /api/v1/resend-activation
-    method: POST
+    route: "/api/v1/resend-activation"
+    method: "POST"
 
 store:
   database:
-    host: ENC(g7kd8v84u4d...)  # Encrypted database host
-    port: ENC(j2938djw...)  # Encrypted port, e.g., 3306
-    username: ENC(dj3k4jf...)  # Encrypted DB username
-    password: ENC(fk3948dj...)  # Encrypted DB password
+    host: "g7kd8v84u4d..."  # Encrypted database host
+    port: "j2938djw..."  # Encrypted port, e.g., 3306
+    username: "dj3k4jf..."  # Encrypted DB username
+    password: "fk3948dj..."  # Encrypted DB password
     name: test  # Database name
     prefix: pm_  # Table prefix for your DB tables
     
@@ -65,11 +65,11 @@ user:
   loginAttemptSessionPeriod: 60  # Time period (in seconds) to count failed attempts
   passwordHashCost: 12  # bcrypt cost factor for password hashing
   activation:
-    templatePath: "./templates/activation_email_template.html"  # Template for activation email
+    templatePath: "/path/to/activation_email_template.html"  # Template for activation email
     link: "https://example.com/activate?token={{token}}"  # Activation link with token macro
     linkExpiry: 1800  # Expiry time for activation link in seconds (30 min)
   passwordReset:
-    templatePath: "./templates/password_reset_email_template.html"  # Template for reset email
+    templatePath: "/path/to/password_reset_email_template.html"  # Template for reset email
     link: "https://example.com/password-reset?token={{token}}"  # Reset link with token macro
     linkExpiry: 1800  # Expiry time for reset link in seconds (30 min)
   refreshToken:
