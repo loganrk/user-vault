@@ -12,6 +12,3 @@
 
 # ignore ALL .env files
 *.env
-
-# ignore go.sum file
-go.sum
