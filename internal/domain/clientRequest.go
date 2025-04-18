@@ -1,45 +1,37 @@
 package domain
 
-type UserLoginClientRequest interface {
-	Validate() error
-	GetUsername() string
-	GetPassword() string
+type UserLoginClientRequest struct {
+	Username string `json:"username" schema:"username" validate:"required,email"`
+	Password string `json:"password" schema:"password" validate:"required,min=8,max=32"`
 }
 
-type UserActivationClientRequest interface {
-	Validate() error
-	GetToken() string
+type UserRegisterClientRequest struct {
+	Username string `json:"username" schema:"username" validate:"required,email"`
+	Password string `json:"password" schema:"password" validate:"required,password"`
+	Name     string `json:"name" schema:"name" validate:"required"`
 }
 
-type UserForgotPasswordClientRequest interface {
-	Validate() error
-	GetUsername() string
+type UserForgotPasswordClientRequest struct {
+	Username string `json:"username" schema:"username" validate:"required,email"`
 }
 
-type UserResetPasswordClientRequest interface {
-	Validate() error
-	GetToken() string
-	GetPassword() string
+type UserResetPasswordClientRequest struct {
+	Token    string `json:"token" schema:"token" validate:"required"`
+	Password string `json:"password" schema:"password" validate:"required,password"`
 }
 
-type UserRegisterClientRequest interface {
-	Validate() error
-	GetUsername() string
-	GetPassword() string
-	GetName() string
+type UserResendActivationClientRequest struct {
+	Username string `json:"username" schema:"username" validate:"required,email"`
 }
 
-type UserResendActivationClientRequest interface {
-	Validate() error
-	GetUsername() string
+type UserLogoutClientRequest struct {
+	RefreshToken string `json:"refresh_token" schema:"refresh_token" validate:"required"`
 }
 
-type UserLogoutClientRequest interface {
-	Validate() error
-	GetRefreshToken() string
+type UserActivationClientRequest struct {
+	Token string `json:"token" schema:"token" validate:"required"`
 }
 
-type UserRefreshTokenValidateClientRequest interface {
-	Validate() error
-	GetRefreshToken() string
+type UserRefreshTokenValidateClientRequest struct {
+	RefreshToken string `json:"refresh_token" schema:"refresh_token" validate:"required"`
 }

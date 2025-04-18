@@ -9,14 +9,14 @@ type List struct {
 }
 
 type UserSvr interface {
-	Login(ctx context.Context, username, password string) (UserLoginClientResponse, HTTPError)
-	Logout(ctx context.Context, refreshToken string) (UserLogoutClientResponse, HTTPError)
-	Register(ctx context.Context, username, password, name string) (UserRegisterClientResponse, HTTPError)
+	Login(ctx context.Context, req UserLoginClientRequest) (UserLoginClientResponse, ResponseError)
+	Logout(ctx context.Context, req UserLogoutClientRequest) (UserLogoutClientResponse, ResponseError)
+	Register(ctx context.Context, req UserRegisterClientRequest) (UserRegisterClientResponse, ResponseError)
 
-	ActivateUser(ctx context.Context, token string) (UserActivationClientResponse, HTTPError)
-	ResendActivation(ctx context.Context, username string) (UserResendActivationClientResponse, HTTPError)
-	ForgotPassword(ctx context.Context, username string) (UserForgotPasswordClientResponse, HTTPError)
-	ResetPassword(ctx context.Context, token, newPassword string) (UserResetPasswordClientResponse, HTTPError)
+	ActivateUser(ctx context.Context, req UserActivationClientRequest) (UserActivationClientResponse, ResponseError)
+	ResendActivation(ctx context.Context, req UserResendActivationClientRequest) (UserResendActivationClientResponse, ResponseError)
+	ForgotPassword(ctx context.Context, req UserForgotPasswordClientRequest) (UserForgotPasswordClientResponse, ResponseError)
+	ResetPassword(ctx context.Context, req UserResetPasswordClientRequest) (UserResetPasswordClientResponse, ResponseError)
 
-	ValidateRefreshToken(ctx context.Context, refreshToken string) (UserRefreshTokenValidateClientResponse, HTTPError)
+	ValidateRefreshToken(ctx context.Context, req UserRefreshTokenValidateClientRequest) (UserRefreshTokenValidateClientResponse, ResponseError)
 }

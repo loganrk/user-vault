@@ -1,10 +1,9 @@
 package domain
 
-type HTTPError interface {
-	error
+type ResponseError interface {
 	StatusCode() int
+	Error() error
 	MessageText() string
-	Unwrap() error
 }
 
 type UserLoginClientResponse struct {
