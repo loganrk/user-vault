@@ -10,16 +10,6 @@ logger:
   path: logs/app.log  # Path to the application log file
   errPath: logs/error.log  # Path to the error log file
 
-cipher:
-  cryptoKey: qf0ac7131xktkut8  # 128/256-bit key used for encrypting sensitive data like DB creds
-
-token:
-  jwt:
-    method: "RS256"  # Could be either "HS256" for HMAC or "RS256" for RSA
-    hmacKey: "supersecretkeyforhmac"  # HMAC key (used only if method is HS256)
-    rsaPrivateKeyPath: "./keys/rsa_private_key.pem"  # Path to RSA private key
-    rsaPublicKeyPath: "./keys/rsa_public_key.pem"  # Path to RSA public key
-
 middleware:
   keys:
     - "mhkwuhcL30tq6IuErPfKgRi86BfcRC8vtdQvJa5ILqrDmC2JdNlGlYs05w2KWcyd"
