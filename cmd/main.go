@@ -23,12 +23,8 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
+	godotenv.Load()
 
-	if err != nil {
-		log.Println("failed to load env:", err)
-		return
-	}
 	configPath := os.Getenv("CONFIG_FILE_PATH")
 	configName := os.Getenv("CONFIG_FILE_NAME")
 	configType := os.Getenv("CONFIG_FILE_TYPE")
