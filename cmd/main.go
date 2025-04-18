@@ -3,199 +3,184 @@ package main
 import (
 	"context"
 	"log"
+	"os"
+
+	"github.com/joho/godotenv"
+
 	"userVault/config"
 	"userVault/internal/domain"
 	"userVault/internal/port"
 	"userVault/internal/utils"
 
-	cipherAes "userVault/internal/adapters/cipher/aes"
-	handler "userVault/internal/adapters/handler/http/v1"
-	loggerZap "userVault/internal/adapters/logger/zapLogger"
-	middlewareAuth "userVault/internal/adapters/middleware/auth"
-	repositoryMysql "userVault/internal/adapters/repository/mysql"
-	routerGin "userVault/internal/adapters/router/gin"
-	tokenJwt "userVault/internal/adapters/token/jwt"
-	userSrv "userVault/internal/usecase/user"
-)
-
-const (
-	CONFIG_FILE_PATH = ``
-	CONFIG_FILE_NAME = `app_config`
-	CONFIG_FILE_TYPE = `yaml`
+	aesCipher "userVault/internal/adapters/cipher/aes"
+	httpHandler "userVault/internal/adapters/handler/http/v1"
+	zapLogger "userVault/internal/adapters/logger/zapLogger"
+	authMiddleware "userVault/internal/adapters/middleware/auth"
+	mysqlRepo "userVault/internal/adapters/repository/mysql"
+	ginRouter "userVault/internal/adapters/router/gin"
+	jwtToken "userVault/internal/adapters/token/jwt"
+	userUsecase "userVault/internal/usecase/user"
 )
 
 func main() {
-	/* get the config instance */
-	appConfigIns, err := config.StartConfig(CONFIG_FILE_PATH, config.File{
-		Name: CONFIG_FILE_NAME,
-		Ext:  CONFIG_FILE_TYPE,
+	err := godotenv.Load()
+
+	if err != nil {
+		log.Println("failed to load env:", err)
+		return
+	}
+	configPath := os.Getenv("CONFIG_FILE_PATH")
+	configName := os.Getenv("CONFIG_FILE_NAME")
+	configType := os.Getenv("CONFIG_FILE_TYPE")
+
+	appConfig, err := config.StartConfig(configPath, config.File{
+		Name: configName,
+		Ext:  configType,
 	})
+
 	if err != nil {
-		log.Println(err)
+		log.Println("failed to load config:", err)
 		return
 	}
 
-	/* get the logger instance */
-	loggerIns, err := getLogger(appConfigIns.GetLogger())
+	logger, err := initLogger(appConfig.GetLogger())
 	if err != nil {
-		log.Println(err)
+		log.Println("failed to initialize logger:", err)
 		return
 	}
 
-	/* get the database instance */
-	mysqlIns, err := getDatabase(appConfigIns)
+	db, err := initDatabase(appConfig)
 	if err != nil {
-		log.Println(err)
+		log.Println("failed to connect to database:", err)
 		return
 	}
-	mysqlIns.AutoMigrate()
+	db.AutoMigrate()
 
-	/* get the user usecase instance */
-	userSrvIns := userSrv.New(loggerIns, mysqlIns, appConfigIns.GetAppName(), appConfigIns.GetUser())
+	userService := userUsecase.New(logger, db, appConfig.GetAppName(), appConfig.GetUser())
+	services := domain.List{User: userService}
 
-	svcList := domain.List{
-		User: userSrvIns,
-	}
-
-	tokenIns, err := getToken(appConfigIns.GetJWTToken())
+	tokenService, err := initTokenManager()
 	if err != nil {
-		log.Println(err)
+		log.Println("failed to setup token manager:", err)
 		return
 	}
 
-	/* get the router instance */
-	routerIns := getRouter(appConfigIns, loggerIns, tokenIns, svcList)
+	router := setupRouter(appConfig, logger, tokenService, services)
+	port := appConfig.GetAppPort()
+	logger.Infow(context.Background(), "Starting server", "port", port)
+	logger.Sync(context.Background())
 
-	/* start the usecase */
-	port := appConfigIns.GetAppPort()
-	loggerIns.Infow(context.Background(), "app started", "port", port)
-	loggerIns.Sync(context.Background())
-
-	err = routerIns.StartServer(port)
-	if err != nil {
-		loggerIns.Errorw(context.Background(), "app stoped", "port", port, "error", err)
-		loggerIns.Sync(context.Background())
+	if err := router.StartServer(port); err != nil {
+		logger.Errorw(context.Background(), "Server stopped with error", "port", port, "error", err)
+		logger.Sync(context.Background())
 		return
 	}
 
-	loggerIns.Infow(context.Background(), "app stoped", "port", port, "error", nil)
-	loggerIns.Sync(context.Background())
+	logger.Infow(context.Background(), "Server stopped", "port", port)
+	logger.Sync(context.Background())
 }
 
-func getLogger(logConfigIns config.Logger) (port.Logger, error) {
-	loggerConfig := loggerZap.Config{
-		Level:           logConfigIns.GetLoggerLevel(),
-		Encoding:        logConfigIns.GetLoggerEncodingMethod(),
-		EncodingCaller:  logConfigIns.GetLoggerEncodingCaller(),
-		OutputPath:      logConfigIns.GetLoggerPath(),
-		ErrorOutputPath: logConfigIns.GetLoggerErrorPath(),
+func initLogger(conf config.Logger) (port.Logger, error) {
+	loggerConf := zapLogger.Config{
+		Level:           conf.GetLoggerLevel(),
+		Encoding:        conf.GetLoggerEncodingMethod(),
+		EncodingCaller:  conf.GetLoggerEncodingCaller(),
+		OutputPath:      conf.GetLoggerPath(),
+		ErrorOutputPath: conf.GetLoggerErrorPath(),
 	}
-	return loggerZap.New(loggerConfig)
+	return zapLogger.New(loggerConf)
 }
 
-func getDatabase(appConfigIns config.App) (port.RepositoryMySQL, error) {
-	cipherCryptoKey := appConfigIns.GetCipherCryptoKey()
-	cipherIns := cipherAes.New(cipherCryptoKey)
+func initDatabase(conf config.App) (port.RepositoryMySQL, error) {
+	cipherKey := os.Getenv("CIPHER_CRYPTO_KEY")
+	cipher := aesCipher.New(cipherKey)
 
-	encryptDbHost, encryptDbPort, encryptDbUsename, encryptDbPasword, dbName, prefix := appConfigIns.GetStoreDatabaseProperties()
+	hostEnc, portEnc, userEnc, passEnc, dbName, prefix := conf.GetStoreDatabaseProperties()
 
-	decryptDbHost, decryptErr := cipherIns.Decrypt(encryptDbHost)
-	if decryptErr != nil {
-		return nil, decryptErr
+	host, err := cipher.Decrypt(hostEnc)
+	if err != nil {
+		return nil, err
 	}
-
-	decryptdbPort, decryptErr := cipherIns.Decrypt(encryptDbPort)
-	if decryptErr != nil {
-		return nil, decryptErr
+	portVal, err := cipher.Decrypt(portEnc)
+	if err != nil {
+		return nil, err
 	}
-
-	decryptDbUsename, decryptErr := cipherIns.Decrypt(encryptDbUsename)
-	if decryptErr != nil {
-		return nil, decryptErr
+	user, err := cipher.Decrypt(userEnc)
+	if err != nil {
+		return nil, err
 	}
-
-	decryptDbPasword, decryptErr := cipherIns.Decrypt(encryptDbPasword)
-	if decryptErr != nil {
-		return nil, decryptErr
-	}
-
-	return repositoryMysql.New(decryptDbHost, decryptdbPort, decryptDbUsename, decryptDbPasword, dbName, prefix)
-
-}
-
-func getToken(jwtConfigIns config.Jwt) (port.Token, error) {
-	rsaPrivateKey, err := utils.LoadRSAPrivKeyFromFile(jwtConfigIns.GetRsaPublicKeyPath())
+	pass, err := cipher.Decrypt(passEnc)
 	if err != nil {
 		return nil, err
 	}
 
-	rsaPublicKey, err := utils.LoadRSAPubKeyFromFile(jwtConfigIns.GetRsaPublicKeyPath())
+	return mysqlRepo.New(host, portVal, user, pass, dbName, prefix)
+}
+
+func initTokenManager() (port.Token, error) {
+	method := os.Getenv("JWT_METHOD")
+	hmacKey := os.Getenv("JWT_HMAC_KEY")
+	privateKeyPath := os.Getenv("JWT_RSA_PRIVATE_KEY_PATH")
+	publicKeyPath := os.Getenv("JWT_RSA_PUBLIC_KEY_PATH")
+
+	privateKey, err := utils.LoadRSAPrivKeyFromFile(privateKeyPath)
+	if err != nil {
+		return nil, err
+	}
+	publicKey, err := utils.LoadRSAPubKeyFromFile(publicKeyPath)
 	if err != nil {
 		return nil, err
 	}
 
-	return tokenJwt.New(
-		jwtConfigIns.GetMethod(),
-		[]byte(jwtConfigIns.GetHmacKey()),
-		rsaPrivateKey,
-		rsaPublicKey,
-	), nil
-
+	return jwtToken.New(method, []byte(hmacKey), privateKey, publicKey), nil
 }
 
-func getRouter(appConfigIns config.App, loggerIns port.Logger, tokenIns port.Token, svcList domain.List) port.Router {
-	apiKeys := appConfigIns.GetMiddlewareApiKeys()
+func setupRouter(conf config.App, logger port.Logger, token port.Token, services domain.List) port.Router {
+	apiKeys := conf.GetMiddlewareApiKeys()
+	middleware := authMiddleware.New(apiKeys, token)
+	handler := httpHandler.New(logger, token, services)
+	apiConf := conf.GetApi()
 
-	middlewareAuthIns := middlewareAuth.New(apiKeys, tokenIns)
+	router := ginRouter.New()
+	publicRoutes := router.NewGroup("")
+	publicRoutes.UseBefore(middleware.ValidateApiKey())
 
-	handlerIns := handler.New(loggerIns, tokenIns, svcList)
-	apiConfigIns := appConfigIns.GetApi()
-
-	routerIns := routerGin.New()
-	generalGr := routerIns.NewGroup("")
-	generalGr.UseBefore(middlewareAuthIns.ValidateApiKey())
-
-	if apiConfigIns.GetUserLoginEnabled() {
-		userApiMethod, userApiRoute := apiConfigIns.GetUserLoginProperties()
-		generalGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserLogin)
+	if apiConf.GetUserLoginEnabled() {
+		method, route := apiConf.GetUserLoginProperties()
+		publicRoutes.RegisterRoute(method, route, handler.UserLogin)
+	}
+	if apiConf.GetUserRegisterEnabled() {
+		method, route := apiConf.GetUserRegisterProperties()
+		publicRoutes.RegisterRoute(method, route, handler.UserRegister)
+	}
+	if apiConf.GetUserActivationEnabled() {
+		method, route := apiConf.GetUserActivationProperties()
+		publicRoutes.RegisterRoute(method, route, handler.UserActivation)
+	}
+	if apiConf.GetUserResendActivationEnabled() {
+		method, route := apiConf.GetUserResendActivationProperties()
+		publicRoutes.RegisterRoute(method, route, handler.UserResendActivation)
+	}
+	if apiConf.GetUserForgotPasswordEnabled() {
+		method, route := apiConf.GetUserForgotPasswordProperties()
+		publicRoutes.RegisterRoute(method, route, handler.UserForgotPassword)
+	}
+	if apiConf.GetUserPasswordResetEnabled() {
+		method, route := apiConf.GetUserPasswordResetProperties()
+		publicRoutes.RegisterRoute(method, route, handler.UserPasswordReset)
+	}
+	if apiConf.GetUserRefreshTokenValidateEnabled() {
+		method, route := apiConf.GetUserRefreshTokenValidateProperties()
+		publicRoutes.RegisterRoute(method, route, handler.UserRefreshTokenValidate)
 	}
 
-	if apiConfigIns.GetUserRegisterEnabled() {
-		userApiMethod, userApiRoute := apiConfigIns.GetUserRegisterProperties()
-		generalGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserRegister)
+	protectedRoutes := router.NewGroup("")
+	protectedRoutes.UseBefore(middleware.ValidateAccessToken())
+
+	if apiConf.GetUserLogoutEnabled() {
+		method, route := apiConf.GetUserLogoutProperties()
+		protectedRoutes.RegisterRoute(method, route, handler.UserLogout)
 	}
 
-	if apiConfigIns.GetUserActivationEnabled() {
-		userApiMethod, userApiRoute := apiConfigIns.GetUserActivationProperties()
-		generalGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserActivation)
-	}
-
-	if apiConfigIns.GetUserResendActivationEnabled() {
-		userApiMethod, userApiRoute := apiConfigIns.GetUserResendActivationProperties()
-		generalGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserResendActivation)
-	}
-
-	if apiConfigIns.GetUserForgotPasswordEnabled() {
-		userApiMethod, userApiRoute := apiConfigIns.GetUserForgotPasswordProperties()
-		generalGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserForgotPassword)
-	}
-
-	if apiConfigIns.GetUserPasswordResetEnabled() {
-		userApiMethod, userApiRoute := apiConfigIns.GetUserPasswordResetProperties()
-		generalGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserPasswordReset)
-	}
-
-	if apiConfigIns.GetUserRefreshTokenValidateEnabled() {
-		userApiMethod, userApiRoute := apiConfigIns.GetUserRefreshTokenValidateProperties()
-		generalGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserRefreshTokenValidate)
-	}
-
-	accessTokenGr := routerIns.NewGroup("")
-	accessTokenGr.UseBefore(middlewareAuthIns.ValidateAccessToken())
-	if apiConfigIns.GetUserLogoutEnabled() {
-		userApiMethod, userApiRoute := apiConfigIns.GetUserLogoutProperties()
-		accessTokenGr.RegisterRoute(userApiMethod, userApiRoute, handlerIns.UserLogout)
-	}
-
-	return routerIns
+	return router
 }
