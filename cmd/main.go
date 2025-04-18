@@ -13,11 +13,8 @@ import (
 	"userVault/internal/utils"
 
 	aesCipher "userVault/internal/adapters/cipher/aes"
-	httpHandler "userVault/internal/adapters/handler/http/v1"
 	zapLogger "userVault/internal/adapters/logger/zapLogger"
-	authMiddleware "userVault/internal/adapters/middleware/auth"
 	mysqlRepo "userVault/internal/adapters/repository/mysql"
-	ginRouter "userVault/internal/adapters/router/gin"
 	jwtToken "userVault/internal/adapters/token/jwt"
 	userUsecase "userVault/internal/usecase/user"
 )
@@ -135,52 +132,53 @@ func initTokenManager() (port.Token, error) {
 	return jwtToken.New(method, []byte(hmacKey), privateKey, publicKey), nil
 }
 
-func setupRouter(conf config.App, logger port.Logger, token port.Token, services domain.List) port.Router {
-	apiKeys := conf.GetMiddlewareApiKeys()
-	middleware := authMiddleware.New(apiKeys, token)
-	handler := httpHandler.New(logger, token, services)
-	apiConf := conf.GetApi()
+func setupRouter(conf config.App, logger port.Logger, token port.Token, services domain.List) port.Router {\
+	return  port.Router
+	// apiKeys := conf.GetMiddlewareApiKeys()
+	// middleware := authMiddleware.New(apiKeys, token)
+	// handler := httpHandler.New(logger, token, services)
+	// apiConf := conf.GetApi()
 
-	router := ginRouter.New()
-	publicRoutes := router.NewGroup("")
-	publicRoutes.UseBefore(middleware.ValidateApiKey())
+	// router := ginRouter.New()
+	// publicRoutes := router.NewGroup("")
+	// publicRoutes.UseBefore(middleware.ValidateApiKey())
 
-	if apiConf.GetUserLoginEnabled() {
-		method, route := apiConf.GetUserLoginProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserLogin)
-	}
-	if apiConf.GetUserRegisterEnabled() {
-		method, route := apiConf.GetUserRegisterProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserRegister)
-	}
-	if apiConf.GetUserActivationEnabled() {
-		method, route := apiConf.GetUserActivationProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserActivation)
-	}
-	if apiConf.GetUserResendActivationEnabled() {
-		method, route := apiConf.GetUserResendActivationProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserResendActivation)
-	}
-	if apiConf.GetUserForgotPasswordEnabled() {
-		method, route := apiConf.GetUserForgotPasswordProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserForgotPassword)
-	}
-	if apiConf.GetUserPasswordResetEnabled() {
-		method, route := apiConf.GetUserPasswordResetProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserPasswordReset)
-	}
-	if apiConf.GetUserRefreshTokenValidateEnabled() {
-		method, route := apiConf.GetUserRefreshTokenValidateProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserRefreshTokenValidate)
-	}
+	// if apiConf.GetUserLoginEnabled() {
+	// 	method, route := apiConf.GetUserLoginProperties()
+	// 	publicRoutes.RegisterRoute(method, route, handler.UserLogin)
+	// }
+	// if apiConf.GetUserRegisterEnabled() {
+	// 	method, route := apiConf.GetUserRegisterProperties()
+	// 	publicRoutes.RegisterRoute(method, route, handler.UserRegister)
+	// }
+	// if apiConf.GetUserActivationEnabled() {
+	// 	method, route := apiConf.GetUserActivationProperties()
+	// 	publicRoutes.RegisterRoute(method, route, handler.UserActivation)
+	// }
+	// if apiConf.GetUserResendActivationEnabled() {
+	// 	method, route := apiConf.GetUserResendActivationProperties()
+	// 	publicRoutes.RegisterRoute(method, route, handler.UserResendActivation)
+	// }
+	// if apiConf.GetUserForgotPasswordEnabled() {
+	// 	method, route := apiConf.GetUserForgotPasswordProperties()
+	// 	publicRoutes.RegisterRoute(method, route, handler.UserForgotPassword)
+	// }
+	// if apiConf.GetUserPasswordResetEnabled() {
+	// 	method, route := apiConf.GetUserPasswordResetProperties()
+	// 	publicRoutes.RegisterRoute(method, route, handler.UserPasswordReset)
+	// }
+	// if apiConf.GetUserRefreshTokenValidateEnabled() {
+	// 	method, route := apiConf.GetUserRefreshTokenValidateProperties()
+	// 	publicRoutes.RegisterRoute(method, route, handler.UserRefreshTokenValidate)
+	// }
 
-	protectedRoutes := router.NewGroup("")
-	protectedRoutes.UseBefore(middleware.ValidateAccessToken())
+	// protectedRoutes := router.NewGroup("")
+	// protectedRoutes.UseBefore(middleware.ValidateAccessToken())
 
-	if apiConf.GetUserLogoutEnabled() {
-		method, route := apiConf.GetUserLogoutProperties()
-		protectedRoutes.RegisterRoute(method, route, handler.UserLogout)
-	}
+	// if apiConf.GetUserLogoutEnabled() {
+	// 	method, route := apiConf.GetUserLogoutProperties()
+	// 	protectedRoutes.RegisterRoute(method, route, handler.UserLogout)
+	// }
 
-	return router
+	// return router
 }
