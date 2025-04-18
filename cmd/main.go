@@ -165,13 +165,14 @@ func setupRouter(conf config.App, logger port.Logger, token port.Token, services
 		method, route := apiConf.GetUserForgotPasswordProperties()
 		publicRoutes.RegisterRoute(method, route, handler.UserForgotPassword)
 	}
-	if apiConf.GetUserPasswordResetEnabled() {
-		method, route := apiConf.GetUserPasswordResetProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserPasswordReset)
-	}
+
 	if apiConf.GetUserRefreshTokenValidateEnabled() {
 		method, route := apiConf.GetUserRefreshTokenValidateProperties()
 		publicRoutes.RegisterRoute(method, route, handler.UserRefreshTokenValidate)
+	}
+	if apiConf.GetUserPasswordResetEnabled() {
+		method, route := apiConf.GetUserPasswordResetProperties()
+		publicRoutes.RegisterRoute(method, route, handler.UserPasswordReset)
 	}
 
 	protectedRoutes := router.NewGroup("")
