@@ -17,7 +17,6 @@ type App interface {
 	GetCipherCryptoKey() string
 	GetMiddlewareApiKeys() []string
 	GetStoreDatabaseProperties() (string, string, string, string, string, string)
-	GetStoreCacheHeapProperties() (bool, int)
 	GetLogger() Logger
 	GetApi() Api
 	GetUser() User
@@ -71,12 +70,6 @@ func (a app) GetStoreDatabaseProperties() (string, string, string, string, strin
 	database := a.Store.Database
 
 	return database.Host, database.Port, database.Username, database.Password, database.Name, database.Prefix
-}
-
-func (a app) GetStoreCacheHeapProperties() (bool, int) {
-	heapCache := a.Store.Cache.Heap
-
-	return heapCache.Enabled, heapCache.Expiry
 }
 
 func (a app) GetApi() Api {

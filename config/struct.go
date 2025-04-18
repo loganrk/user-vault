@@ -21,13 +21,6 @@ type app struct {
 			Name     string `mapstructure:"name"`
 			Prefix   string `mapstructure:"prefix"`
 		} `mapstructure:"database"`
-		Cache struct {
-			Heap struct {
-				Enabled     bool `mapstructure:"enabled"`
-				MaxCapacity int  `mapstructure:"maxCapacity"`
-				Expiry      int  `mapstructure:"expiry"`
-			} `mapstructure:"heap"`
-		} `mapstructure:"cache"`
 	} `mapstructure:"store"`
 	Token struct {
 		JWT tokenJWT `mapstructure:"jwt"`
