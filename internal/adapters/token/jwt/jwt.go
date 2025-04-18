@@ -3,8 +3,11 @@ package jwt
 import (
 	"crypto/rsa"
 	"errors"
+	"fmt"
+	"os"
 	"time"
 	"userVault/internal/port"
+	"userVault/internal/utils"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -19,13 +22,37 @@ type token struct {
 }
 
 // New function initializes and returns a new instance of token with the provided parameters
-func New(method string, hmacKey []byte, rsaPrivKey *rsa.PrivateKey, rsaPubKey *rsa.PublicKey) port.Token {
+func New(method string, hmacKey []byte, privateKeyPath, publicKeyPath string) (port.Token, error) {
+	var privateKey *rsa.PrivateKey
+	var publicKey *rsa.PublicKey
+	var err error
+	switch method {
+	case "HMAC", "HS256", "HS384", "HS512":
+		if string(hmacKey) == "" {
+			return nil, fmt.Errorf("HMAC key is missing for JWT method %s", method)
+		}
+	case "RSA", "RS256", "RS384", "RS512":
+		privateKeyPath := os.Getenv("JWT_RSA_PRIVATE_KEY_PATH")
+		publicKeyPath := os.Getenv("JWT_RSA_PUBLIC_KEY_PATH")
+
+		privateKey, err = utils.LoadRSAPrivKeyFromFile(privateKeyPath)
+		if err != nil {
+			return nil, err
+		}
+		publicKey, err = utils.LoadRSAPubKeyFromFile(publicKeyPath)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, errors.New("unsupported signing method: " + method)
+	}
+
 	return &token{
 		method:     method,
 		hmacKey:    hmacKey,
-		rsaPrivKey: rsaPrivKey,
-		rsaPubKey:  rsaPubKey,
-	}
+		rsaPrivKey: privateKey,
+		rsaPubKey:  publicKey,
+	}, nil
 }
 
 // signToken signs the provided claims using the appropriate signing method (HS256 or RS256)
@@ -40,11 +67,25 @@ func (t *token) signToken(claims jwt.Claims) (string, error) {
 	case "HS256":
 		signingMethod = jwt.SigningMethodHS256
 		signedToken, err = jwt.NewWithClaims(signingMethod, claims).SignedString(t.hmacKey)
+	case "HS384":
+		signingMethod = jwt.SigningMethodHS384
+		signedToken, err = jwt.NewWithClaims(signingMethod, claims).SignedString(t.hmacKey)
+	case "HS512":
+		signingMethod = jwt.SigningMethodHS512
+		signedToken, err = jwt.NewWithClaims(signingMethod, claims).SignedString(t.hmacKey)
+
 	case "RS256":
 		signingMethod = jwt.SigningMethodRS256
 		signedToken, err = jwt.NewWithClaims(signingMethod, claims).SignedString(t.rsaPrivKey)
+	case "RS384":
+		signingMethod = jwt.SigningMethodRS384
+		signedToken, err = jwt.NewWithClaims(signingMethod, claims).SignedString(t.rsaPrivKey)
+	case "RS512":
+		signingMethod = jwt.SigningMethodRS512
+		signedToken, err = jwt.NewWithClaims(signingMethod, claims).SignedString(t.rsaPrivKey)
+
 	default:
-		return "", errors.New("unsupported signing method") // Return error if the signing method is not supported
+		return "", errors.New("unsupported signing method: " + t.method)
 	}
 
 	// Return the signed token or an error if the signing process failed

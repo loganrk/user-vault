@@ -30,9 +30,9 @@ type app struct {
 }
 
 type logger struct {
-	Level    int
+	Level    string
 	Encoding struct {
-		Method int
+		Method string
 		Caller bool
 	}
 	Path    string

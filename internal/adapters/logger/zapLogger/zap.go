@@ -17,8 +17,8 @@ const (
 )
 
 type Config struct {
-	Level          int
-	Encoding       int
+	Level          string
+	Encoding       string
 	EncodingCaller bool
 	OutputPath     string
 }
@@ -34,7 +34,7 @@ type zapLog struct {
 func New(config Config) (port.Logger, error) {
 
 	// Convert the provided log level to a zapcore.Level
-	zapLevel, err := intToZapLevel(config.Level)
+	zapLevel, err := stringToZapLevel(config.Level)
 	if err != nil {
 		// Return error if the log level is invalid
 		return nil, err
@@ -164,22 +164,20 @@ func (l *zapLog) Sync(ctx context.Context) error {
 	return l.logger.Sync()
 }
 
-// intToZapLevel converts an integer log level to a zapcore.Level, or returns an error if the level is invalid
-func intToZapLevel(level int) (zapcore.Level, error) {
+// stringToZapLevel converts an string log level to a zapcore.Level, or returns an error if the level is invalid
+func stringToZapLevel(level string) (zapcore.Level, error) {
 	switch level {
-	case 1:
-		return zapcore.FatalLevel, nil
-	case 2:
+	case "error":
 		return zapcore.ErrorLevel, nil
-	case 3:
+	case "warn":
 		return zapcore.WarnLevel, nil
-	case 4:
+	case "info":
 		return zapcore.InfoLevel, nil
-	case 5:
+	case "debug":
 		return zapcore.DebugLevel, nil
 	default:
 		// Return error for invalid log level
-		return zapcore.InfoLevel, fmt.Errorf("invalid log level: %d", level)
+		return zapcore.ErrorLevel, fmt.Errorf("invalid log level: %d", level)
 	}
 }
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -10,7 +11,6 @@ import (
 	"userVault/config"
 	"userVault/internal/domain"
 	"userVault/internal/port"
-	"userVault/internal/utils"
 
 	aesCipher "userVault/internal/adapters/cipher/aes"
 	httpHandler "userVault/internal/adapters/handler/http/v1"
@@ -30,6 +30,9 @@ func main() {
 	configPath := os.Getenv("CONFIG_FILE_PATH")
 	configName := os.Getenv("CONFIG_FILE_NAME")
 	configType := os.Getenv("CONFIG_FILE_TYPE")
+	fmt.Println("configPath", configPath)
+	fmt.Println("configName", configName)
+	fmt.Println("configType", configType)
 
 	// Initialize application configuration
 	appConfig, err := config.StartConfig(configPath, config.File{
@@ -124,21 +127,13 @@ func initDatabase(conf config.App) (port.RepositoryMySQL, error) {
 
 // initTokenManager sets up JWT token manager with RSA or HMAC keys.
 func initTokenManager() (port.Token, error) {
+
 	method := os.Getenv("JWT_METHOD")
-	hmacKey := os.Getenv("JWT_HMAC_KEY")
 	privateKeyPath := os.Getenv("JWT_RSA_PRIVATE_KEY_PATH")
 	publicKeyPath := os.Getenv("JWT_RSA_PUBLIC_KEY_PATH")
+	hmacKey := os.Getenv("JWT_HMAC_KEY")
 
-	privateKey, err := utils.LoadRSAPrivKeyFromFile(privateKeyPath)
-	if err != nil {
-		return nil, err
-	}
-	publicKey, err := utils.LoadRSAPubKeyFromFile(publicKeyPath)
-	if err != nil {
-		return nil, err
-	}
-
-	return jwtToken.New(method, []byte(hmacKey), privateKey, publicKey), nil
+	return jwtToken.New(method, []byte(hmacKey), privateKeyPath, publicKeyPath)
 }
 
 // setupRouter configures routes, handlers, and middleware.

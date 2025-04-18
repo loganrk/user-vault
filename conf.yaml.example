@@ -4,9 +4,9 @@ application:
 
 logger:
   level: "debug"  # Options: debug, info, warn, error
-  encoding: "json"  # Options: json, console
-  method: true  # Log HTTP method
-  caller: true  # Include caller information in logs
+  encoding: 
+    method: "json" # Options: json, console
+    caller: true  # Include caller information in logs
   path: "/path/to/app.log"  # Path to the application log file
   errPath: "logs/error.log"  # Path to the error log file
 

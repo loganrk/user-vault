@@ -1,19 +1,19 @@
 package config
 
 type Logger interface {
-	GetLoggerLevel() int
-	GetLoggerEncodingMethod() int
+	GetLoggerLevel() string
+	GetLoggerEncodingMethod() string
 	GetLoggerEncodingCaller() bool
 	GetLoggerPath() string
 	GetLoggerErrorPath() string
 }
 
-func (l logger) GetLoggerLevel() int {
+func (l logger) GetLoggerLevel() string {
 	return l.Level
 
 }
 
-func (l logger) GetLoggerEncodingMethod() int {
+func (l logger) GetLoggerEncodingMethod() string {
 	return l.Encoding.Method
 
 }
