@@ -2,169 +2,152 @@ package user
 
 import (
 	"context"
-	"strconv"
-	"strings"
 	"time"
-	"userVault/internal/constant"
 	"userVault/internal/domain"
-	"userVault/internal/utils"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
-func (u *userusecase) createActivationToken(ctx context.Context, userid int) (int, string, error) {
-	activationToken := utils.GenerateRandomString(25)
-
-	tokenData, err := u.getActivationByToken(ctx, activationToken)
-	if err != nil {
-		return 0, "", err
-	}
-
-	if tokenData.Id != 0 {
-		return u.createActivationToken(ctx, userid)
-	}
-
-	tokenData = domain.UserActivationToken{
-		UserId:    userid,
-		Token:     activationToken,
-		Status:    constant.USER_ACTIVATION_TOKEN_STATUS_ACTIVE,
-		ExpiresAt: u.getActivationLinkExpiry(),
-	}
-
-	tokenId, err := u.createActivation(ctx, tokenData)
-	if err != nil {
-		return 0, "", err
-	}
-	return tokenId, activationToken, nil
+func (u *userusecase) getUserByUsername(ctx context.Context, username string) (domain.User, error) {
+	userData, err := u.mysql.GetUserByUsername(ctx, username)
+	return userData, err
 }
 
-func (u *userusecase) createRefreshToken(ctx context.Context, userid int, token string, expiresAt time.Time) (int, error) {
-
-	refreshTokenData := domain.UserRefreshToken{
-		UserId:    userid,
-		Token:     token,
-		ExpiresAt: expiresAt,
-		Revoked:   false,
-	}
-
-	refreshTokenId, err := u.storeRefreshToken(ctx, refreshTokenData)
-	if err != nil {
-		return 0, err
-	}
-	return refreshTokenId, nil
+func (u *userusecase) getUserByUserid(ctx context.Context, userid int) (domain.User, error) {
+	userData, err := u.mysql.GetUserByUserid(ctx, userid)
+	return userData, err
 }
 
-func (u *userusecase) createPasswordResetToken(ctx context.Context, userid int) (int, string, error) {
-	passwordResetData, err := u.getActivePasswordResetByUserId(ctx, userid)
-	if err != nil {
-		return 0, "", err
-	}
-
-	if passwordResetData.Id != 0 && passwordResetData.Token != "" {
-		return passwordResetData.Id, passwordResetData.Token, nil
-	}
-
-	passwordResetToken := utils.GenerateRandomString(25)
-
-	alreadyExiststData, err := u.getPasswordResetByToken(ctx, passwordResetToken)
-	if err != nil {
-		return 0, "", err
-	}
-
-	if alreadyExiststData.Id != 0 {
-		return u.createPasswordResetToken(ctx, userid)
-	}
-
-	passwordResetData = domain.UserPasswordReset{
-		UserId:    userid,
-		Token:     passwordResetToken,
-		Status:    constant.USER_PASSWORD_RESET_STATUS_ACTIVE,
-		ExpiresAt: u.getPasswordResetLinkExpiry(),
-	}
-
-	passwordResetId, err := u.mysql.NewPasswordReset(ctx, passwordResetData)
-	if err != nil {
-		return 0, "", err
-	}
-	return passwordResetId, passwordResetToken, nil
+func (u *userusecase) getUserLoginFailedAttemptCount(ctx context.Context, userid int, sesstionStartTime time.Time) (int, error) {
+	attempCount, err := u.mysql.GetUserLoginFailedAttemptCount(ctx, userid, sesstionStartTime)
+	return attempCount, err
 }
 
-func (u *userusecase) checkLoginFailedAttemptLimitReached(ctx context.Context, userId int) (int, error) {
-	attempCount, err := u.getUserLoginFailedAttemptCount(ctx, userId, u.getLoginAttemptSessionPeriod())
-	if err != nil {
+func (u *userusecase) createLoginAttempt(ctx context.Context, userId int, success bool) (int, error) {
 
-		return constant.LOGIN_ATTEMPT_FAILED, err
-	}
+	loginAttemptId, err := u.mysql.NewUserLoginAttempt(ctx, domain.UserLoginAttempt{
+		UserId:    userId,
+		Success:   success,
+		CreatedAt: time.Now(),
+	})
 
-	if attempCount >= u.getMaxLoginAttempt() {
-
-		return constant.LOGIN_ATTEMPT_MAX_REACHED, nil
-	}
-
-	return constant.LOGIN_ATTEMPT_SUCCESS, nil
+	return loginAttemptId, err
 }
 
-func (u *userusecase) comparePassword(ctx context.Context, password string, passwordHash string, saltHash string) (bool, error) {
-
-	err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password+saltHash))
-	if err != nil {
-		return false, err
-	}
-	return true, nil
+func (u *userusecase) createUser(ctx context.Context, userData domain.User) (int, error) {
+	userid, err := u.mysql.NewUser(ctx, userData)
+	return userid, err
 }
 
-func (u *userusecase) newSaltHash() (string, error) {
-	// Generate a random salt (using bcrypt's salt generation function)
-	saltRaw := utils.GenerateRandomString(10)
-
-	salt, err := bcrypt.GenerateFromPassword([]byte(saltRaw), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(salt), nil
+func (u *userusecase) getActivePasswordResetByUserId(ctx context.Context, userid int) (domain.UserPasswordReset, error) {
+	passwordResetData, err := u.mysql.GetActivePasswordResetByUserId(ctx, userid)
+	return passwordResetData, err
 }
 
-func (u *userusecase) passwordResetLinkMacroReplacement(passwordResetLink string, token string) string {
-	s := strings.NewReplacer(
-		USER_PASSWORD_RESET_TOKEN_MACRO, token)
-
-	return s.Replace(passwordResetLink)
+func (u *userusecase) getPasswordResetByToken(ctx context.Context, passwordResetToken string) (domain.UserPasswordReset, error) {
+	alreadyExiststData, err := u.mysql.GetPasswordResetByToken(ctx, passwordResetToken)
+	return alreadyExiststData, err
 
 }
 
-func (u *userusecase) passwordResetTemplateMacroReplacement(template string, name string, passwordResetLink string) string {
-	s := strings.NewReplacer(
-		USER_PASSWORD_RESET_APP_NAME_MACRO, u.appName,
-		USER_PASSWORD_RESET_NAME_MACRO, name,
-		USER_PASSWORD_RESET_LINK_MACRO, passwordResetLink)
+func (u *userusecase) updatedPasswordResetStatus(ctx context.Context, id int, status int) error {
+	err := u.mysql.UpdatedPasswordResetStatus(ctx, id, status)
 
-	return s.Replace(template)
+	return err
 }
 
-func (u *userusecase) sendPasswordReset(ctx context.Context, email string, template string) error {
-	return nil
-}
+func (u *userusecase) updatePassword(ctx context.Context, userid int, hashPassword []byte) error {
 
-func (u *userusecase) activationLinkMacroReplacement(activationLink string, tokenId int, token string) string {
-	s := strings.NewReplacer(
-		USER_ACTIVATION_TOKEN_ID_MACRO, strconv.Itoa(tokenId),
-		USER_ACTIVATION_TOKEN_MACRO, token)
-
-	return s.Replace(activationLink)
+	err := u.mysql.UpdatePassword(ctx, userid, string(hashPassword))
+	return err
 
 }
 
-func (u *userusecase) activationTemplateMacroReplacement(template string, name string, activationLink string) string {
-	s := strings.NewReplacer(
-		USER_ACTIVATION_APP_NAME_MACRO, u.appName,
-		USER_ACTIVATION_NAME_MACRO, name,
-		USER_ACTIVATION_LINK_MACRO, activationLink)
+func (u *userusecase) storeRefreshToken(ctx context.Context, refreshTokenData domain.UserRefreshToken) (int, error) {
 
-	return s.Replace(template)
+	refreshTokenId, err := u.mysql.NewRefreshToken(ctx, refreshTokenData)
+	return refreshTokenId, err
 
 }
 
-func (u *userusecase) sendActivation(ctx context.Context, email string, template string) error {
+func (u *userusecase) revokedRefreshToken(ctx context.Context, userid int, refreshToken string) error {
+	err := u.mysql.RevokedRefreshToken(ctx, userid, refreshToken)
 
-	return nil
+	return err
+}
+
+func (u *userusecase) getRefreshTokenData(ctx context.Context, userid int, refreshToken string) (domain.UserRefreshToken, error) {
+	tokenData, err := u.mysql.GetRefreshTokenData(ctx, userid, refreshToken)
+
+	return tokenData, err
+
+}
+
+func (u *userusecase) getActivationByToken(ctx context.Context, activationToken string) (domain.UserActivationToken, error) {
+	tokenData, err := u.mysql.GetActivationByToken(ctx, activationToken)
+	return tokenData, err
+
+}
+
+func (u *userusecase) createActivation(ctx context.Context, tokenData domain.UserActivationToken) (int, error) {
+	tokenId, err := u.mysql.NewActivation(ctx, tokenData)
+	return tokenId, err
+
+}
+
+func (u *userusecase) getUserActivationByToken(ctx context.Context, token string) (domain.UserActivationToken, error) {
+	tokenData, err := u.mysql.GetActivationByToken(ctx, token)
+	return tokenData, err
+}
+
+func (u *userusecase) updatedActivationtatus(ctx context.Context, id int, status int) error {
+	err := u.mysql.UpdatedActivationtatus(ctx, id, status)
+
+	return err
+}
+
+func (u *userusecase) updateStatus(ctx context.Context, userid int, status int) error {
+	err := u.mysql.UpdateStatus(ctx, userid, status)
+	return err
+}
+
+func (u *userusecase) getAccessTokenExpiry() time.Time {
+	return time.Now().Add(time.Duration(u.conf.GetAccessTokenExpiry()) * time.Second)
+}
+
+func (u *userusecase) refreshTokenEnabled() bool {
+	return u.conf.GetRefreshTokenEnabled()
+}
+
+func (u *userusecase) refreshTokenRotationEnabled() bool {
+	return u.conf.GetRefreshTokenRotationEnabled()
+}
+
+func (u *userusecase) getRefreshTokenExpiry() time.Time {
+	return time.Now().Add(time.Duration(u.conf.GetRefreshTokenExpiry()) * time.Second)
+}
+
+func (u *userusecase) getActivationLink() string {
+	activationLink := u.conf.GetActivationLink()
+	return activationLink
+}
+
+func (u *userusecase) getActivationLinkExpiry() time.Time {
+	return time.Now().Add(time.Duration(u.conf.GetActivationLinkExpiry()) * time.Second)
+
+}
+
+func (u *userusecase) getPasswordResetLinkExpiry() time.Time {
+	return time.Now().Add(time.Duration(u.conf.GetPasswordResetLinkExpiry()) * time.Second)
+
+}
+func (u *userusecase) getLoginAttemptSessionPeriod() time.Time {
+	return time.Now().Add(time.Duration(u.conf.GetLoginAttemptSessionPeriod()*-1) * time.Second)
+
+}
+
+func (u *userusecase) getMaxLoginAttempt() int {
+	return u.conf.GetMaxLoginAttempt()
+}
+
+func (u *userusecase) getPasswordResetLink() string {
+	return u.conf.GetPasswordResetLink()
 }

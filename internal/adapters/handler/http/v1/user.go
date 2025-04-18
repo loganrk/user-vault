@@ -2,26 +2,74 @@ package v1
 
 import (
 	"context"
+	"encoding/json"
 
-	"userVault/internal/adapters/handler/http/v1/request"
-	"userVault/internal/adapters/handler/http/v1/response"
+	"userVault/internal/domain"
+	"userVault/internal/utils"
 
 	"net/http"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/gorilla/schema"
 )
 
-func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context() // Use request context for tracing, timeouts, etc.
-	res := response.New()
+var (
+	decoder  = schema.NewDecoder()
+	validate = validator.New()
+)
 
-	req, err := request.NewUserLogin(r)
-	if err != nil || req.Validate() != nil {
-		res.SetStatus(http.StatusBadRequest)
-		res.SetError("Invalid login request")
+func init() {
+	validate.RegisterValidation("password", func(fl validator.FieldLevel) bool {
+		p := fl.Field().String()
+		return len(p) >= 8 && utils.HasDigit(p) && utils.HasUppercase(p) && utils.HasLowercase(p) && utils.HasSpecialChar(p)
+	})
+}
+
+func (h *handler) bindAndValidate(w http.ResponseWriter, r *http.Request, dst any) bool {
+	var res response
+
+	switch r.Method {
+	case http.MethodPost:
+		if err := json.NewDecoder(r.Body).Decode(dst); err != nil {
+			res.SetStatus(http.StatusBadRequest)
+			res.SetError("invalid JSON payload")
+			res.Send(w)
+			return false
+		}
+	case http.MethodGet:
+		if err := decoder.Decode(dst, r.URL.Query()); err != nil {
+			res.SetStatus(http.StatusBadRequest)
+			res.SetError("invalid query parameters")
+			res.Send(w)
+			return false
+		}
+	default:
+		res.SetStatus(http.StatusMethodNotAllowed)
+		res.SetError("unsupported request method")
 		res.Send(w)
+		return false
+	}
+
+	if err := validate.Struct(dst); err != nil {
+		res.SetStatus(http.StatusBadRequest)
+		res.SetError("validation failed: " + err.Error())
+		res.Send(w)
+		return false
+	}
+
+	return true
+}
+
+func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var res response
+
+	var req domain.UserLoginClientRequest
+	if !h.bindAndValidate(w, r, &req) {
 		return
 	}
 
-	respData, resErr := h.usecases.User.Login(ctx, req.GetUsername(), req.GetPassword())
+	respData, resErr := h.usecases.User.Login(ctx, req)
 	if resErr != nil {
 		res.SetStatus(resErr.StatusCode())
 		res.SetError(resErr.MessageText())
@@ -36,17 +84,14 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	res := response.New()
+	var res response
 
-	req, err := request.NewUserRegister(r)
-	if err != nil || req.Validate() != nil {
-		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid request parameters")
-		res.Send(w)
+	var req domain.UserRegisterClientRequest
+	if !h.bindAndValidate(w, r, &req) {
 		return
 	}
 
-	respData, resErr := h.usecases.User.Register(ctx, req.GetUsername(), req.GetPassword(), req.GetName())
+	respData, resErr := h.usecases.User.Register(ctx, req)
 	if resErr != nil {
 		res.SetStatus(resErr.StatusCode())
 		res.SetError(resErr.MessageText())
@@ -60,17 +105,14 @@ func (h *handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	res := response.New()
+	var res response
 
-	req, err := request.NewUserForgotPassword(r)
-	if err != nil || req.Validate() != nil {
-		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid request")
-		res.Send(w)
+	var req domain.UserForgotPasswordClientRequest
+	if !h.bindAndValidate(w, r, &req) {
 		return
 	}
 
-	respData, resErr := h.usecases.User.ForgotPassword(ctx, req.GetUsername())
+	respData, resErr := h.usecases.User.ForgotPassword(ctx, req)
 	if resErr != nil {
 		res.SetStatus(resErr.StatusCode())
 		res.SetError(resErr.MessageText())
@@ -84,17 +126,14 @@ func (h *handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	res := response.New()
+	var res response
 
-	req, err := request.NewUserActivation(r)
-	if err != nil || req.Validate() != nil {
-		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid activation request")
-		res.Send(w)
+	var req domain.UserActivationClientRequest
+	if !h.bindAndValidate(w, r, &req) {
 		return
 	}
 
-	respData, resErr := h.usecases.User.ActivateUser(ctx, req.GetToken())
+	respData, resErr := h.usecases.User.ActivateUser(ctx, req)
 	if resErr != nil {
 		res.SetStatus(resErr.StatusCode())
 		res.SetError(resErr.MessageText())
@@ -108,17 +147,14 @@ func (h *handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	res := response.New()
+	var res response
 
-	req, err := request.NewUserLogout(r)
-	if err != nil || req.Validate() != nil {
-		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid request parameters")
-		res.Send(w)
+	var req domain.UserLogoutClientRequest
+	if !h.bindAndValidate(w, r, &req) {
 		return
 	}
 
-	respData, resErr := h.usecases.User.Logout(ctx, req.GetRefreshToken())
+	respData, resErr := h.usecases.User.Logout(ctx, req)
 	if resErr != nil {
 		res.SetStatus(resErr.StatusCode())
 		res.SetError(resErr.MessageText())
@@ -132,17 +168,14 @@ func (h *handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	res := response.New()
+	var res response
 
-	req, err := request.NewUserResetPassword(r)
-	if err != nil || req.Validate() != nil {
-		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid request")
-		res.Send(w)
+	var req domain.UserResetPasswordClientRequest
+	if !h.bindAndValidate(w, r, &req) {
 		return
 	}
 
-	respData, resErr := h.usecases.User.ResetPassword(ctx, req.GetToken(), req.GetPassword())
+	respData, resErr := h.usecases.User.ResetPassword(ctx, req)
 	if resErr != nil {
 		res.SetStatus(resErr.StatusCode())
 		res.SetError(resErr.MessageText())
@@ -156,25 +189,14 @@ func (h *handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	res := response.New()
+	var res response
 
-	req, err := request.NewUserRefreshTokenValidate(r)
-	if err != nil {
-		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid request parameters")
-		res.Send(w)
+	var req domain.UserRefreshTokenValidateClientRequest
+	if !h.bindAndValidate(w, r, &req) {
 		return
 	}
 
-	err = req.Validate()
-	if err != nil {
-		res.SetStatus(http.StatusUnprocessableEntity)
-		res.SetError(err.Error())
-		res.Send(w)
-		return
-	}
-
-	respData, resErr := h.usecases.User.ValidateRefreshToken(ctx, req.GetRefreshToken())
+	respData, resErr := h.usecases.User.ValidateRefreshToken(ctx, req)
 	if resErr != nil {
 		res.SetStatus(resErr.StatusCode())
 		res.SetError(resErr.MessageText())
@@ -188,25 +210,14 @@ func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Reques
 
 func (h *handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	res := response.New()
+	var res response
 
-	req, err := request.NewUserResendActivation(r)
-	if err != nil {
-		res.SetStatus(http.StatusBadRequest)
-		res.SetError("invalid request parameters")
-		res.Send(w)
+	var req domain.UserResendActivationClientRequest
+	if !h.bindAndValidate(w, r, &req) {
 		return
 	}
 
-	err = req.Validate()
-	if err != nil {
-		res.SetStatus(http.StatusUnprocessableEntity)
-		res.SetError(err.Error())
-		res.Send(w)
-		return
-	}
-
-	respData, resErr := h.usecases.User.ResendActivation(ctx, req.GetUsername())
+	respData, resErr := h.usecases.User.ResendActivation(ctx, req)
 	if resErr != nil {
 		res.SetStatus(resErr.StatusCode())
 		res.SetError(resErr.MessageText())
