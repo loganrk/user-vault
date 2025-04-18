@@ -25,31 +25,36 @@ jobs: # Define the jobs that make up the workflow
         uses: actions/checkout@v4 # Use the 'checkout' action to clone the repository
 
       - name: Get dependencies # Step name
-        run: go mod download # Download Go dependencies
+        run: |
+          go mod download # Download Go dependencies
+          go get github.com/joho/godotenv # Add missing go.sum entry
 
       - name: Run tests # Step name
-        run: go test -v ./... # Run all tests in the project
-
-      - name: Build # Step name
-        run: go build -v -o ./bin/my-go-app # Build the Go binary and output to ./bin.  Change "my-go-app"
+        run: |
+          cd ./cmd # Change to the directory containing main.go
+          go test -v # Run tests in the current directory
 
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go 1.22
+      - name: Set up Go 1.24
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.24"
 
       - name: Check out code
         uses: actions/checkout@v4
 
       - name: Get dependencies
-        run: go mod download
+        run: |
+          go mod download
+          go get github.com/joho/godotenv # Add missing go.sum entry
 
       - name: Run tests with coverage
-        run: go test -v -coverprofile=coverage.txt ./...
+        run: |
+          cd ./cmd # Change to the directory containing main.go
+          go test -v -coverprofile=coverage.txt # Run tests with coverage
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -62,10 +67,10 @@ jobs: # Define the jobs that make up the workflow
     needs: coverage
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go 1.22
+      - name: Set up Go 1.24
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.24"
 
       - name: Check out code
         uses: actions/checkout@v4
@@ -83,4 +88,4 @@ jobs: # Define the jobs that make up the workflow
         uses: actions/upload-artifact@v4
         with:
           name: html-coverage-report
-       
+          path: coverage.html
