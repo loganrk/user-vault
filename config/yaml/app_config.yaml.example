@@ -1,96 +1,90 @@
 application:
-  port: 8000
-  name: userVault
+  port: 8000  # Port the application will run on
+  name: userVault  # Name of the application
 
 logger:
-  level:
-  encoding:
-    method:
-    caller:
-  path:
-  errPath:
+  level: debug  # Options: debug, info, warn, error
+  encoding: json  # Options: json, console
+  method: true  # Log HTTP method
+  caller: true  # Include caller information in logs
+  path: logs/app.log  # Path to the application log file
+  errPath: logs/error.log  # Path to the error log file
 
 cipher:
-  cryptoKey: qf0ac7131xktkut8
+  cryptoKey: qf0ac7131xktkut8  # 128/256-bit key used for encrypting sensitive data like DB creds
 
 token:
   jwt:
-    method: "RS256"   # Could be either "HS256" for HMAC or "RS256" for RSA
-    hmacKey: "supersecretkeyforhmac"  # HMAC key used for signing (only if method is "HS256")
-    rsaPrivateKeyPath: "/path/to/rsa_private_key.pem"  # Path to your RSA private key (only if method is "RS256")
-    rsaPublicKeyPath: "/path/to/rsa_public_key.pem"    # Path to your RSA public key (only if method is "RS256")
-  
+    method: "RS256"  # Could be either "HS256" for HMAC or "RS256" for RSA
+    hmacKey: "supersecretkeyforhmac"  # HMAC key (used only if method is HS256)
+    rsaPrivateKeyPath: "./keys/rsa_private_key.pem"  # Path to RSA private key
+    rsaPublicKeyPath: "./keys/rsa_public_key.pem"  # Path to RSA public key
+
 middleware:
   keys:
     - "mhkwuhcL30tq6IuErPfKgRi86BfcRC8vtdQvJa5ILqrDmC2JdNlGlYs05w2KWcyd"
     - "f97bTqnEWXcSKQ4wtMwFf2vDCdUjnCrZDS6voQNZbf5s0a18j8uOWuS41Uwj6Jhv"
     - "bLiaBYhfYGr1ZXp6VfIEeaipGXWFAqxtw7LgaYaDcNMmHyz73BBnxMgK78YcfpUp"
-    - "qIAJeZ7qzrUZ2CjsR2vvmhfnDOz8hMnKH2BwlpvCHkmc7TP0poxeqrCmU8ZV7q9q"
-
+    - "qIAJeZ7qzrUZ2CjsR2vvmhfnDOz8hMnKH2BwlpvCHkmc7TP0poxeqrCmU8ZV7q9q"  # Keys used for verifying internal middleware calls
 
 api:
   userLogin:
     enabled: true
-    route: /user/login
-    method: GET
+    route: /api/v1/login
+    method: POST
   userRegister:
     enabled: true
-    route: /user/register
-    method: GET
+    route: /api/v1/register
+    method: POST
   userActivation:
     enabled: true
-    route: /user/activation
-    method: GET
-  userResendActivation:
-    enabled: true
-    route: /user/resend-activation
-    method: GET
-  userForgotPassword:
-    enabled: true
-    route: /user/forgot-password
-    method: GET
-  userPasswordReset:
-    enabled: true
-    route: /user/password-reset
-    method: GET
-  userRefreshTokenValidate:
-    enabled: true
-    route: /user/refresh-token-validate
-    method: GET
+    route: /api/v1/activate
+    method: POST
   userLogout:
     enabled: true
-    route: /user/logout
-    method: GET
-      
+    route: /api/v1/logout
+    method: POST
+  userForgotPassword:
+    enabled: true
+    route: /api/v1/forgot-password
+    method: POST
+  userPasswordReset:
+    enabled: true
+    route: /api/v1/reset-password
+    method: POST
+  userRefreshTokenValidate:
+    enabled: true
+    route: /api/v1/refresh-token
+    method: POST
+  userResendActivation:
+    enabled: true
+    route: /api/v1/resend-activation
+    method: POST
+
 store:
   database:
-    host: #encrypted value
-    port:  #encrypted value
-    username:  #encrypted value
-    password:  #encrypted value
-    name: test
-    prefix: pm_
-  cache:
-    heap:
-      enabled: true
-      maxCapacity: 2000
-      expiry: 3600
-
+    host: ENC(g7kd8v84u4d...)  # Encrypted database host
+    port: ENC(j2938djw...)  # Encrypted port, e.g., 3306
+    username: ENC(dj3k4jf...)  # Encrypted DB username
+    password: ENC(fk3948dj...)  # Encrypted DB password
+    name: test  # Database name
+    prefix: pm_  # Table prefix for your DB tables
+    
 user:
-  maxLoginAttempt: 5
-  loginAttemptSessionPeriod: 60 #seconds
-  passwordHashCost: 12
+  maxLoginAttempt: 5  # Maximum allowed failed login attempts before lockout
+  loginAttemptSessionPeriod: 60  # Time period (in seconds) to count failed attempts
+  passwordHashCost: 12  # bcrypt cost factor for password hashing
   activation:
-    templatePath: data/templates/activation_email_template.html  # macros :[{{appName}},{{name}},{{Link}}]
-    link: http://localhost:8000/user/activate??token={{token}} # macros :[{{tokenId}},{{token}}]
-    linkExpiry: 1800 #seconds
+    templatePath: "./templates/activation_email_template.html"  # Template for activation email
+    link: "https://example.com/activate?token={{token}}"  # Activation link with token macro
+    linkExpiry: 1800  # Expiry time for activation link in seconds (30 min)
   passwordReset:
-    templatePath: data/templates/password_reset_email_template.html  # macros :[{{appName}},{{name}},{{Link}}]
-    link: http://localhost:8000/user/password_reset?token={{token}} # macros :[{{token}}]
-    linkExpiry: 1800 #seconds
+    templatePath: "./templates/password_reset_email_template.html"  # Template for reset email
+    link: "https://example.com/password-reset?token={{token}}"  # Reset link with token macro
+    linkExpiry: 1800  # Expiry time for reset link in seconds (30 min)
   refreshToken:
-     enabled: true
-     rotation: false
-     expiry: 36000
+    enabled: true  # Whether refresh token system is enabled
+    rotation: false  # Whether to rotate refresh tokens on use
+    expiry: 36000  # Expiry time for refresh tokens in seconds (10 hours)
   accessToken:
-    expiry: 1500
+    expiry: 1500  # Expiry time for access tokens in seconds (25 min)
