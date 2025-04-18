@@ -14,6 +14,8 @@ import (
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
+// GenerateRandomString returns a random string of the given length
+// using characters from the predefined charset.
 func GenerateRandomString(length int) string {
 	result := make([]byte, length)
 	for i := range result {
@@ -22,6 +24,8 @@ func GenerateRandomString(length int) string {
 	return string(result)
 }
 
+// FindFileContent reads the file at the given path and returns its contents as a string.
+// Returns an error if the file cannot be read.
 func FindFileContent(path string) (string, error) {
 	templateBytes, err := os.ReadFile(path)
 	if err != nil {
@@ -30,6 +34,7 @@ func FindFileContent(path string) (string, error) {
 	return string(templateBytes), nil
 }
 
+// HasLowercase checks if the given string contains at least one lowercase letter.
 func HasLowercase(s string) bool {
 	for _, c := range s {
 		if unicode.IsLower(c) {
@@ -39,6 +44,7 @@ func HasLowercase(s string) bool {
 	return false
 }
 
+// HasUppercase checks if the given string contains at least one uppercase letter.
 func HasUppercase(s string) bool {
 	for _, c := range s {
 		if unicode.IsUpper(c) {
@@ -48,6 +54,7 @@ func HasUppercase(s string) bool {
 	return false
 }
 
+// HasDigit checks if the given string contains at least one digit.
 func HasDigit(s string) bool {
 	for _, c := range s {
 		if unicode.IsDigit(c) {
@@ -57,6 +64,8 @@ func HasDigit(s string) bool {
 	return false
 }
 
+// HasSpecialChar checks if the given string contains at least one special character
+// from the predefined set: @$!%*?&
 func HasSpecialChar(s string) bool {
 	specialChars := "@$!%*?&"
 	for _, c := range s {
@@ -67,6 +76,7 @@ func HasSpecialChar(s string) bool {
 	return false
 }
 
+// containsRune checks if the rune `r` exists in the string `s`.
 func containsRune(s string, r rune) bool {
 	for _, c := range s {
 		if c == r {

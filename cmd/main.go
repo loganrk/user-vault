@@ -23,53 +23,57 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
+	// Load environment variables from .env file
+	godotenv.Load()
 
-	if err != nil {
-		log.Println("failed to load env:", err)
-		return
-	}
+	// Read config file path, name, and type from environment variables
 	configPath := os.Getenv("CONFIG_FILE_PATH")
 	configName := os.Getenv("CONFIG_FILE_NAME")
 	configType := os.Getenv("CONFIG_FILE_TYPE")
 
+	// Initialize application configuration
 	appConfig, err := config.StartConfig(configPath, config.File{
 		Name: configName,
 		Ext:  configType,
 	})
-
 	if err != nil {
 		log.Println("failed to load config:", err)
 		return
 	}
 
+	// Initialize logger
 	logger, err := initLogger(appConfig.GetLogger())
 	if err != nil {
 		log.Println("failed to initialize logger:", err)
 		return
 	}
 
+	// Initialize database connection
 	db, err := initDatabase(appConfig)
 	if err != nil {
 		log.Println("failed to connect to database:", err)
 		return
 	}
-	db.AutoMigrate()
+	db.AutoMigrate() // Auto-migrate schema
 
+	// Initialize user service
 	userService := userUsecase.New(logger, db, appConfig.GetAppName(), appConfig.GetUser())
 	services := domain.List{User: userService}
 
+	// Initialize token service (JWT)
 	tokenService, err := initTokenManager()
 	if err != nil {
 		log.Println("failed to setup token manager:", err)
 		return
 	}
 
+	// Setup HTTP router with routes and middleware
 	router := setupRouter(appConfig, logger, tokenService, services)
 	port := appConfig.GetAppPort()
 	logger.Infow(context.Background(), "Starting server", "port", port)
 	logger.Sync(context.Background())
 
+	// Start HTTP server
 	if err := router.StartServer(port); err != nil {
 		logger.Errorw(context.Background(), "Server stopped with error", "port", port, "error", err)
 		logger.Sync(context.Background())
@@ -80,17 +84,18 @@ func main() {
 	logger.Sync(context.Background())
 }
 
+// initLogger creates a new zap-based logger with the given config.
 func initLogger(conf config.Logger) (port.Logger, error) {
 	loggerConf := zapLogger.Config{
-		Level:           conf.GetLoggerLevel(),
-		Encoding:        conf.GetLoggerEncodingMethod(),
-		EncodingCaller:  conf.GetLoggerEncodingCaller(),
-		OutputPath:      conf.GetLoggerPath(),
-		ErrorOutputPath: conf.GetLoggerErrorPath(),
+		Level:          conf.GetLoggerLevel(),
+		Encoding:       conf.GetLoggerEncodingMethod(),
+		EncodingCaller: conf.GetLoggerEncodingCaller(),
+		OutputPath:     conf.GetLoggerPath(),
 	}
 	return zapLogger.New(loggerConf)
 }
 
+// initDatabase connects to the MySQL database using decrypted credentials.
 func initDatabase(conf config.App) (port.RepositoryMySQL, error) {
 	cipherKey := os.Getenv("CIPHER_CRYPTO_KEY")
 	cipher := aesCipher.New(cipherKey)
@@ -117,6 +122,7 @@ func initDatabase(conf config.App) (port.RepositoryMySQL, error) {
 	return mysqlRepo.New(host, portVal, user, pass, dbName, prefix)
 }
 
+// initTokenManager sets up JWT token manager with RSA or HMAC keys.
 func initTokenManager() (port.Token, error) {
 	method := os.Getenv("JWT_METHOD")
 	hmacKey := os.Getenv("JWT_HMAC_KEY")
@@ -135,16 +141,18 @@ func initTokenManager() (port.Token, error) {
 	return jwtToken.New(method, []byte(hmacKey), privateKey, publicKey), nil
 }
 
+// setupRouter configures routes, handlers, and middleware.
 func setupRouter(conf config.App, logger port.Logger, token port.Token, services domain.List) port.Router {
 	apiKeys := conf.GetMiddlewareApiKeys()
 	middleware := authMiddleware.New(apiKeys, token)
 	handler := httpHandler.New(logger, token, services)
 	apiConf := conf.GetApi()
 
-	router := ginRouter.New()
+	router := ginRouter.New(logger)
 	publicRoutes := router.NewGroup("")
 	publicRoutes.UseBefore(middleware.ValidateApiKey())
 
+	// Register public endpoints
 	if apiConf.GetUserLoginEnabled() {
 		method, route := apiConf.GetUserLoginProperties()
 		publicRoutes.RegisterRoute(method, route, handler.UserLogin)
@@ -165,7 +173,6 @@ func setupRouter(conf config.App, logger port.Logger, token port.Token, services
 		method, route := apiConf.GetUserForgotPasswordProperties()
 		publicRoutes.RegisterRoute(method, route, handler.UserForgotPassword)
 	}
-
 	if apiConf.GetUserRefreshTokenValidateEnabled() {
 		method, route := apiConf.GetUserRefreshTokenValidateProperties()
 		publicRoutes.RegisterRoute(method, route, handler.UserRefreshTokenValidate)
@@ -175,6 +182,7 @@ func setupRouter(conf config.App, logger port.Logger, token port.Token, services
 		publicRoutes.RegisterRoute(method, route, handler.UserPasswordReset)
 	}
 
+	// Register protected routes
 	protectedRoutes := router.NewGroup("")
 	protectedRoutes.UseBefore(middleware.ValidateAccessToken())
 
