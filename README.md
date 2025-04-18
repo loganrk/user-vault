@@ -10,7 +10,6 @@ UserVault is a Go-based microservice that implements a complete user authenticat
 - [Validation Rules](#validation-rules)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
-- [License](#license)
 
 ## Features
 
@@ -105,7 +104,3 @@ Custom `password` validation ensures:
 ## Contributing
 
 Contributions are welcome! Feel free to submit issues and pull requests.
-
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
