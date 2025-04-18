@@ -83,22 +83,23 @@ Custom `password` validation ensures:
 
 ```text
 ├── cmd/                               # Main application entrypoint
+│  └── main.go                         # Application bootstrap
 ├── config/                            # Configuration loaders
 ├── internal/
 │   ├── adapters/
-│   │   ├── cipher/aes/               # AES encryption helpers
-│   │   ├── handler/http/v1/          # HTTP handler layer (v1 API)
-│   │   ├── logger/zapLogger/         # Zap-based logger adapter
-│   │   ├── middleware/auth/          # Auth middleware (API key, JWT)
-│   │   ├── repository/mysql/         # MySQL persistence layer
-│   │   └── router/gin/               # Gin router integration
-│   │   └── token/jwt/                # JWT token handling adapter
+│   │   ├── cipher/aes/                # AES encryption helpers
+│   │   ├── handler/http/v1/           # HTTP handler layer (v1 API)
+│   │   ├── logger/zapLogger/          # Zap-based logger adapter
+│   │   ├── middleware/auth/           # Auth middleware (API key, JWT)
+│   │   ├── repository/mysql/          # MySQL persistence layer
+│   │   └── router/gin/                # Gin router integration
+│   │   └── token/jwt/                 # JWT token handling adapter
 │   ├── domain/                        # DTOs, interfaces, types
 │   ├── port/                          # Interface ports (contracts)
 │   ├── usecase/                       # Business logic (see user.go)
 │   └── utils/                         # Utilities (e.g. crypto, random)
-├── main.go                            # Application bootstrap
 ├── README.md
+├── .env                               #Load the config details
 ```
 
 ## Contributing
