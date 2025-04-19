@@ -26,6 +26,7 @@ type RepositoryMySQL interface {
 
 	GetUserByUserID(ctx context.Context, id int) (domain.User, error)                                        // Retrieves a user by user ID
 	GetUserByUsername(ctx context.Context, username string) (domain.User, error)                             // Retrieves a user by username
+	GetUserDetailsWithPasswordByUserID(ctx context.Context, id int) (domain.User, error)                     // Retrieves a user by user ID
 	GetUserLoginFailedAttemptCount(ctx context.Context, userId int, sessionStartTime time.Time) (int, error) // Gets the count of failed login attempts since the session start time
 	CreateUserLoginAttempt(ctx context.Context, userLoginAttempt domain.UserLoginAttempt) (int, error)       // Creates a new user login attempt record
 	CreateUser(ctx context.Context, userData domain.User) (int, error)                                       // Creates a new user
@@ -33,7 +34,7 @@ type RepositoryMySQL interface {
 	GetActivationByToken(ctx context.Context, token string) (domain.UserActivationToken, error) // Retrieves activation data by token
 	CreateActivation(ctx context.Context, tokenData domain.UserActivationToken) (int, error)    // Creates a new activation token record
 	UpdatedActivationStatus(ctx context.Context, tokenId int, status int) error                 // Updates the status of an activation token
-	UpdateStatus(ctx context.Context, userid int, status int) error                             // Updates a user’s account status (e.g., active/inactive)
+	UpdateUserStatus(ctx context.Context, userid int, status int) error                         // Updates a user’s account status (e.g., active/inactive)
 
 	CreatePasswordReset(ctx context.Context, tokenData domain.UserPasswordReset) (int, error)         // Creates a password reset token
 	GetPasswordResetByToken(ctx context.Context, token string) (domain.UserPasswordReset, error)      // Retrieves a password reset record using token

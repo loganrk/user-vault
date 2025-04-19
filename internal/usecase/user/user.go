@@ -136,20 +136,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 	}
 
 	// Compare password
-	passwordMatch, err := u.comparePassword(ctx, req.Password, userData.Password, userData.Salt)
-	if err != nil {
-		u.logger.Errorw(ctx, "error comparing password",
-			"event", "password_compare_failed",
-			"userId", userData.Id,
-			"error", err,
-			"code", http.StatusInternalServerError,
-		)
-		return domain.UserLoginClientResponse{}, errorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "internal server error",
-			Err:     err,
-		}
-	}
+	passwordMatch := u.comparePassword(ctx, req.Password, userData.Password, userData.Salt)
 
 	if !passwordMatch {
 		_, _ = u.createLoginAttempt(ctx, userData.Id, false)
@@ -213,32 +200,9 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 		}
 	}
 
-	// Generate access token
-	accessToken, err := u.token.CreateAccessToken(userData.Id, userData.Username, userData.Name, u.getAccessTokenExpiry())
-	if err != nil {
-		u.logger.Errorw(ctx, "failed to create access token",
-			"event", "access_token_generation_failed",
-			"userId", userData.Id,
-			"error", err,
-			"code", http.StatusInternalServerError,
-		)
-
-		return domain.UserLoginClientResponse{}, errorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "internal server error",
-			Err:     err,
-		}
-	}
-
 	// Prepare refresh token if enabled
-	var refreshToken, refreshTokenType string
+	var refreshToken string
 	if u.refreshTokenEnabled() {
-		if u.refreshTokenRotationEnabled() {
-			refreshTokenType = constant.REFRESH_TOKEN_TYPE_ROTATING
-		} else {
-			refreshTokenType = constant.REFRESH_TOKEN_TYPE_STATIC
-		}
-
 		refreshTokenExpireAt := u.getRefreshTokenExpiry()
 		refreshToken, err = u.token.CreateRefreshToken(userData.Id, refreshTokenExpireAt)
 		if err != nil {
@@ -282,9 +246,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 
 	// Return tokens
 	return domain.UserLoginClientResponse{
-		AccessToken:      accessToken,
-		RefreshToken:     refreshToken,
-		RefreshTokenType: refreshTokenType,
+		RefreshToken: refreshToken,
 	}, nil
 }
 
@@ -641,7 +603,6 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 			Err:     nil,
 		}
 	}
-
 	// Fetch user data based on the user ID from the token
 	userData, err := u.getUserByUserID(ctx, tokenData.UserId)
 	if err != nil {
@@ -698,9 +659,8 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 			Err:     err,
 		}
 	}
-
 	// Update the user status to active
-	err = u.updateStatus(ctx, userData.Id, constant.USER_STATUS_ACTIVE)
+	err = u.updateUserStatus(ctx, userData.Id, constant.USER_STATUS_ACTIVE)
 	if err != nil {
 		u.logger.Errorw(ctx, "failed to activate user account",
 			"event", "user_activation_failed",
@@ -1094,7 +1054,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 	}
 
 	//  Fetch user
-	userData, err := u.getUserByUserID(ctx, tokenData.UserId)
+	userData, err := u.getUserDetailsWithPasswordByUserID(ctx, tokenData.UserId)
 	if err != nil {
 		u.logger.Errorw(ctx, "failed to fetch user",
 			"event", "user_reset_password_failed",
@@ -1285,7 +1245,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 		}
 	}
 
-	var refreshTokenType, finalRefreshToken string
+	var refreshTokenType, refreshToken string
 
 	// Refresh token rotation enabled, create new refresh token
 	if u.refreshTokenRotationEnabled() {
@@ -1307,7 +1267,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 		}
 
 		// Create and store new refresh token
-		finalRefreshToken, err = u.token.CreateRefreshToken(userData.Id, u.getRefreshTokenExpiry())
+		refreshToken, err = u.token.CreateRefreshToken(userData.Id, u.getRefreshTokenExpiry())
 		if err != nil {
 			u.logger.Errorw(ctx, "failed to create new refresh token",
 				"event", "user_refresh_token_failed",
@@ -1322,7 +1282,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 			}
 		}
 
-		if _, err := u.createRefreshToken(ctx, userData.Id, finalRefreshToken, u.getRefreshTokenExpiry()); err != nil {
+		if _, err := u.createRefreshToken(ctx, userData.Id, refreshToken, u.getRefreshTokenExpiry()); err != nil {
 			u.logger.Errorw(ctx, "failed to store new refresh token",
 				"event", "user_refresh_token_failed",
 				"userId", userData.Id,
@@ -1337,7 +1297,6 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 		}
 	} else {
 		refreshTokenType = constant.REFRESH_TOKEN_TYPE_STATIC
-		finalRefreshToken = req.RefreshToken
 	}
 
 	// Log success message
@@ -1351,7 +1310,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 	return domain.UserRefreshTokenClientResponse{
 		AccessToken:      accessToken,
 		RefreshTokenType: refreshTokenType,
-		RefreshToken:     finalRefreshToken,
+		RefreshToken:     refreshToken,
 	}, nil
 }
 
@@ -1466,13 +1425,13 @@ func (u *userusecase) checkLoginFailedAttemptLimitReached(ctx context.Context, u
 }
 
 // comparePassword compares a provided password with the stored password hash and salt.
-func (u *userusecase) comparePassword(ctx context.Context, password string, passwordHash string, saltHash string) (bool, error) {
+func (u *userusecase) comparePassword(ctx context.Context, password string, passwordHash string, saltHash string) bool {
 	// Use bcrypt to compare the password with the hashed value
 	err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password+saltHash))
 	if err != nil {
-		return false, err
+		return false
 	}
-	return true, nil
+	return true
 }
 
 // newSaltHash generates a new salt for password hashing.
