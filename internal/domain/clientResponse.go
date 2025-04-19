@@ -7,15 +7,13 @@ type ResponseError interface {
 }
 
 type UserLoginClientResponse struct {
-	AccessToken      string `json:"access_token"`
-	RefreshTokenType string `json:"refresh_token_type,omitempty"`
-	RefreshToken     string `json:"refresh_token,omitempty"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type UserRefreshTokenClientResponse struct {
 	AccessToken      string `json:"access_token"`
-	RefreshTokenType string `json:"refresh_token_type,omitempty"`
-	RefreshToken     string `json:"refresh_token"`
+	RefreshTokenType string `json:"refresh_token_type"`
+	RefreshToken     string `json:"refresh_token,omitempty"`
 }
 
 type UserActivationClientResponse struct {

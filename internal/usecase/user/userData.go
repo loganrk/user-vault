@@ -20,6 +20,13 @@ func (u *userusecase) getUserByUserID(ctx context.Context, userid int) (domain.U
 	return userData, err
 }
 
+// getUserDetailsWithPasswordByUserID retrieves the user data based on the provided user ID.
+// Returns the user data if found or an error if the user is not found or there's an issue with the DB query.
+func (u *userusecase) getUserDetailsWithPasswordByUserID(ctx context.Context, userid int) (domain.User, error) {
+	userData, err := u.mysql.GetUserDetailsWithPasswordByUserID(ctx, userid)
+	return userData, err
+}
+
 // getUserLoginFailedAttemptCount retrieves the count of failed login attempts for the specified user ID.
 // Takes the user ID and session start time to filter failed attempts in the given period.
 // Returns the failed attempt count or an error if the query fails.
@@ -126,8 +133,8 @@ func (u *userusecase) UpdatedActivationStatus(ctx context.Context, id int, statu
 
 // updateStatus updates the user's status in the database.
 // Takes the user ID and new status as input and returns any errors encountered during the update.
-func (u *userusecase) updateStatus(ctx context.Context, userid int, status int) error {
-	err := u.mysql.UpdateStatus(ctx, userid, status)
+func (u *userusecase) updateUserStatus(ctx context.Context, userid int, status int) error {
+	err := u.mysql.UpdateUserStatus(ctx, userid, status)
 	return err
 }
 

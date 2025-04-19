@@ -71,6 +71,17 @@ func (m *MySQL) GetUserByUsername(ctx context.Context, username string) (domain.
 	return userData, result.Error
 }
 
+// GetUserDetailsWithPasswordByUserID retrieves a user record by their userID.
+func (m *MySQL) GetUserDetailsWithPasswordByUserID(ctx context.Context, userID int) (domain.User, error) {
+	var userData domain.User
+	// Select specific fields for user data fetching
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "password", "salt", "state", "status").Where("id = ?", userID).First(&userData)
+	if result.Error == gorm.ErrRecordNotFound {
+		result.Error = nil // Return nil error if no user found
+	}
+	return userData, result.Error
+}
+
 // GetUserLoginFailedAttemptCount counts the number of failed login attempts by the user.
 func (m *MySQL) GetUserLoginFailedAttemptCount(ctx context.Context, userID int, sessionStartTime time.Time) (int, error) {
 	var userLoginAttempt []domain.UserLoginAttempt
@@ -103,7 +114,7 @@ func (m *MySQL) CreateActivation(ctx context.Context, tokenData domain.UserActiv
 func (m *MySQL) GetActivationByToken(ctx context.Context, token string) (domain.UserActivationToken, error) {
 	var tokenData domain.UserActivationToken
 	// Query token by its value
-	result := m.dialer.WithContext(ctx).Model(&domain.UserActivationToken{}).Select("id").Where("token = ?", token).First(&tokenData)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserActivationToken{}).Select("id", "user_id", "status", "expires_at").Where("token = ?", token).First(&tokenData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no token found
 	}
@@ -120,7 +131,7 @@ func (m *MySQL) UpdateActivationStatus(ctx context.Context, id int, status int) 
 // UpdateUserStatus updates the status of a user by their user ID.
 func (m *MySQL) UpdateUserStatus(ctx context.Context, userID int, status int) error {
 	// Update the status for the user based on their ID
-	result := m.dialer.WithContext(ctx).Model(&domain.UserActivationToken{}).Where("id = ?", userID).Update("status", status)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Where("id = ?", userID).Update("status", status)
 	return result.Error
 }
 
@@ -196,20 +207,6 @@ func (m *MySQL) UpdatePassword(ctx context.Context, userID int, password string)
 	}
 
 	// Return nil if the password was updated successfully
-	return nil
-}
-
-// UpdateStatus updates the status of the user activation token by its ID.
-func (m *MySQL) UpdateStatus(ctx context.Context, userID int, status int) error {
-	// Update the status field for the user activation token with the given userID
-	result := m.dialer.WithContext(ctx).Model(&domain.UserActivationToken{}).Where("user_id = ?", userID).Update("status", status)
-
-	// Check if an error occurred during the update
-	if result.Error != nil {
-		return result.Error
-	}
-
-	// Return nil if the status was updated successfully
 	return nil
 }
 
