@@ -158,20 +158,9 @@ func (u *userusecase) getRefreshTokenExpiry() time.Time {
 	return time.Now().Add(time.Duration(u.conf.GetRefreshTokenExpiry()) * time.Second)
 }
 
-// getActivationLink retrieves the activation link from the configuration.
-func (u *userusecase) getActivationLink() string {
-	activationLink := u.conf.GetActivationLink()
-	return activationLink
-}
-
 // getActivationLinkExpiry calculates and returns the expiry time for the activation link based on configuration.
 func (u *userusecase) getActivationLinkExpiry() time.Time {
 	return time.Now().Add(time.Duration(u.conf.GetActivationLinkExpiry()) * time.Second)
-}
-
-// getPasswordResetLinkExpiry calculates and returns the expiry time for the password reset link based on configuration.
-func (u *userusecase) getPasswordResetLinkExpiry() time.Time {
-	return time.Now().Add(time.Duration(u.conf.GetPasswordResetLinkExpiry()) * time.Second)
 }
 
 // getLoginAttemptSessionPeriod calculates and returns the session period for login attempts based on configuration.
@@ -184,7 +173,7 @@ func (u *userusecase) getMaxLoginAttempt() int {
 	return u.conf.GetMaxLoginAttempt()
 }
 
-// getPasswordResetLink retrieves the password reset link from the configuration.
-func (u *userusecase) getPasswordResetLink() string {
-	return u.conf.GetPasswordResetLink()
+// getPasswordResetLinkExpiry calculates and returns the expiry time for the password reset link based on configuration.
+func (u *userusecase) getPasswordResetLinkExpiry() time.Time {
+	return time.Now().Add(time.Duration(u.conf.GetPasswordResetLinkExpiry()) * time.Second)
 }

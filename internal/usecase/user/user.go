@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strconv"
-	"strings"
 	"time"
 	"userVault/config"
 	"userVault/internal/constant"
@@ -16,20 +14,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Constants for various macros used in user activation and password reset links
-const (
-	USER_ACTIVATION_TOKEN_ID_MACRO = "{{tokenId}}"
-	USER_ACTIVATION_TOKEN_MACRO    = "{{token}}"
-	USER_ACTIVATION_LINK_MACRO     = "{{link}}"
-	USER_ACTIVATION_NAME_MACRO     = "{{name}}"
-	USER_ACTIVATION_APP_NAME_MACRO = "{{appName}}"
-
-	USER_PASSWORD_RESET_TOKEN_MACRO    = "{{token}}"
-	USER_PASSWORD_RESET_LINK_MACRO     = "{{link}}"
-	USER_PASSWORD_RESET_NAME_MACRO     = "{{name}}"
-	USER_PASSWORD_RESET_APP_NAME_MACRO = "{{appName}}"
-)
-
 // userusecase struct holds the dependencies for the user service, including
 // configuration, logger, MySQL repository, and token management.
 type userusecase struct {
@@ -38,15 +22,17 @@ type userusecase struct {
 	mysql   port.RepositoryMySQL
 	conf    config.User
 	token   port.Token
+	email   port.Email
 }
 
 // New initializes a new user service with required dependencies and returns it.
-func New(loggerIns port.Logger, tokenIns port.Token, mysqlIns port.RepositoryMySQL, appName string, userConfIns config.User) domain.UserSvr {
+func New(loggerIns port.Logger, tokenIns port.Token, emailIns port.Email, mysqlIns port.RepositoryMySQL, appName string, userConfIns config.User) domain.UserSvr {
 	return &userusecase{
 		mysql:  mysqlIns,
 		logger: loggerIns,
 		conf:   userConfIns,
 		token:  tokenIns,
+		email:  emailIns,
 	}
 }
 
@@ -458,7 +444,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 
 	// If user status is pending, generate an activation token and send activation email
 	if userData.Status == constant.USER_STATUS_PENDING {
-		tokenID, activationToken, err := u.createActivationToken(ctx, userData.Id)
+		_, activationToken, err := u.createActivationToken(ctx, userData.Id)
 		if err != nil {
 			// Log error and return response indicating failure to create activation token
 			u.logger.Errorw(ctx, "failed to create activation token",
@@ -474,63 +460,23 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 			}
 		}
 
-		// If activation token is created successfully, send the activation email
-		if tokenID != 0 && activationToken != "" {
-			link := u.getActivationLink()
-			link = u.activationLinkMacroReplacement(link, tokenID, activationToken)
+		err = u.email.SendActivationEmail(userData.Username, userData.Name, activationToken)
 
-			if link != "" {
-				templatePath := u.conf.GetActivationEmailTemplate()
-
-				template, err := utils.FindFileContent(templatePath)
-				if err != nil {
-					// Log error and return response indicating failure to load email template
-					u.logger.Errorw(ctx, "failed to load email template",
-						"event", "register_failed",
-						"userId", userData.Id,
-						"error", err,
-						"code", http.StatusInternalServerError,
-					)
-					return domain.UserRegisterClientResponse{}, errorRes{
-						Code:    http.StatusInternalServerError,
-						Message: "Internal server error",
-						Err:     err,
-					}
-				}
-
-				// Replace macros in the email template and send the activation email
-				emailTemplate := u.activationTemplateMacroReplacement(template, userData.Name, link)
-
-				if emailTemplate != "" {
-					err = u.sendActivation(ctx, userData.Username, emailTemplate)
-					if err != nil {
-						// Log error and return response indicating failure to send activation email
-						u.logger.Errorw(ctx, "failed to send activation email",
-							"event", "register_failed",
-							"userId", userData.Id,
-							"error", err,
-							"code", http.StatusInternalServerError,
-						)
-						return domain.UserRegisterClientResponse{}, errorRes{
-							Code:    http.StatusInternalServerError,
-							Message: "Internal server error",
-							Err:     err,
-						}
-					}
-
-					// Log successful user registration and email sending
-					u.logger.Infow(ctx, "user registered successfully, activation email sent",
-						"event", "register_success",
-						"userId", userData.Id,
-						"code", http.StatusOK,
-					)
-
-					return domain.UserRegisterClientResponse{
-						Message: "Account created successfully. Please check your email to activate your account.",
-					}, nil
-				}
+		if err != nil {
+			// Log error and return response indicating failure to send the email
+			u.logger.Errorw(ctx, "failed to send the email",
+				"event", "register_failed",
+				"userId", userData.Id,
+				"error", err,
+				"code", http.StatusInternalServerError,
+			)
+			return domain.UserRegisterClientResponse{}, errorRes{
+				Code:    http.StatusInternalServerError,
+				Message: "Internal server error",
+				Err:     err,
 			}
 		}
+
 	}
 
 	// Log successful user registration
@@ -773,46 +719,9 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 		}
 	}
 
-	// Generate activation link
-	link := u.getActivationLink()
-	link = u.activationLinkMacroReplacement(link, tokenId, token)
-
-	// Load email template
-	templatePath := u.conf.GetActivationEmailTemplate()
-	template, err := utils.FindFileContent(templatePath)
+	err = u.email.SendActivationEmail(userData.Username, userData.Name, token)
 	if err != nil {
-		u.logger.Errorw(ctx, "failed to load email template",
-			"event", "user_resend_activation_failed",
-			"userId", userData.Id,
-			"error", err,
-			"code", http.StatusInternalServerError,
-		)
-		return domain.UserResendActivationClientResponse{}, errorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Internal server error",
-			Err:     err,
-		}
-	}
-
-	// Prepare email content
-	emailTemplate := u.activationTemplateMacroReplacement(template, userData.Name, link)
-	if emailTemplate == "" {
-		u.logger.Errorw(ctx, "email template is empty after macro replacement",
-			"event", "user_resend_activation_failed",
-			"userId", userData.Id,
-			"code", http.StatusInternalServerError,
-		)
-		return domain.UserResendActivationClientResponse{}, errorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Internal server error",
-			Err:     errors.New("email template is empty"),
-		}
-	}
-
-	// Send email
-	err = u.sendActivation(ctx, userData.Username, emailTemplate)
-	if err != nil {
-		u.logger.Errorw(ctx, "failed to send activation email",
+		u.logger.Errorw(ctx, "failed to send the email",
 			"event", "user_resend_activation_failed",
 			"userId", userData.Id,
 			"error", err,
@@ -928,49 +837,10 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 		}
 	}
 
-	// Generate reset link
-	link := u.getPasswordResetLink()
-	link = u.passwordResetLinkMacroReplacement(link, token)
-
-	// Load email template
-	templatePath := u.conf.GetPasswordResetTemplate()
-	template, err := utils.FindFileContent(templatePath)
+	err = u.email.SendPasswordResetEmail(userData.Username, userData.Name, token)
 	if err != nil {
 		statusCode := http.StatusInternalServerError
-		u.logger.Errorw(ctx, "failed to load email template",
-			"event", "user_forgot_password_failed",
-			"userId", userData.Id,
-			"error", err,
-			"code", statusCode,
-		)
-		return domain.UserForgotPasswordClientResponse{}, errorRes{
-			Code:    statusCode,
-			Message: "Internal server error",
-			Err:     err,
-		}
-	}
-
-	// Replace placeholders
-	template = u.passwordResetTemplateMacroReplacement(template, userData.Name, link)
-	if template == "" {
-		statusCode := http.StatusInternalServerError
-		u.logger.Errorw(ctx, "email template is empty after macro replacement",
-			"event", "user_forgot_password_failed",
-			"userId", userData.Id,
-			"code", statusCode,
-		)
-		return domain.UserForgotPasswordClientResponse{}, errorRes{
-			Code:    statusCode,
-			Message: "Internal server error",
-			Err:     errors.New("email template is empty"),
-		}
-	}
-
-	// Send email
-	err = u.sendPasswordReset(ctx, userData.Username, template)
-	if err != nil {
-		statusCode := http.StatusInternalServerError
-		u.logger.Errorw(ctx, "failed to send password reset email",
+		u.logger.Errorw(ctx, "failed to send the email",
 			"event", "user_forgot_password_failed",
 			"userId", userData.Id,
 			"error", err,
@@ -1445,78 +1315,4 @@ func (u *userusecase) newSaltHash() (string, error) {
 		return "", err
 	}
 	return string(salt), nil
-}
-
-// passwordResetLinkMacroReplacement replaces macros in the password reset link with the provided token.
-func (u *userusecase) passwordResetLinkMacroReplacement(passwordResetLink string, token string) string {
-	s := strings.NewReplacer(
-		USER_PASSWORD_RESET_TOKEN_MACRO, token)
-
-	return s.Replace(passwordResetLink)
-}
-
-// passwordResetTemplateMacroReplacement replaces macros in the email template with actual values.
-func (u *userusecase) passwordResetTemplateMacroReplacement(template string, name string, passwordResetLink string) string {
-	s := strings.NewReplacer(
-		USER_PASSWORD_RESET_APP_NAME_MACRO, u.appName,
-		USER_PASSWORD_RESET_NAME_MACRO, name,
-		USER_PASSWORD_RESET_LINK_MACRO, passwordResetLink)
-
-	return s.Replace(template)
-}
-
-// sendPasswordReset simulates sending the password reset email to the user (no actual implementation here).
-func (u *userusecase) sendPasswordReset(ctx context.Context, email string, template string) error {
-	return nil
-}
-
-// activationLinkMacroReplacement replaces macros in the activation link with the provided token data.
-func (u *userusecase) activationLinkMacroReplacement(activationLink string, tokenId int, token string) string {
-	s := strings.NewReplacer(
-		USER_ACTIVATION_TOKEN_ID_MACRO, strconv.Itoa(tokenId),
-		USER_ACTIVATION_TOKEN_MACRO, token)
-
-	return s.Replace(activationLink)
-}
-
-// activationTemplateMacroReplacement replaces macros in the activation email template with actual values.
-func (u *userusecase) activationTemplateMacroReplacement(template string, name string, activationLink string) string {
-	s := strings.NewReplacer(
-		USER_ACTIVATION_APP_NAME_MACRO, u.appName,
-		USER_ACTIVATION_NAME_MACRO, name,
-		USER_ACTIVATION_LINK_MACRO, activationLink)
-
-	return s.Replace(template)
-
-}
-
-func (u *userusecase) sendActivation(ctx context.Context, email string, template string) error {
-
-	// Here, send the email using a third-party service, SMTP, or another method
-	err := u.sendEmail(email, template)
-	if err != nil {
-		// Log error details and return the error
-		u.logger.Errorw(ctx, "failed to send activation email",
-			"event", "send_activation_email_failed",
-			"email", email,
-			"error", err,
-		)
-		return err
-	}
-
-	// Log success message
-	u.logger.Infow(ctx, "activation email sent successfully",
-		"event", "send_activation_email_success",
-		"email", email,
-		"code", http.StatusOK,
-	)
-
-	return nil
-}
-
-// sendEmail simulates sending an email
-func (u *userusecase) sendEmail(email string, content string) error {
-	// For example, using an SMTP server or third-party API like SendGrid, etc.
-	// This can be replaced with actual email-sending logic
-	return nil
 }

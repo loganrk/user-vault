@@ -95,3 +95,8 @@ type Logger interface {
 
 	Sync(ctx context.Context) error // Flushes any buffered log entries
 }
+
+type Email interface {
+	SendActivationEmail(toAddress, name, token string) error
+	SendPasswordResetEmail(toAddress, name, token string) error
+}
