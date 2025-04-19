@@ -36,8 +36,8 @@ type response struct {
 
 // errorMsg struct represents an individual error message with a code and description.
 type errorMsg struct {
-	Code string `json:"code"` // Error code identifying the error
-	Msg  string `json:"msg"`  // A human-readable error message
+	Code string `json:"code,omitempty"` // Error code identifying the error
+	Msg  string `json:"msg"`            // A human-readable error message
 }
 
 // SetError appends a new error message to the Err field in the response struct.

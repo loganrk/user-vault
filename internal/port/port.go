@@ -4,19 +4,20 @@ import (
 	"context"
 	"net/http"
 	"time"
+	"userVault/config"
 	"userVault/internal/domain"
 )
 
 // Handler defines the interface for user authentication and account-related HTTP handlers.
 type Handler interface {
-	UserLogin(w http.ResponseWriter, r *http.Request)                // Handles user login requests
-	UserLogout(w http.ResponseWriter, r *http.Request)               // Handles user logout requests
-	UserActivation(w http.ResponseWriter, r *http.Request)           // Handles account activation using a token
-	UserPasswordReset(w http.ResponseWriter, r *http.Request)        // Handles user password reset via token
-	UserForgotPassword(w http.ResponseWriter, r *http.Request)       // Handles forgot password requests and sends a reset link
-	UserRefreshTokenValidate(w http.ResponseWriter, r *http.Request) // Validates and refreshes user access tokens
-	UserRegister(w http.ResponseWriter, r *http.Request)             // Handles new user registration
-	UserResendActivation(w http.ResponseWriter, r *http.Request)     // Resends account activation link/token to the user
+	UserLogin(w http.ResponseWriter, r *http.Request)            // Handles user login requests
+	UserLogout(w http.ResponseWriter, r *http.Request)           // Handles user logout requests
+	UserActivation(w http.ResponseWriter, r *http.Request)       // Handles account activation using a token
+	UserPasswordReset(w http.ResponseWriter, r *http.Request)    // Handles user password reset via token
+	UserForgotPassword(w http.ResponseWriter, r *http.Request)   // Handles forgot password requests and sends a reset link
+	UserRefreshToken(w http.ResponseWriter, r *http.Request)     // Validates and refreshes user access tokens
+	UserRegister(w http.ResponseWriter, r *http.Request)         // Handles new user registration
+	UserResendActivation(w http.ResponseWriter, r *http.Request) // Resends account activation link/token to the user
 }
 
 // RepositoryMySQL defines the interface for all database operations using MySQL.
@@ -40,23 +41,15 @@ type RepositoryMySQL interface {
 	GetActivePasswordResetByUserID(ctx context.Context, userid int) (domain.UserPasswordReset, error) // Retrieves the active password reset request for a user
 	UpdatePassword(ctx context.Context, userid int, password string) error                            // Updates the user’s password
 
-	CreateRefreshToken(ctx context.Context, refreshTokenData domain.UserRefreshToken) (int, error)             // Stores a refresh token in the database
-	RevokeRefreshToken(ctx context.Context, userid int, refreshToken string) error                             // Revokes a user's refresh token
-	GetRefreshTokenData(ctx context.Context, userid int, refreshToken string) (domain.UserRefreshToken, error) // Retrieves refresh token data
+	CreateRefreshToken(ctx context.Context, refreshTokenData domain.UserRefreshToken) (int, error) // Stores a refresh token in the database
+	RevokeRefreshToken(ctx context.Context, userid int, refreshToken string) error                 // Revokes a user's refresh token
+	GetRefreshTokenData(ctx context.Context, refreshToken string) (domain.UserRefreshToken, error) // Retrieves refresh token data
 }
 
 // Router defines the interface for setting up and starting HTTP routes and middleware.
 type Router interface {
-	RegisterRoute(method, path string, handlerFunc http.HandlerFunc) // Registers a route with a given HTTP method and handler
-	StartServer(port string) error                                   // Starts the HTTP server on the specified port
-	UseBefore(middlewares ...http.Handler)                           // Registers middleware to be executed before route handlers
-	NewGroup(groupName string) RouterGroup                           // Creates and returns a new route group
-}
-
-// RouterGroup defines the interface for grouping related routes under a common path.
-type RouterGroup interface {
-	RegisterRoute(method, path string, handlerFunc http.HandlerFunc) // Registers a route within the group
-	UseBefore(middlewares ...http.Handler)                           // Applies middleware to all routes in the group
+	SetupRoutes(apiConfig config.Api, logger Logger, authMiddlewareIns Auth, handler Handler)
+	StartServer(port string) error // Starts the HTTP server on the specified port
 }
 
 // Cipher defines the interface for encrypting and decrypting strings.
@@ -70,14 +63,13 @@ type Cipher interface {
 type Token interface {
 	CreateAccessToken(uid int, uname string, name string, expiry time.Time) (string, error) // Creates a new access token for a user
 	CreateRefreshToken(uid int, expiry time.Time) (string, error)                           // Creates a new refresh token for a user
-	GetRefreshTokenData(tokenStringEcr string) (int, time.Time, error)                      // Extracts user ID and expiry from a refresh token
-	GetAccessTokenData(encryptedToken string) (int, time.Time, error)                       // Extracts user ID and expiry from an access token
+	GetRefreshTokenData(encryptedToken string) (int, time.Time, error)                      // Extracts user ID and expiry from a refresh token
 }
 
 // Auth defines the interface for API key and access token validation middleware.
 type Auth interface {
-	ValidateApiKey() http.Handler      // Returns middleware that validates API keys
-	ValidateAccessToken() http.Handler // Returns middleware that validates access tokens
+	ValidateApiKey() http.Handler       // Returns middleware that validates API keys
+	ValidateRefreshToken() http.Handler // Returns middleware that validates refresh token
 }
 
 // Logger defines the interface for structured and leveled logging.

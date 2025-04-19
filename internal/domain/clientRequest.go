@@ -32,6 +32,6 @@ type UserActivationClientRequest struct {
 	Token string `json:"token" schema:"token" validate:"required"`
 }
 
-type UserRefreshTokenValidateClientRequest struct {
+type UserRefreshTokenClientRequest struct {
 	RefreshToken string `json:"refresh_token" schema:"refresh_token" validate:"required"`
 }

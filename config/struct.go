@@ -40,14 +40,14 @@ type logger struct {
 }
 
 type api struct {
-	UserLogin                apiData `mapstructure:"userLogin"`
-	UserRegister             apiData `mapstructure:"userRegister"`
-	UserActivation           apiData `mapstructure:"userActivation"`
-	UserResendActivation     apiData `mapstructure:"userResendActivation"`
-	UserForgotPassword       apiData `mapstructure:"userForgotPassword"`
-	UserPasswordReset        apiData `mapstructure:"userPasswordReset"`
-	UserRefreshTokenValidate apiData `mapstructure:"userRefreshTokenValidate"`
-	UserLogout               apiData `mapstructure:"userLogout"`
+	UserLogin            apiData `mapstructure:"userLogin"`
+	UserRegister         apiData `mapstructure:"userRegister"`
+	UserActivation       apiData `mapstructure:"userActivation"`
+	UserResendActivation apiData `mapstructure:"userResendActivation"`
+	UserForgotPassword   apiData `mapstructure:"userForgotPassword"`
+	UserPasswordReset    apiData `mapstructure:"userPasswordReset"`
+	UserRefreshToken     apiData `mapstructure:"userRefreshToken"`
+	UserLogout           apiData `mapstructure:"userLogout"`
 }
 type apiData struct {
 	Enabled bool   `mapstructure:"enabled"`

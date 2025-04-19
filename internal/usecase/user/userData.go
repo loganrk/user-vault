@@ -90,9 +90,9 @@ func (u *userusecase) RevokeRefreshToken(ctx context.Context, userid int, refres
 }
 
 // getRefreshTokenData retrieves refresh token data for the specified user and token.
-// Takes the user ID and refresh token as input and returns the refresh token data or any errors encountered.
-func (u *userusecase) getRefreshTokenData(ctx context.Context, userid int, refreshToken string) (domain.UserRefreshToken, error) {
-	tokenData, err := u.mysql.GetRefreshTokenData(ctx, userid, refreshToken)
+// Takes therefresh token as input and returns the refresh token data or any errors encountered.
+func (u *userusecase) getRefreshTokenData(ctx context.Context, refreshToken string) (domain.UserRefreshToken, error) {
+	tokenData, err := u.mysql.GetRefreshTokenData(ctx, refreshToken)
 	return tokenData, err
 }
 

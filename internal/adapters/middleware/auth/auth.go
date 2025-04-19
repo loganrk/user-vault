@@ -2,10 +2,9 @@ package auth
 
 import (
 	"net/http"
-	"strconv"
-	"strings"
 	"time"
 	"userVault/internal/port"
+	"userVault/internal/utils"
 
 	"golang.org/x/exp/slices"
 )
@@ -28,8 +27,8 @@ func New(apiKeys []string, tokenIns port.Token) port.Auth {
 func (a *auth) ValidateApiKey() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Extract the access token from the Authorization header
-		accessToken := r.Header.Get("Authorization")
-		token := a.exactToken(accessToken)
+		apiToken := r.Header.Get("Authorization")
+		token := utils.ExtractBearerToken(apiToken)
 
 		if token == "" {
 			// If no API key is provided, respond with Unauthorized error.
@@ -49,12 +48,12 @@ func (a *auth) ValidateApiKey() http.Handler {
 	})
 }
 
-// ValidateAccessToken returns an HTTP handler that validates the access token from the Authorization header.
-func (a *auth) ValidateAccessToken() http.Handler {
+// ValidateRefreshToken returns an HTTP handler that validates the refresh token from the Authorization header.
+func (a *auth) ValidateRefreshToken() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Extract the access token from the Authorization header
-		accessToken := r.Header.Get("Authorization")
-		token := a.exactToken(accessToken)
+		// Extract the refresh token from the Authorization header
+		refreshToken := r.Header.Get("Authorization")
+		token := utils.ExtractBearerToken(refreshToken)
 		if token == "" {
 			// If no token is provided or token is malformed, respond with Unauthorized error.
 			http.Error(w, "authorization header required", http.StatusUnauthorized)
@@ -62,7 +61,7 @@ func (a *auth) ValidateAccessToken() http.Handler {
 		}
 
 		// Get user ID and expiration time from the token
-		userid, expiresAt, err := a.tokenIns.GetAccessTokenData(token)
+		userid, expiresAt, err := a.tokenIns.GetRefreshTokenData(token)
 		if err != nil {
 			// If there’s an internal error while fetching token data, respond with internal server error.
 			http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -81,19 +80,5 @@ func (a *auth) ValidateAccessToken() http.Handler {
 			return
 		}
 
-		// Add user ID to the query parameters for further processing in the request lifecycle.
-		queryParams := r.URL.Query()
-		queryParams.Set("uid", strconv.Itoa(userid))
-		r.URL.RawQuery = queryParams.Encode()
 	})
-}
-
-// exactToken extracts the token from the Authorization header by splitting it into "Bearer <token>" format.
-func (a *auth) exactToken(token string) string {
-	// Split the Authorization header to extract the token part.
-	parts := strings.SplitN(token, " ", 2)
-	if len(parts) == 2 && parts[0] == "Bearer" {
-		return parts[1] // Return the token part of the "Bearer <token>" format.
-	}
-	return "" // Return an empty string if the token is not in the correct format.
 }

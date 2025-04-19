@@ -1,10 +1,9 @@
 package gin
 
 import (
-	"bytes"
-	"io"
 	"net/http"
 	"time"
+	"userVault/config"
 	"userVault/internal/port"
 
 	"github.com/gin-contrib/cors"
@@ -37,52 +36,60 @@ func New(accessLoggerIns port.Logger) port.Router {
 	}
 }
 
-// RegisterRoute registers a new HTTP route with a specified method, path, and handler function.
-func (r *route) RegisterRoute(method, path string, handlerFunc http.HandlerFunc) {
-	r.gin.Handle(method, path, func(c *gin.Context) {
-		// Create a custom response writer to capture response status, body, and headers
-		respWriter := &responseWriter{
-			ResponseWriter: c.Writer,
-			body:           &bytes.Buffer{},
-			headers:        make(http.Header),
-		}
-		c.Writer = respWriter
+func (r *route) SetupRoutes(apiConfig config.Api, logger port.Logger, authMiddlewareIns port.Auth, handler port.Handler) {
 
-		// Execute the handler function
-		handlerFunc(c.Writer, c.Request)
+	apiKeyProtectedRoutes := r.gin.Group("/")
+	apiKeyProtectedRoutes.Use(wrapHTTPMiddleware(authMiddlewareIns.ValidateApiKey()))
+	if apiConfig.GetUserLoginEnabled() {
+		method, route := apiConfig.GetUserLoginProperties()
+		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserLogin)
+	}
 
-		// Log the response if status code is OK (200)
-		if respWriter.statusCode == http.StatusOK {
-			r.accessLog.Infow(c, "api response success",
-				"method", c.Request.Method,
-				"url", c.Request.URL.Path+"?"+c.Request.URL.RawQuery,
-				"client-ip", c.ClientIP(),
-				"headers", respWriter.headers,
-			)
-		} else {
-			// Log failed response with additional details
-			var requestBody string
-			// Capture request body if POST, PUT, or PATCH request
-			if c.Request.Method == http.MethodPost || c.Request.Method == http.MethodPut || c.Request.Method == http.MethodPatch {
-				bodyBytes, err := io.ReadAll(c.Request.Body)
-				if err == nil {
-					requestBody = string(bodyBytes)
-					c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-				}
-			}
+	// User Register
+	if apiConfig.GetUserRegisterEnabled() {
+		method, route := apiConfig.GetUserRegisterProperties()
+		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserRegister)
+	}
 
-			// Log the failure with response body, status code, and request body
-			r.accessLog.Warnw(c, "api response failed",
-				"method", c.Request.Method,
-				"url", c.Request.URL.Path+"?"+c.Request.URL.RawQuery,
-				"request-body", requestBody,
-				"status", respWriter.statusCode,
-				"response", respWriter.body.String(),
-				"headers", respWriter.headers,
-				"client-ip", c.ClientIP(),
-			)
-		}
-	})
+	// User Activation
+	if apiConfig.GetUserActivationEnabled() {
+		method, route := apiConfig.GetUserActivationProperties()
+		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserActivation)
+	}
+
+	// User Resend Activation
+	if apiConfig.GetUserResendActivationEnabled() {
+		method, route := apiConfig.GetUserResendActivationProperties()
+		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserResendActivation)
+	}
+
+	// User Forgot Password
+	if apiConfig.GetUserForgotPasswordEnabled() {
+		method, route := apiConfig.GetUserForgotPasswordProperties()
+		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserForgotPassword)
+	}
+
+	// User Password Reset
+	if apiConfig.GetUserPasswordResetEnabled() {
+		method, route := apiConfig.GetUserPasswordResetProperties()
+		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserPasswordReset)
+	}
+
+	refreshTokenProtectedRoutes := r.gin.Group("/")
+	refreshTokenProtectedRoutes.Use(wrapHTTPMiddleware(authMiddlewareIns.ValidateRefreshToken()))
+
+	// User Refresh Token Validate
+	if apiConfig.GetUserRefreshTokenEnabled() {
+		method, route := apiConfig.GetUserRefreshTokenProperties()
+		wrapAndRegisterRoute(refreshTokenProtectedRoutes, method, route, handler.UserRefreshToken)
+	}
+
+	// User Logout
+	if apiConfig.GetUserLogoutEnabled() {
+		method, route := apiConfig.GetUserLogoutProperties()
+		wrapAndRegisterRoute(refreshTokenProtectedRoutes, method, route, handler.UserLogout)
+	}
+
 }
 
 // StartServer starts the Gin HTTP server on the specified port.
@@ -91,23 +98,35 @@ func (r *route) StartServer(port string) error {
 	return r.gin.Run(":" + port)
 }
 
-// UseBefore registers middleware to be executed before the route handler.
-func (r *route) UseBefore(middlewares ...http.Handler) {
-	for _, middleware := range middlewares {
-		// Wrap each middleware and add it to the Gin router
-		r.gin.Use(r.wrapHTTPHandlerFunc(middleware))
+func wrapAndRegisterRoute(group *gin.RouterGroup, method, path string, handlerFunc http.HandlerFunc) {
+	switch method {
+	case "GET":
+		group.GET(path, func(c *gin.Context) {
+			handlerFunc.ServeHTTP(c.Writer, c.Request)
+		})
+	case "POST":
+		group.POST(path, func(c *gin.Context) {
+			handlerFunc.ServeHTTP(c.Writer, c.Request)
+		})
+	case "PUT":
+		group.PUT(path, func(c *gin.Context) {
+			handlerFunc.ServeHTTP(c.Writer, c.Request)
+		})
+	case "DELETE":
+		group.DELETE(path, func(c *gin.Context) {
+			handlerFunc.ServeHTTP(c.Writer, c.Request)
+		})
+	default:
+		panic("Unsupported HTTP method: " + method)
 	}
 }
 
-// wrapHTTPHandlerFunc wraps an HTTP handler to work with Gin's context.
-func (r *route) wrapHTTPHandlerFunc(h http.Handler) gin.HandlerFunc {
+func wrapHTTPMiddleware(h http.Handler) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Execute the middleware (http.Handler)
+		// Create a new http request/response pair
 		h.ServeHTTP(c.Writer, c.Request)
-
-		// Proceed to the next handler if the status is OK
-		if c.Writer.Status() == http.StatusOK {
-			c.Next() // Continue to the next middleware or handler
+		if c.Writer.Status() >= 400 {
+			c.Abort()
 		}
 	}
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -30,9 +29,6 @@ func main() {
 	configPath := os.Getenv("CONFIG_FILE_PATH")
 	configName := os.Getenv("CONFIG_FILE_NAME")
 	configType := os.Getenv("CONFIG_FILE_TYPE")
-	fmt.Println("configPath", configPath)
-	fmt.Println("configName", configName)
-	fmt.Println("configType", configType)
 
 	// Initialize application configuration
 	appConfig, err := config.StartConfig(configPath, config.File{
@@ -59,19 +55,23 @@ func main() {
 	}
 	db.AutoMigrate() // Auto-migrate schema
 
-	// Initialize user service
-	userService := userUsecase.New(logger, db, appConfig.GetAppName(), appConfig.GetUser())
-	services := domain.List{User: userService}
-
 	// Initialize token service (JWT)
-	tokenService, err := initTokenManager()
+	tokenIns, err := initTokenManager()
 	if err != nil {
 		log.Println("failed to setup token manager:", err)
 		return
 	}
 
-	// Setup HTTP router with routes and middleware
-	router := setupRouter(appConfig, logger, tokenService, services)
+	// Initialize user service
+	userService := userUsecase.New(logger, tokenIns, db, appConfig.GetAppName(), appConfig.GetUser())
+	services := domain.List{User: userService}
+
+	authMiddlewareIns := authMiddleware.New(appConfig.GetMiddlewareApiKeys(), tokenIns)
+	handlerIns := httpHandler.New(logger, tokenIns, services)
+
+	router := ginRouter.New(logger)
+	router.SetupRoutes(appConfig.GetApi(), logger, authMiddlewareIns, handlerIns)
+
 	port := appConfig.GetAppPort()
 	logger.Infow(context.Background(), "Starting server", "port", port)
 	logger.Sync(context.Background())
@@ -134,57 +134,4 @@ func initTokenManager() (port.Token, error) {
 	hmacKey := os.Getenv("JWT_HMAC_KEY")
 
 	return jwtToken.New(method, []byte(hmacKey), privateKeyPath, publicKeyPath)
-}
-
-// setupRouter configures routes, handlers, and middleware.
-func setupRouter(conf config.App, logger port.Logger, token port.Token, services domain.List) port.Router {
-	apiKeys := conf.GetMiddlewareApiKeys()
-	middleware := authMiddleware.New(apiKeys, token)
-	handler := httpHandler.New(logger, token, services)
-	apiConf := conf.GetApi()
-
-	router := ginRouter.New(logger)
-	publicRoutes := router.NewGroup("")
-	publicRoutes.UseBefore(middleware.ValidateApiKey())
-
-	// Register public endpoints
-	if apiConf.GetUserLoginEnabled() {
-		method, route := apiConf.GetUserLoginProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserLogin)
-	}
-	if apiConf.GetUserRegisterEnabled() {
-		method, route := apiConf.GetUserRegisterProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserRegister)
-	}
-	if apiConf.GetUserActivationEnabled() {
-		method, route := apiConf.GetUserActivationProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserActivation)
-	}
-	if apiConf.GetUserResendActivationEnabled() {
-		method, route := apiConf.GetUserResendActivationProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserResendActivation)
-	}
-	if apiConf.GetUserForgotPasswordEnabled() {
-		method, route := apiConf.GetUserForgotPasswordProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserForgotPassword)
-	}
-	if apiConf.GetUserRefreshTokenValidateEnabled() {
-		method, route := apiConf.GetUserRefreshTokenValidateProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserRefreshTokenValidate)
-	}
-	if apiConf.GetUserPasswordResetEnabled() {
-		method, route := apiConf.GetUserPasswordResetProperties()
-		publicRoutes.RegisterRoute(method, route, handler.UserPasswordReset)
-	}
-
-	// Register protected routes
-	protectedRoutes := router.NewGroup("")
-	protectedRoutes.UseBefore(middleware.ValidateAccessToken())
-
-	if apiConf.GetUserLogoutEnabled() {
-		method, route := apiConf.GetUserLogoutProperties()
-		protectedRoutes.RegisterRoute(method, route, handler.UserLogout)
-	}
-
-	return router
 }

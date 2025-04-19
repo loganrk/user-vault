@@ -139,10 +139,10 @@ func (m *MySQL) RevokeRefreshToken(ctx context.Context, userID int, refreshToken
 }
 
 // GetRefreshTokenData retrieves the data for a specific refresh token.
-func (m *MySQL) GetRefreshTokenData(ctx context.Context, userID int, refreshToken string) (domain.UserRefreshToken, error) {
+func (m *MySQL) GetRefreshTokenData(ctx context.Context, refreshToken string) (domain.UserRefreshToken, error) {
 	var tokenData domain.UserRefreshToken
-	// Query the refresh token data by user ID and token value
-	result := m.dialer.WithContext(ctx).Model(&domain.UserRefreshToken{}).Select("id", "expires_at", "revoked").Where("user_id = ? and token = ?", userID, refreshToken).First(&tokenData)
+	// Query the refresh token data by token value
+	result := m.dialer.WithContext(ctx).Model(&domain.UserRefreshToken{}).Select("id", "user_id", "expires_at", "revoked").Where("token = ?", refreshToken).First(&tokenData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no token found
 	}
