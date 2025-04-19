@@ -18,5 +18,5 @@ type UserSvr interface {
 	ForgotPassword(ctx context.Context, req UserForgotPasswordClientRequest) (UserForgotPasswordClientResponse, ResponseError)
 	ResetPassword(ctx context.Context, req UserResetPasswordClientRequest) (UserResetPasswordClientResponse, ResponseError)
 
-	ValidateRefreshToken(ctx context.Context, req UserRefreshTokenValidateClientRequest) (UserRefreshTokenValidateClientResponse, ResponseError)
+	RefreshToken(ctx context.Context, req UserRefreshTokenClientRequest) (UserRefreshTokenClientResponse, ResponseError)
 }

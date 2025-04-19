@@ -101,9 +101,9 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 // UserRegister handles user registration requests. It decodes the registration data, validates it,
 // and then invokes the usecase for user registration. If successful, it returns the response data, otherwise an error.
 func (h *handler) UserRegister(w http.ResponseWriter, r *http.Request) {
+
 	ctx := context.Background()
 	var res response
-
 	var req domain.UserRegisterClientRequest
 	// Bind and validate the incoming request
 	if !h.bindAndValidate(w, r, &req) {
@@ -182,13 +182,11 @@ func (h *handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var res response
 
-	var req domain.UserLogoutClientRequest
-	// Bind and validate the incoming request
-	if !h.bindAndValidate(w, r, &req) {
-		return
+	refreshToken := r.Header.Get("Authorization")
+	var req = domain.UserLogoutClientRequest{
+		RefreshToken: utils.ExtractBearerToken(refreshToken),
 	}
 
-	// Call the logout usecase
 	respData, resErr := h.usecases.User.Logout(ctx, req)
 	if resErr != nil {
 		res.SetStatus(resErr.StatusCode())
@@ -228,20 +226,20 @@ func (h *handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 	res.Send(w)
 }
 
-// UserRefreshTokenValidate handles requests to validate refresh tokens. It decodes the request, validates it,
+// UserRefreshToken handles requests to validate refresh tokens. It decodes the request, validates it,
 // and invokes the token validation usecase. Returns the response based on success or failure.
-func (h *handler) UserRefreshTokenValidate(w http.ResponseWriter, r *http.Request) {
+func (h *handler) UserRefreshToken(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var res response
 
-	var req domain.UserRefreshTokenValidateClientRequest
-	// Bind and validate the incoming request
-	if !h.bindAndValidate(w, r, &req) {
-		return
+	refreshToken := r.Header.Get("Authorization")
+
+	var req = domain.UserRefreshTokenClientRequest{
+		RefreshToken: utils.ExtractBearerToken(refreshToken),
 	}
 
 	// Call the refresh token validation usecase
-	respData, resErr := h.usecases.User.ValidateRefreshToken(ctx, req)
+	respData, resErr := h.usecases.User.RefreshToken(ctx, req)
 	if resErr != nil {
 		res.SetStatus(resErr.StatusCode())
 		res.SetError(resErr.MessageText()) // Set the error message if token validation fails

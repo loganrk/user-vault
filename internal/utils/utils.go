@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"strings"
 	"unicode"
 )
 
@@ -129,4 +130,14 @@ func LoadRSAPrivKeyFromFile(filePath string) (*rsa.PrivateKey, error) {
 	}
 
 	return privKey, nil
+}
+
+// ExtractBearerToken extracts the token from the Authorization header by splitting it into "Bearer <token>" format.
+func ExtractBearerToken(token string) string {
+	// Split the Authorization header to extract the token part.
+	parts := strings.SplitN(token, " ", 2)
+	if len(parts) == 2 && parts[0] == "Bearer" {
+		return parts[1] // Return the token part of the "Bearer <token>" format.
+	}
+	return "" // Return an empty string if the token is not in the correct format.
 }

@@ -135,33 +135,6 @@ func (t *token) parseTokenWithoutVerification(encryptedToken string) (jwt.MapCla
 	return nil, errors.New("invalid token claims") // Return error if claims are not valid
 }
 
-// GetAccessTokenData extracts and returns the user ID and expiration time from an access token
-// It parses the token and validates the type and claims, returning an error if any validation fails
-func (t *token) GetAccessTokenData(encryptedToken string) (int, time.Time, error) {
-	claims, err := t.parseTokenWithoutVerification(encryptedToken)
-	if err != nil {
-		return 0, time.Time{}, err // Return error if token parsing fails
-	}
-
-	// Validate the token type, should be "access"
-	if tokenType, ok := claims["type"].(string); !ok || tokenType != "access" {
-		return 0, time.Time{}, errors.New("token type (`type`) not found or mismatch in token")
-	}
-
-	// Extract the user ID and expiration time from the claims
-	uid, ok := claims["uid"].(float64)
-	if !ok {
-		return 0, time.Time{}, errors.New("user id (`uid`) not found in token")
-	}
-
-	exp, ok := claims["exp"].(float64)
-	if !ok {
-		return 0, time.Time{}, errors.New("expiration time (`exp`) not found in token")
-	}
-
-	return int(uid), time.Unix(int64(exp), 0), nil // Return user ID and expiration time
-}
-
 // GetRefreshTokenData extracts and returns the user ID and expiration time from a refresh token
 // It parses the token and validates the type and claims, returning an error if any validation fails
 func (t *token) GetRefreshTokenData(encryptedToken string) (int, time.Time, error) {

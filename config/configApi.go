@@ -19,8 +19,8 @@ type Api interface {
 	GetUserPasswordResetEnabled() bool
 	GetUserPasswordResetProperties() (string, string)
 
-	GetUserRefreshTokenValidateEnabled() bool
-	GetUserRefreshTokenValidateProperties() (string, string)
+	GetUserRefreshTokenEnabled() bool
+	GetUserRefreshTokenProperties() (string, string)
 
 	GetUserLogoutEnabled() bool
 	GetUserLogoutProperties() (string, string)
@@ -90,11 +90,11 @@ func (a api) GetUserPasswordResetProperties() (string, string) {
 	return apiData.Method, apiData.Route
 }
 
-func (a api) GetUserRefreshTokenValidateEnabled() bool {
-	return a.UserRefreshTokenValidate.Enabled
+func (a api) GetUserRefreshTokenEnabled() bool {
+	return a.UserRefreshToken.Enabled
 }
-func (a api) GetUserRefreshTokenValidateProperties() (string, string) {
-	apiData := a.UserRefreshTokenValidate
+func (a api) GetUserRefreshTokenProperties() (string, string) {
+	apiData := a.UserRefreshToken
 
 	return apiData.Method, apiData.Route
 }

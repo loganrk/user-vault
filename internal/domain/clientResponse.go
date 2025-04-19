@@ -12,7 +12,7 @@ type UserLoginClientResponse struct {
 	RefreshToken     string `json:"refresh_token,omitempty"`
 }
 
-type UserRefreshTokenValidateClientResponse struct {
+type UserRefreshTokenClientResponse struct {
 	AccessToken      string `json:"access_token"`
 	RefreshTokenType string `json:"refresh_token_type,omitempty"`
 	RefreshToken     string `json:"refresh_token"`
