@@ -82,7 +82,8 @@ Custom `password` validation ensures:
 
 ```text
 ├── cmd/                               # Main application entrypoint
-│  └── main.go                         # Application bootstrap
+│  │── main.go                         # Application bootstrap
+│  └── .env                            #Load the config details
 ├── config/                            # Configuration loaders
 ├── internal/
 │   ├── adapters/
@@ -97,8 +98,8 @@ Custom `password` validation ensures:
 │   ├── port/                          # Interface ports (contracts)
 │   ├── usecase/                       # Business logic (see user.go)
 │   └── utils/                         # Utilities (e.g. crypto, random)
-├── README.md
-├── .env                               #Load the config details
+└── README.md
+
 ```
 
 ## Contributing
