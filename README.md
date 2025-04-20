@@ -1,6 +1,6 @@
 # UserVault - Secure User Authentication System
 
-UserVault is a Go-based microservice that implements a complete user authentication system. It includes registration, login, logout, password reset, account activation, and refresh token validation, with secure password hashing and JWT-based token management.
+UserVault is a Go-based microservice for secure and scalable user authentication. It supports full account lifecycle operations like registration, login, logout, password reset, token validation, and account activation, with a clean hexagonal architecture.
 
 ## Table of Contents
 - [Features](#features)
@@ -13,14 +13,15 @@ UserVault is a Go-based microservice that implements a complete user authenticat
 
 ## Features
 
-- ✅ User Registration with Activation Email
-- 🔐 Secure Password Hashing using bcrypt + salt
-- 🔑 JWT Access and Refresh Token Authentication
-- 🔁 Refresh Token Rotation and Validation
-- 🧠 Rate Limiting on Failed Login Attempts
-- 📧 Email-based Account Activation and Password Reset
-- 📦 Hexagonal Architecture with Clean Adapter Separation
-- 🧪 Validator-Based Input Validation (GET or POST)
+- - ✅ User Registration with Activation Email  
+- 🔐 Secure Password Hashing using bcrypt + salt  
+- 🔑 JWT Access and Refresh Token Authentication (HS256/RS256)  
+- 🔁 Refresh Token Rotation and Validation  
+- 📧 Kafka-based Email Delivery for Account Activation and Password Reset  
+- 🧪 Validator-Based Request Validation (GET or POST)  
+- 📦 Hexagonal Architecture with Domain-Driven Design  
+- 🧱 Modular Adapters for DB, Messaging, Email, Tokens, Logging  
+- 🔄 Graceful Error Handling with Logger Middleware  
 
 ## Installation
 
@@ -81,24 +82,29 @@ Custom `password` validation ensures:
 ## Project Structure
 
 ```text
-├── cmd/                               # Main application entrypoint
-│  │── main.go                         # Application bootstrap
-│  └── .env                            #Load the config details
-├── config/                            # Configuration loaders
+.
+├── cmd/                           # Main application entrypoint
+│   ├── main.go                    # Application bootstrap logic
+│   └── .env                       # Environment variables for the service
+├── config/                        # YAML/ENV configuration loaders
 ├── internal/
-│   ├── adapters/
-│   │   ├── cipher/aes/                # AES encryption helpers
-│   │   ├── handler/http/v1/           # HTTP handler layer (v1 API)
-│   │   ├── logger/zapLogger/          # Zap-based logger adapter
-│   │   ├── middleware/auth/           # Auth middleware (API key, JWT)
-│   │   ├── repository/mysql/          # MySQL persistence layer
-│   │   └── router/gin/                # Gin router integration
-│   │   └── token/jwt/                 # JWT token handling adapter
-│   ├── domain/                        # DTOs, interfaces, types
-│   ├── port/                          # Interface ports (contracts)
-│   ├── usecase/                       # Business logic (see user.go)
-│   └── utils/                         # Utilities (e.g. crypto, random)
-└── README.md
+│   ├── adapters/                  # Infrastructure layer (driven adapters)
+│   │   ├── cipher/aes/            # AES encryption helpers
+│   │   ├── email/                 # Email template and content builder
+│   │   ├── handler/http/v1/       # HTTP API handlers (v1)
+│   │   ├── logger/zapLogger/      # Zap-based logging adapter
+│   │   ├── message/kafka/         # Kafka producer for email events
+│   │   ├── middleware/auth/       # JWT/API key middleware
+│   │   ├── repository/mysql/      # MySQL persistence adapter
+│   │   ├── router/gin/            # Gin router setup
+│   │   └── token/jwt/             # JWT token generation and validation
+│
+│   ├── domain/                    # Core domain models and logic
+│   ├── port/                      # Interface ports for adapters/usecases
+│   ├── usecase/                   # Business logic and services
+│   └── utils/                     # Utility helpers (crypto, random, etc.)
+├── conf.yml                       # YAML-based application configuration
+└── README.md                      # Project documentation
 
 ```
 
