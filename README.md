@@ -2,13 +2,18 @@
 
 UserVault is a Go-based microservice for secure and scalable user authentication. It supports full account lifecycle operations like registration, login, logout, password reset, token validation, and account activation, with a clean hexagonal architecture.
 
+The project is structured using a clean **Hexagonal Architecture** to ensure maintainability and testability.
+
+## 📘 [Project Wiki](https://github.com/loganrk/userVault/wiki)
+
+Detailed documentation is available in the [Wiki](https://github.com/loganrk/userVault/wiki), including setup guides, API reference, and architectural overviews.
+
 ## Table of Contents
 - [Wiki](https://github.com/loganrk/userVault/wiki)
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
-- [Validation Rules](#validation-rules)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
 
@@ -65,20 +70,6 @@ go run main.go
 | POST/GET | `/api/v1/resend-activation` | Resend activation email             |
 
 > 🔒 All routes support both `application/json` POST and query-based GET formats.
-
-## Validation Rules
-
-All request bodies are validated using `github.com/go-playground/validator/v10`.
-
-Example:
-```go
-Username string `validate:"required,email"`
-Password string `validate:"required,password"`
-```
-
-Custom `password` validation ensures:
-- At least 8 characters
-- Includes digit, lowercase, uppercase, and special character
 
 ## Project Structure
 
