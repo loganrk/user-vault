@@ -98,7 +98,6 @@ Custom `password` validation ensures:
 │   │   ├── repository/mysql/      # MySQL persistence adapter
 │   │   ├── router/gin/            # Gin router setup
 │   │   └── token/jwt/             # JWT token generation and validation
-│
 │   ├── domain/                    # Core domain models and logic
 │   ├── port/                      # Interface ports for adapters/usecases
 │   ├── usecase/                   # Business logic and services
