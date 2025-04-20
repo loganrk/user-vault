@@ -14,7 +14,6 @@ Detailed documentation is available in the [Wiki](https://github.com/loganrk/use
 - [Installation](#installation)
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
-- [Validation Rules](#validation-rules)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
 
@@ -71,20 +70,6 @@ go run main.go
 | POST/GET | `/api/v1/resend-activation` | Resend activation email             |
 
 > 🔒 All routes support both `application/json` POST and query-based GET formats.
-
-## Validation Rules
-
-All request bodies are validated using `github.com/go-playground/validator/v10`.
-
-Example:
-```go
-Username string `validate:"required,email"`
-Password string `validate:"required,password"`
-```
-
-Custom `password` validation ensures:
-- At least 8 characters
-- Includes digit, lowercase, uppercase, and special character
 
 ## Project Structure
 
