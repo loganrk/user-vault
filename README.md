@@ -13,7 +13,7 @@ UserVault is a Go-based microservice for secure and scalable user authentication
 
 ## Features
 
-- - ✅ User Registration with Activation Email  
+- ✅ User Registration with Activation Email  
 - 🔐 Secure Password Hashing using bcrypt + salt  
 - 🔑 JWT Access and Refresh Token Authentication (HS256/RS256)  
 - 🔁 Refresh Token Rotation and Validation  
