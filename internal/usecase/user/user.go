@@ -17,22 +17,23 @@ import (
 // userusecase struct holds the dependencies for the user service, including
 // configuration, logger, MySQL repository, and token management.
 type userusecase struct {
-	appName string
-	logger  port.Logger
-	mysql   port.RepositoryMySQL
-	conf    config.User
-	token   port.Token
-	email   port.Email
+	logger   port.Logger
+	mysql    port.RepositoryMySQL
+	conf     config.User
+	token    port.Token
+	emailer  port.Emailer
+	messager port.Messager
 }
 
 // New initializes a new user service with required dependencies and returns it.
-func New(loggerIns port.Logger, tokenIns port.Token, emailIns port.Email, mysqlIns port.RepositoryMySQL, appName string, userConfIns config.User) domain.UserSvr {
+func New(loggerIns port.Logger, tokenIns port.Token, emailIns port.Emailer, messageIns port.Messager, mysqlIns port.RepositoryMySQL, appName string, userConfIns config.User) domain.UserSvr {
 	return &userusecase{
-		mysql:  mysqlIns,
-		logger: loggerIns,
-		conf:   userConfIns,
-		token:  tokenIns,
-		email:  emailIns,
+		logger:   loggerIns,
+		mysql:    mysqlIns,
+		conf:     userConfIns,
+		token:    tokenIns,
+		emailer:  emailIns,
+		messager: messageIns,
 	}
 }
 
@@ -460,11 +461,26 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 			}
 		}
 
-		err = u.email.SendActivationEmail(userData.Username, userData.Name, activationToken)
-
+		emailContent, subject, err := u.emailer.PrepareActivationEmail(userData.Name, activationToken)
 		if err != nil {
 			// Log error and return response indicating failure to send the email
-			u.logger.Errorw(ctx, "failed to send the email",
+			u.logger.Errorw(ctx, "failed to prepare the email",
+				"event", "register_failed",
+				"userId", userData.Id,
+				"error", err,
+				"code", http.StatusInternalServerError,
+			)
+			return domain.UserRegisterClientResponse{}, errorRes{
+				Code:    http.StatusInternalServerError,
+				Message: "Internal server error",
+				Err:     err,
+			}
+		}
+
+		err = u.messager.PublishActivationEmail(userData.Username, subject, emailContent)
+		if err != nil {
+			// Log error and return response indicating failure to send the email
+			u.logger.Errorw(ctx, "failed to publish the email",
 				"event", "register_failed",
 				"userId", userData.Id,
 				"error", err,
@@ -719,9 +735,25 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 		}
 	}
 
-	err = u.email.SendActivationEmail(userData.Username, userData.Name, token)
+	emailContent, subject, err := u.emailer.PrepareActivationEmail(userData.Name, token)
 	if err != nil {
-		u.logger.Errorw(ctx, "failed to send the email",
+		u.logger.Errorw(ctx, "failed to prepare the email",
+			"event", "user_resend_activation_failed",
+			"userId", userData.Id,
+			"error", err,
+			"code", http.StatusInternalServerError,
+		)
+		return domain.UserResendActivationClientResponse{}, errorRes{
+			Code:    http.StatusInternalServerError,
+			Message: "Internal server error",
+			Err:     err,
+		}
+	}
+
+	err = u.messager.PublishActivationEmail(userData.Username, subject, emailContent)
+	if err != nil {
+		// Log error and return response indicating failure to send the email
+		u.logger.Errorw(ctx, "failed to publish the email",
 			"event", "user_resend_activation_failed",
 			"userId", userData.Id,
 			"error", err,
@@ -837,10 +869,10 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 		}
 	}
 
-	err = u.email.SendPasswordResetEmail(userData.Username, userData.Name, token)
+	emailContent, subject, err := u.emailer.PreparePasswordResetEmail(userData.Name, token)
 	if err != nil {
 		statusCode := http.StatusInternalServerError
-		u.logger.Errorw(ctx, "failed to send the email",
+		u.logger.Errorw(ctx, "failed to prepare the email",
 			"event", "user_forgot_password_failed",
 			"userId", userData.Id,
 			"error", err,
@@ -853,6 +885,21 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 		}
 	}
 
+	err = u.messager.PublishPasswordResetEmail(userData.Username, subject, emailContent)
+	if err != nil {
+		// Log error and return response indicating failure to send the email
+		u.logger.Errorw(ctx, "failed to publish the email",
+			"event", "user_forgot_password_failed",
+			"userId", userData.Id,
+			"error", err,
+			"code", http.StatusInternalServerError,
+		)
+		return domain.UserForgotPasswordClientResponse{}, errorRes{
+			Code:    http.StatusInternalServerError,
+			Message: "Internal server error",
+			Err:     err,
+		}
+	}
 	// Success
 	u.logger.Infow(ctx, "password reset link sent successfully",
 		"event", "user_forgot_password_success",

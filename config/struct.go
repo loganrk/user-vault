@@ -28,6 +28,7 @@ type app struct {
 	Api   api   `mapstructure:"api"`
 	User  user  `mapstructure:"user"`
 	Email email `mapstructure:"email"`
+	Kafka kafka `mapstructure:"kafka"`
 }
 
 type logger struct {
@@ -92,4 +93,15 @@ type email struct {
 		Link         string `mapstructure:"link"`
 		TemplatePath string `mapstructure:"templatePath"`
 	} `mapstructure:"passwordReset"`
+}
+
+type kafka struct {
+	Brokers []string `mapstructure:"brokers"`
+	Topics  struct {
+		ActivationEmail    string `mapstructure:"activationEmail"`
+		PasswordResetEmail string `mapstructure:"passwordResetEmail"`
+	} `mapstructure:"topics"`
+	ClientID string `mapstructure:"clientID"`
+	Version  string `mapstructure:"version"`
+	RetryMax int    `mapstructure:"retryMax"`
 }

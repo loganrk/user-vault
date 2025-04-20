@@ -24,7 +24,18 @@ email:
   passwordReset:
     templatePath: "/path/to/password_reset_email_template.html"  # Template for reset email
     link: "https://example.com/password-reset?token={{token}}"  # Reset link with token macro
-  
+
+kafka:
+  brokers:
+    - "g7kd8v84u4d..." # Encrypted kafka host
+  topics:
+    activationEmail: "email_activation"
+    passwordResetEmail: "email_password_reset"
+  clientID: "userVault"
+  version: "2.6.0"
+  retryMax: 5
+
+
 api:
   userLogin:
     enabled: true

@@ -1,6 +1,7 @@
 package email
 
 import (
+	"errors"
 	"strings"
 	"userVault/config"
 	"userVault/internal/constant"
@@ -16,7 +17,7 @@ type email struct {
 	passwordResetLink     string
 }
 
-func New(conf config.Email) (port.Email, error) {
+func New(appName string, conf config.Email) (port.Emailer, error) {
 
 	activationTemplate, err := utils.FindFileContent(conf.GetActivationEmailTemplatePath())
 	if err != nil {
@@ -28,6 +29,7 @@ func New(conf config.Email) (port.Email, error) {
 	}
 
 	return &email{
+		appName:               appName,
 		activationTemplate:    activationTemplate,
 		activationtLink:       conf.GetActivationLink(),
 		passwordResetTemplate: passwordResetTemplate,
@@ -35,30 +37,34 @@ func New(conf config.Email) (port.Email, error) {
 	}, nil
 }
 
-func (u *email) SendActivationEmail(toAddress, name, token string) error {
+func (u *email) PrepareActivationEmail(name, token string) (string, string, error) {
 	activationLink := u.activationLinkMacroReplacement(u.activationtLink, token)
 	if activationLink != "" {
 		// Replace macros in the email template and send the activation email
-		emailTemplate := u.activationTemplateMacroReplacement(u.activationTemplate, name, activationLink)
-		if emailTemplate != "" {
-			// send to kafka
+		emailContent := u.activationTemplateMacroReplacement(u.activationTemplate, name, activationLink)
+		if emailContent != "" {
+			emailSubject := u.getActivationEmailSubject()
+			return emailContent, emailSubject, nil
 		}
+		return "", "", errors.New("activation email content is empty")
 	}
 
-	return nil
+	return "", "", errors.New("activation email link is empty")
 }
 
-func (u *email) SendPasswordResetEmail(toAddress, name, token string) error {
+func (u *email) PreparePasswordResetEmail(name, token string) (string, string, error) {
 	passwordResetLink := u.passwordResetLinkMacroReplacement(u.activationtLink, token)
 	if passwordResetLink != "" {
 		// Replace macros in the email template and send the activation email
-		emailTemplate := u.passwordResetTemplateMacroReplacement(u.activationTemplate, name, passwordResetLink)
-		if emailTemplate != "" {
-			// send to kafka
+		emailContent := u.passwordResetTemplateMacroReplacement(u.activationTemplate, name, passwordResetLink)
+		if emailContent != "" {
+			emailSubject := u.getPasswordResetEmailSubject()
+			return emailContent, emailSubject, nil
 		}
+		return "", "", errors.New("password reset email content is empty")
 	}
 
-	return nil
+	return "", "", errors.New("password reset email link is empty")
 }
 
 // passwordResetLinkMacroReplacement replaces macros in the password reset link with the provided token.
@@ -95,5 +101,21 @@ func (e *email) activationTemplateMacroReplacement(template string, name string,
 		constant.USER_ACTIVATION_LINK_MACRO, activationLink)
 
 	return s.Replace(template)
+
+}
+func (e *email) getPasswordResetEmailSubject() string {
+	s := strings.NewReplacer(
+		constant.USER_ACTIVATION_APP_NAME_MACRO, e.appName,
+	)
+
+	return s.Replace(constant.USER_PASSWORD_RESET_EMAIL_SUBJECT)
+
+}
+func (e *email) getActivationEmailSubject() string {
+	s := strings.NewReplacer(
+		constant.USER_ACTIVATION_APP_NAME_MACRO, e.appName,
+	)
+
+	return s.Replace(constant.USER_ACTIVATION_EMAIL_SUBJECT)
 
 }
