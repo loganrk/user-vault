@@ -20,6 +20,7 @@ type App interface {
 	GetLogger() Logger
 	GetApi() Api
 	GetEmail() Email
+	GetKafka() Kafka
 	GetUser() User
 	GetJWTToken() Jwt
 }
@@ -84,6 +85,11 @@ func (a app) GetUser() User {
 func (a app) GetJWTToken() Jwt {
 	return a.Token.JWT
 }
+
 func (a app) GetEmail() Email {
 	return a.Email
+}
+
+func (a app) GetKafka() Kafka {
+	return a.Kafka
 }

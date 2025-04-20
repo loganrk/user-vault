@@ -32,4 +32,7 @@ const (
 	USER_PASSWORD_RESET_LINK_MACRO     = "{{link}}"
 	USER_PASSWORD_RESET_NAME_MACRO     = "{{name}}"
 	USER_PASSWORD_RESET_APP_NAME_MACRO = "{{appName}}"
+
+	USER_ACTIVATION_EMAIL_SUBJECT     = "{{appName}} - Activate your account"
+	USER_PASSWORD_RESET_EMAIL_SUBJECT = "{{appName}} - Password reset request"
 )

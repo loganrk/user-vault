@@ -12,9 +12,11 @@ import (
 	"userVault/internal/port"
 
 	aesCipher "userVault/internal/adapters/cipher/aes"
+
 	email "userVault/internal/adapters/email"
 	httpHandler "userVault/internal/adapters/handler/http/v1"
 	zapLogger "userVault/internal/adapters/logger/zapLogger"
+	kafkaMessage "userVault/internal/adapters/message/kafka"
 	authMiddleware "userVault/internal/adapters/middleware/auth"
 	mysqlRepo "userVault/internal/adapters/repository/mysql"
 	ginRouter "userVault/internal/adapters/router/gin"
@@ -63,14 +65,20 @@ func main() {
 		return
 	}
 
-	emailIns, err := email.New(appConfig.GetEmail())
+	emailIns, err := email.New(appConfig.GetAppName(), appConfig.GetEmail())
 	if err != nil {
 		log.Println("failed to setup email:", err)
 		return
 	}
 
+	kafkaIns, err := initKafka(appConfig.GetKafka())
+	if err != nil {
+		log.Println("failed to setup kafka:", err)
+		return
+	}
+
 	// Initialize user service
-	userService := userUsecase.New(logger, tokenIns, emailIns, db, appConfig.GetAppName(), appConfig.GetUser())
+	userService := userUsecase.New(logger, tokenIns, emailIns, kafkaIns, db, appConfig.GetAppName(), appConfig.GetUser())
 	services := domain.List{User: userService}
 
 	authMiddlewareIns := authMiddleware.New(appConfig.GetMiddlewareApiKeys(), tokenIns)
@@ -103,6 +111,22 @@ func initLogger(conf config.Logger) (port.Logger, error) {
 		OutputPath:     conf.GetLoggerPath(),
 	}
 	return zapLogger.New(loggerConf)
+}
+
+func initKafka(conf config.Kafka) (port.Messager, error) {
+	cipherKey := os.Getenv("CIPHER_CRYPTO_KEY")
+	cipher := aesCipher.New(cipherKey)
+	var brokers []string
+
+	for _, brokerEnc := range conf.GetBrokers() {
+		broker, err := cipher.Decrypt(brokerEnc)
+		if err != nil {
+			return nil, err
+		}
+		brokers = append(brokers, broker)
+	}
+
+	return kafkaMessage.New(brokers, conf)
 }
 
 // initDatabase connects to the MySQL database using decrypted credentials.
