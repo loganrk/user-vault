@@ -3,7 +3,7 @@
 UserVault is a Go-based microservice for secure and scalable user authentication. It supports full account lifecycle operations like registration, login, logout, password reset, token validation, and account activation, with a clean hexagonal architecture.
 
 ## Table of Contents
-- [Wiki](/loganrk/userVault/wiki)
+- [Wiki](https://github.com/loganrk/userVault/wiki)
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
