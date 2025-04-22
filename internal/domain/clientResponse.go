@@ -1,9 +1,9 @@
 package domain
 
-type ResponseError interface {
-	StatusCode() int
-	Error() error
-	MessageText() string
+type ErrorRes struct {
+	Code    int
+	Message string
+	Err     error
 }
 
 type UserLoginClientResponse struct {

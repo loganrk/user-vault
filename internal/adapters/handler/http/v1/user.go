@@ -85,9 +85,9 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Call the login usecase
 	respData, resErr := h.usecases.User.Login(ctx, req)
-	if resErr != nil {
-		res.SetStatus(resErr.StatusCode())
-		res.SetError(resErr.MessageText()) // Set the error message if the login fails
+	if resErr.Code != 0 {
+		res.SetStatus(resErr.Code)
+		res.SetError(resErr.Message) // Set the error message if registration fails
 		res.Send(w)
 		return
 	}
@@ -112,9 +112,9 @@ func (h *handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 
 	// Call the registration usecase
 	respData, resErr := h.usecases.User.Register(ctx, req)
-	if resErr != nil {
-		res.SetStatus(resErr.StatusCode())
-		res.SetError(resErr.MessageText()) // Set the error message if registration fails
+	if resErr.Code != 0 {
+		res.SetStatus(resErr.Code)
+		res.SetError(resErr.Message) // Set the error message if registration fails
 		res.Send(w)
 		return
 	}
@@ -138,9 +138,9 @@ func (h *handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 
 	// Call the forgot password usecase
 	respData, resErr := h.usecases.User.ForgotPassword(ctx, req)
-	if resErr != nil {
-		res.SetStatus(resErr.StatusCode())
-		res.SetError(resErr.MessageText()) // Set the error message if the forgot password action fails
+	if resErr.Code != 0 {
+		res.SetStatus(resErr.Code)
+		res.SetError(resErr.Message) // Set the error message if registration fails
 		res.Send(w)
 		return
 	}
@@ -164,9 +164,9 @@ func (h *handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 
 	// Call the user activation usecase
 	respData, resErr := h.usecases.User.ActivateUser(ctx, req)
-	if resErr != nil {
-		res.SetStatus(resErr.StatusCode())
-		res.SetError(resErr.MessageText()) // Set the error message if activation fails
+	if resErr.Code != 0 {
+		res.SetStatus(resErr.Code)
+		res.SetError(resErr.Message) // Set the error message if registration fails
 		res.Send(w)
 		return
 	}
@@ -188,9 +188,9 @@ func (h *handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respData, resErr := h.usecases.User.Logout(ctx, req)
-	if resErr != nil {
-		res.SetStatus(resErr.StatusCode())
-		res.SetError(resErr.MessageText()) // Set the error message if logout fails
+	if resErr.Code != 0 {
+		res.SetStatus(resErr.Code)
+		res.SetError(resErr.Message) // Set the error message if registration fails
 		res.Send(w)
 		return
 	}
@@ -214,9 +214,9 @@ func (h *handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 
 	// Call the reset password usecase
 	respData, resErr := h.usecases.User.ResetPassword(ctx, req)
-	if resErr != nil {
-		res.SetStatus(resErr.StatusCode())
-		res.SetError(resErr.MessageText()) // Set the error message if password reset fails
+	if resErr.Code != 0 {
+		res.SetStatus(resErr.Code)
+		res.SetError(resErr.Message) // Set the error message if registration fails
 		res.Send(w)
 		return
 	}
@@ -240,9 +240,9 @@ func (h *handler) UserRefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	// Call the refresh token validation usecase
 	respData, resErr := h.usecases.User.RefreshToken(ctx, req)
-	if resErr != nil {
-		res.SetStatus(resErr.StatusCode())
-		res.SetError(resErr.MessageText()) // Set the error message if token validation fails
+	if resErr.Code != 0 {
+		res.SetStatus(resErr.Code)
+		res.SetError(resErr.Message) // Set the error message if registration fails
 		res.Send(w)
 		return
 	}
@@ -266,9 +266,9 @@ func (h *handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 
 	// Call the resend activation usecase
 	respData, resErr := h.usecases.User.ResendActivation(ctx, req)
-	if resErr != nil {
-		res.SetStatus(resErr.StatusCode())
-		res.SetError(resErr.MessageText()) // Set the error message if resend activation fails
+	if resErr.Code != 0 {
+		res.SetStatus(resErr.Code)
+		res.SetError(resErr.Message) // Set the error message if registration fails
 		res.Send(w)
 		return
 	}
