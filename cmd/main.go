@@ -8,7 +8,6 @@ import (
 	"github.com/joho/godotenv"
 
 	"userVault/config"
-	"userVault/internal/domain"
 	"userVault/internal/port"
 
 	aesCipher "userVault/internal/adapters/cipher/aes"
@@ -79,7 +78,7 @@ func main() {
 
 	// Initialize user service
 	userService := userUsecase.New(logger, tokenIns, emailIns, kafkaIns, db, appConfig.GetAppName(), appConfig.GetUser())
-	services := domain.List{User: userService}
+	services := port.SvrList{User: userService}
 
 	authMiddlewareIns := authMiddleware.New(appConfig.GetMiddlewareApiKeys(), tokenIns)
 	handlerIns := httpHandler.New(logger, tokenIns, services)

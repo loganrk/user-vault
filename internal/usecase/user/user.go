@@ -26,7 +26,7 @@ type userusecase struct {
 }
 
 // New initializes a new user service with required dependencies and returns it.
-func New(loggerIns port.Logger, tokenIns port.Token, emailIns port.Emailer, messageIns port.Messager, mysqlIns port.RepositoryMySQL, appName string, userConfIns config.User) domain.UserSvr {
+func New(loggerIns port.Logger, tokenIns port.Token, emailIns port.Emailer, messageIns port.Messager, mysqlIns port.RepositoryMySQL, appName string, userConfIns config.User) port.UserSvr {
 	return &userusecase{
 		logger:   loggerIns,
 		mysql:    mysqlIns,
@@ -37,32 +37,10 @@ func New(loggerIns port.Logger, tokenIns port.Token, emailIns port.Emailer, mess
 	}
 }
 
-// errorRes is a custom error response type that includes a status code, message, and error.
-type errorRes struct {
-	Code    int
-	Message string
-	Err     error
-}
-
-// Error implements the error interface for errorRes.
-func (e errorRes) Error() error {
-	return e.Err
-}
-
-// StatusCode returns the HTTP status code associated with the error.
-func (e errorRes) StatusCode() int {
-	return e.Code
-}
-
-// MessageText returns the error message.
-func (e errorRes) MessageText() string {
-	return e.Message
-}
-
 // Login is the main handler for user login. It performs various checks such as verifying
 // the username, password, login attempts, and whether the user is active. If all checks
 // pass, it generates access and refresh tokens and returns them to the client.
-func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientRequest) (domain.UserLoginClientResponse, domain.ResponseError) {
+func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientRequest) (domain.UserLoginClientResponse, domain.ErrorRes) {
 	// Retrieve user data by username
 	userData, err := u.getUserByUsername(ctx, req.Username)
 	if err != nil {
@@ -72,7 +50,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserLoginClientResponse{}, errorRes{
+		return domain.UserLoginClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "internal server error",
 			Err:     err,
@@ -86,7 +64,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 			"code", http.StatusUnauthorized,
 		)
 
-		return domain.UserLoginClientResponse{}, errorRes{
+		return domain.UserLoginClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusUnauthorized,
 			Message: "Username or password is incorrect",
 			Err:     nil,
@@ -102,7 +80,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserLoginClientResponse{}, errorRes{
+		return domain.UserLoginClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "internal server error",
 			Err:     err,
@@ -115,7 +93,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 			"userId", userData.Id,
 			"code", http.StatusTooManyRequests,
 		)
-		return domain.UserLoginClientResponse{}, errorRes{
+		return domain.UserLoginClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusTooManyRequests,
 			Message: "Maximum login attempts reached. Please try again later.",
 			Err:     nil,
@@ -133,7 +111,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 			"code", http.StatusUnauthorized,
 		)
 
-		return domain.UserLoginClientResponse{}, errorRes{
+		return domain.UserLoginClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusUnauthorized,
 			Message: "Username or password is incorrect",
 			Err:     nil,
@@ -150,7 +128,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserLoginClientResponse{}, errorRes{
+		return domain.UserLoginClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "internal server error",
 			Err:     err,
@@ -166,7 +144,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserLoginClientResponse{}, errorRes{
+		return domain.UserLoginClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "internal server error",
 			Err:     err,
@@ -180,7 +158,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 			"userId", userData.Id,
 			"code", http.StatusForbidden,
 		)
-		return domain.UserLoginClientResponse{}, errorRes{
+		return domain.UserLoginClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusForbidden,
 			Message: "Your account is not active. Please contact support.",
 			Err:     nil,
@@ -200,7 +178,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 				"code", http.StatusInternalServerError,
 			)
 
-			return domain.UserLoginClientResponse{}, errorRes{
+			return domain.UserLoginClientResponse{}, domain.ErrorRes{
 				Code:    http.StatusInternalServerError,
 				Message: "internal server error",
 				Err:     err,
@@ -216,7 +194,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 				"code", http.StatusInternalServerError,
 			)
 
-			return domain.UserLoginClientResponse{}, errorRes{
+			return domain.UserLoginClientResponse{}, domain.ErrorRes{
 				Code:    http.StatusInternalServerError,
 				Message: "internal server error",
 				Err:     err,
@@ -234,12 +212,12 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 	// Return tokens
 	return domain.UserLoginClientResponse{
 		RefreshToken: refreshToken,
-	}, nil
+	}, domain.ErrorRes{}
 }
 
 // Logout handles the user logout process, including the validation of the refresh token,
 // revocation of the token, and logging of the logout event.
-func (u *userusecase) Logout(ctx context.Context, req domain.UserLogoutClientRequest) (domain.UserLogoutClientResponse, domain.ResponseError) {
+func (u *userusecase) Logout(ctx context.Context, req domain.UserLogoutClientRequest) (domain.UserLogoutClientResponse, domain.ErrorRes) {
 
 	// Retrieve refresh token data
 	refreshData, err := u.getRefreshTokenData(ctx, req.RefreshToken)
@@ -250,7 +228,7 @@ func (u *userusecase) Logout(ctx context.Context, req domain.UserLogoutClientReq
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserLogoutClientResponse{}, errorRes{
+		return domain.UserLogoutClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "internal server error",
 			Err:     err,
@@ -264,7 +242,7 @@ func (u *userusecase) Logout(ctx context.Context, req domain.UserLogoutClientReq
 			"refreshToken", req.RefreshToken,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserLogoutClientResponse{}, errorRes{
+		return domain.UserLogoutClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Token is revoked or incorrect",
 			Err:     nil,
@@ -279,7 +257,7 @@ func (u *userusecase) Logout(ctx context.Context, req domain.UserLogoutClientReq
 			"expiresAt", refreshData.ExpiresAt,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserLogoutClientResponse{}, errorRes{
+		return domain.UserLogoutClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Token is incorrect or expired",
 			Err:     nil,
@@ -295,7 +273,7 @@ func (u *userusecase) Logout(ctx context.Context, req domain.UserLogoutClientReq
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserLogoutClientResponse{}, errorRes{
+		return domain.UserLogoutClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Unable to revoke token",
 			Err:     err,
@@ -312,12 +290,12 @@ func (u *userusecase) Logout(ctx context.Context, req domain.UserLogoutClientReq
 
 	return domain.UserLogoutClientResponse{
 		Message: "Logout successful",
-	}, nil
+	}, domain.ErrorRes{}
 }
 
 // Register handles the user registration process, including the creation of a new user,
 // password hashing, and sending an activation email if the user status is pending.
-func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClientRequest) (domain.UserRegisterClientResponse, domain.ResponseError) {
+func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClientRequest) (domain.UserRegisterClientResponse, domain.ErrorRes) {
 	// Check if the username already exists in the system
 	existingUser, err := u.getUserByUsername(ctx, req.Username)
 	if err != nil {
@@ -328,7 +306,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserRegisterClientResponse{}, errorRes{
+		return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -342,7 +320,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 			"username", req.Username,
 			"code", http.StatusConflict,
 		)
-		return domain.UserRegisterClientResponse{}, errorRes{
+		return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusConflict,
 			Message: "Username already exists",
 			Err:     nil,
@@ -359,7 +337,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserRegisterClientResponse{}, errorRes{
+		return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -376,7 +354,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserRegisterClientResponse{}, errorRes{
+		return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -403,7 +381,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserRegisterClientResponse{}, errorRes{
+		return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -421,7 +399,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 			"code", http.StatusInternalServerError,
 		)
 
-		return domain.UserRegisterClientResponse{}, errorRes{
+		return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -436,7 +414,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 			"code", http.StatusInternalServerError,
 		)
 
-		return domain.UserRegisterClientResponse{}, errorRes{
+		return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     nil,
@@ -454,7 +432,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 				"error", err,
 				"code", http.StatusInternalServerError,
 			)
-			return domain.UserRegisterClientResponse{}, errorRes{
+			return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 				Code:    http.StatusInternalServerError,
 				Message: "Internal server error",
 				Err:     err,
@@ -470,7 +448,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 				"error", err,
 				"code", http.StatusInternalServerError,
 			)
-			return domain.UserRegisterClientResponse{}, errorRes{
+			return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 				Code:    http.StatusInternalServerError,
 				Message: "Internal server error",
 				Err:     err,
@@ -486,7 +464,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 				"error", err,
 				"code", http.StatusInternalServerError,
 			)
-			return domain.UserRegisterClientResponse{}, errorRes{
+			return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 				Code:    http.StatusInternalServerError,
 				Message: "Internal server error",
 				Err:     err,
@@ -504,10 +482,10 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 	// Return successful registration response
 	return domain.UserRegisterClientResponse{
 		Message: "Account created successfully.",
-	}, nil
+	}, domain.ErrorRes{}
 }
 
-func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivationClientRequest) (domain.UserActivationClientResponse, domain.ResponseError) {
+func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivationClientRequest) (domain.UserActivationClientResponse, domain.ErrorRes) {
 	// Fetch the activation token data by token
 	tokenData, err := u.getUserActivationByToken(ctx, req.Token)
 	if err != nil {
@@ -518,7 +496,7 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 			"error", err,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserActivationClientResponse{}, errorRes{
+		return domain.UserActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Invalid or expired token",
 			Err:     err,
@@ -531,7 +509,7 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 			"token", req.Token,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserActivationClientResponse{}, errorRes{
+		return domain.UserActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Invalid or expired token",
 			Err:     err,
@@ -545,7 +523,7 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 			"token", req.Token,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserActivationClientResponse{}, errorRes{
+		return domain.UserActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Activation link already used",
 			Err:     nil,
@@ -559,7 +537,7 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 			"token", req.Token,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserActivationClientResponse{}, errorRes{
+		return domain.UserActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Activation link expired",
 			Err:     nil,
@@ -575,7 +553,7 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserActivationClientResponse{}, errorRes{
+		return domain.UserActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -599,7 +577,7 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 			"userId", userData.Id,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserActivationClientResponse{}, errorRes{
+		return domain.UserActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: message,
 			Err:     nil,
@@ -615,7 +593,7 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserActivationClientResponse{}, errorRes{
+		return domain.UserActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -630,7 +608,7 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserActivationClientResponse{}, errorRes{
+		return domain.UserActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -646,11 +624,11 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 
 	return domain.UserActivationClientResponse{
 		Message: "Account has been activated successfully",
-	}, nil
+	}, domain.ErrorRes{}
 }
 
 // ResendActivation resends the activation email to the user.
-func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResendActivationClientRequest) (domain.UserResendActivationClientResponse, domain.ResponseError) {
+func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResendActivationClientRequest) (domain.UserResendActivationClientResponse, domain.ErrorRes) {
 	// Fetch user data by username
 	userData, err := u.getUserByUsername(ctx, req.Username)
 	if err != nil {
@@ -660,7 +638,7 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserResendActivationClientResponse{}, errorRes{
+		return domain.UserResendActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -673,7 +651,7 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 			"username", req.Username,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserResendActivationClientResponse{}, errorRes{
+		return domain.UserResendActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Username is incorrect",
 			Err:     nil,
@@ -697,7 +675,7 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 			"userId", userData.Id,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserResendActivationClientResponse{}, errorRes{
+		return domain.UserResendActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: message,
 			Err:     nil,
@@ -713,7 +691,7 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserResendActivationClientResponse{}, errorRes{
+		return domain.UserResendActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -728,7 +706,7 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 			"token", token,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserResendActivationClientResponse{}, errorRes{
+		return domain.UserResendActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     errors.New("empty token or token ID"),
@@ -743,7 +721,7 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserResendActivationClientResponse{}, errorRes{
+		return domain.UserResendActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -759,7 +737,7 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserResendActivationClientResponse{}, errorRes{
+		return domain.UserResendActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -774,12 +752,12 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 
 	return domain.UserResendActivationClientResponse{
 		Message: "Please check your email to activate your account",
-	}, nil
+	}, domain.ErrorRes{}
 }
 
 // ForgotPassword handles the request for a user to reset their password.
 // sends a password reset email, and returns the appropriate response.
-func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotPasswordClientRequest) (domain.UserForgotPasswordClientResponse, domain.ResponseError) {
+func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotPasswordClientRequest) (domain.UserForgotPasswordClientResponse, domain.ErrorRes) {
 	// Fetch user by username
 	userData, err := u.getUserByUsername(ctx, req.Username)
 	if err != nil {
@@ -790,7 +768,7 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 			"error", err,
 			"code", statusCode,
 		)
-		return domain.UserForgotPasswordClientResponse{}, errorRes{
+		return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
 			Code:    statusCode,
 			Message: "Internal server error",
 			Err:     err,
@@ -804,7 +782,7 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 			"username", req.Username,
 			"code", statusCode,
 		)
-		return domain.UserForgotPasswordClientResponse{}, errorRes{
+		return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
 			Code:    statusCode,
 			Message: "Username is incorrect",
 			Err:     nil,
@@ -829,7 +807,7 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 			"userId", userData.Id,
 			"code", statusCode,
 		)
-		return domain.UserForgotPasswordClientResponse{}, errorRes{
+		return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
 			Code:    statusCode,
 			Message: message,
 			Err:     nil,
@@ -846,7 +824,7 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 			"error", err,
 			"code", statusCode,
 		)
-		return domain.UserForgotPasswordClientResponse{}, errorRes{
+		return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
 			Code:    statusCode,
 			Message: "Internal server error",
 			Err:     err,
@@ -862,7 +840,7 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 			"token", token,
 			"code", statusCode,
 		)
-		return domain.UserForgotPasswordClientResponse{}, errorRes{
+		return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
 			Code:    statusCode,
 			Message: "Internal server error",
 			Err:     errors.New("reset token is empty or invalid"),
@@ -878,7 +856,7 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 			"error", err,
 			"code", statusCode,
 		)
-		return domain.UserForgotPasswordClientResponse{}, errorRes{
+		return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
 			Code:    statusCode,
 			Message: "Internal server error",
 			Err:     err,
@@ -894,7 +872,7 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserForgotPasswordClientResponse{}, errorRes{
+		return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -909,12 +887,12 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 
 	return domain.UserForgotPasswordClientResponse{
 		Message: "Reset link sent to your email",
-	}, nil
+	}, domain.ErrorRes{}
 }
 
 // ResetPassword handles the password reset process after the user clicks the reset link.
 // updates the user's password, and returns the appropriate response.
-func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPasswordClientRequest) (domain.UserResetPasswordClientResponse, domain.ResponseError) {
+func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPasswordClientRequest) (domain.UserResetPasswordClientResponse, domain.ErrorRes) {
 	//  Fetch token
 	tokenData, err := u.getPasswordResetByToken(ctx, req.Token)
 	if err != nil {
@@ -924,7 +902,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserResetPasswordClientResponse{}, errorRes{
+		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "internal server error",
 			Err:     err,
@@ -938,7 +916,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 			"token", req.Token,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserResetPasswordClientResponse{}, errorRes{
+		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Invalid reset link",
 		}
@@ -951,7 +929,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 			"tokenId", tokenData.Id,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserResetPasswordClientResponse{}, errorRes{
+		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Link already used",
 		}
@@ -964,7 +942,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 			"tokenId", tokenData.Id,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserResetPasswordClientResponse{}, errorRes{
+		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Link expired",
 		}
@@ -979,7 +957,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserResetPasswordClientResponse{}, errorRes{
+		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -993,7 +971,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 			"userId", userData.Id,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserResetPasswordClientResponse{}, errorRes{
+		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Account is not active",
 		}
@@ -1008,7 +986,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserResetPasswordClientResponse{}, errorRes{
+		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -1024,7 +1002,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserResetPasswordClientResponse{}, errorRes{
+		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -1040,7 +1018,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserResetPasswordClientResponse{}, errorRes{
+		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -1057,11 +1035,11 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 	// Return success response
 	return domain.UserResetPasswordClientResponse{
 		Message: "Password has been reset successfully",
-	}, nil
+	}, domain.ErrorRes{}
 }
 
 // RefreshToken validates the refresh token, ensuring it's not expired, not revoked, and that the associated user account is active.
-func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTokenClientRequest) (domain.UserRefreshTokenClientResponse, domain.ResponseError) {
+func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTokenClientRequest) (domain.UserRefreshTokenClientResponse, domain.ErrorRes) {
 	// Fetch refresh token data
 	refreshData, err := u.getRefreshTokenData(ctx, req.RefreshToken)
 	if err != nil {
@@ -1071,7 +1049,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserRefreshTokenClientResponse{}, errorRes{
+		return domain.UserRefreshTokenClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "internal server error",
 			Err:     err,
@@ -1085,7 +1063,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 			"token", req.RefreshToken,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserRefreshTokenClientResponse{}, errorRes{
+		return domain.UserRefreshTokenClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Token is revoked or incorrect",
 		}
@@ -1098,7 +1076,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 			"tokenId", refreshData.Id,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserRefreshTokenClientResponse{}, errorRes{
+		return domain.UserRefreshTokenClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Token is revoked or incorrect",
 		}
@@ -1111,7 +1089,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 			"tokenId", refreshData.Id,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserRefreshTokenClientResponse{}, errorRes{
+		return domain.UserRefreshTokenClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Token is incorrect or expired",
 		}
@@ -1126,7 +1104,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserRefreshTokenClientResponse{}, errorRes{
+		return domain.UserRefreshTokenClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -1140,7 +1118,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 			"userId", refreshData.UserId,
 			"code", http.StatusBadRequest,
 		)
-		return domain.UserRefreshTokenClientResponse{}, errorRes{
+		return domain.UserRefreshTokenClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
 			Message: "Account is not active",
 		}
@@ -1155,7 +1133,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return domain.UserRefreshTokenClientResponse{}, errorRes{
+		return domain.UserRefreshTokenClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
 			Err:     err,
@@ -1176,7 +1154,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 				"error", err,
 				"code", http.StatusInternalServerError,
 			)
-			return domain.UserRefreshTokenClientResponse{}, errorRes{
+			return domain.UserRefreshTokenClientResponse{}, domain.ErrorRes{
 				Code:    http.StatusInternalServerError,
 				Message: "Internal server error",
 				Err:     err,
@@ -1192,7 +1170,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 				"error", err,
 				"code", http.StatusInternalServerError,
 			)
-			return domain.UserRefreshTokenClientResponse{}, errorRes{
+			return domain.UserRefreshTokenClientResponse{}, domain.ErrorRes{
 				Code:    http.StatusInternalServerError,
 				Message: "Internal server error",
 				Err:     err,
@@ -1206,7 +1184,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 				"error", err,
 				"code", http.StatusInternalServerError,
 			)
-			return domain.UserRefreshTokenClientResponse{}, errorRes{
+			return domain.UserRefreshTokenClientResponse{}, domain.ErrorRes{
 				Code:    http.StatusInternalServerError,
 				Message: "Internal server error",
 				Err:     err,
@@ -1228,7 +1206,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 		AccessToken:      accessToken,
 		RefreshTokenType: refreshTokenType,
 		RefreshToken:     refreshToken,
-	}, nil
+	}, domain.ErrorRes{}
 }
 
 // createActivationToken generates a new activation token for the user and ensures its uniqueness by checking the database.

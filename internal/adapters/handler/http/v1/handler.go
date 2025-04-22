@@ -3,7 +3,6 @@ package v1
 import (
 	"encoding/json"
 	"net/http"
-	"userVault/internal/domain"
 	"userVault/internal/port"
 )
 
@@ -11,13 +10,13 @@ import (
 // It contains usecases (services), a logger for logging messages,
 // and a token engine for JWT-related functionality.
 type handler struct {
-	usecases       domain.List // List of usecases (services) to handle business logic
-	logger         port.Logger // Logger instance for logging messages
-	tokenEngineIns port.Token  // Token engine for handling JWT tokens
+	usecases       port.SvrList // List of usecases (services) to handle business logic
+	logger         port.Logger  // Logger instance for logging messages
+	tokenEngineIns port.Token   // Token engine for handling JWT tokens
 }
 
 // New creates and returns a new handler instance with the provided logger, token engine, and service list.
-func New(loggerIns port.Logger, tokenEngineIns port.Token, svcList domain.List) port.Handler {
+func New(loggerIns port.Logger, tokenEngineIns port.Token, svcList port.SvrList) port.Handler {
 	return &handler{
 		usecases:       svcList,        // List of services that will handle specific business logic
 		logger:         loggerIns,      // Logger for capturing logs
