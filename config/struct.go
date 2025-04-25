@@ -27,7 +27,6 @@ type app struct {
 	} `mapstructure:"token"`
 	Api   api   `mapstructure:"api"`
 	User  user  `mapstructure:"user"`
-	Email email `mapstructure:"email"`
 	Kafka kafka `mapstructure:"kafka"`
 }
 
@@ -62,10 +61,12 @@ type user struct {
 	LoginAttemptSessionPeriod int `mapstructure:"loginAttemptSessionPeriod"`
 	PasswordHashCost          int `mapstructure:"passwordHashCost"`
 	Activation                struct {
-		LinkExpiry int `mapstructure:"linkExpiry"`
+		Link       string `mapstructure:"link"`
+		LinkExpiry int    `mapstructure:"linkExpiry"`
 	} `mapstructure:"activation"`
 	PasswordReset struct {
-		LinkExpiry int `mapstructure:"linkExpiry"`
+		Link       string `mapstructure:"link"`
+		LinkExpiry int    `mapstructure:"linkExpiry"`
 	} `mapstructure:"passwordReset"`
 	RefreshToken struct {
 		Enabled  bool `mapstructure:"enabled"`
@@ -82,17 +83,6 @@ type tokenJWT struct {
 	HmacKey           string `mapstructure:"hmacKey"`
 	RsaPrivateKeyPath string `mapstructure:"rsaPrivateKeyPath"`
 	RsaPublicKeyPath  string `mapstructure:"rsaPublicKeyPath"`
-}
-
-type email struct {
-	Activation struct {
-		Link         string `mapstructure:"link"`
-		TemplatePath string `mapstructure:"templatePath"`
-	} `mapstructure:"activation"`
-	PasswordReset struct {
-		Link         string `mapstructure:"link"`
-		TemplatePath string `mapstructure:"templatePath"`
-	} `mapstructure:"passwordReset"`
 }
 
 type kafka struct {

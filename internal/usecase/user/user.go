@@ -21,18 +21,16 @@ type userusecase struct {
 	mysql    port.RepositoryMySQL
 	conf     config.User
 	token    port.Token
-	emailer  port.Emailer
 	messager port.Messager
 }
 
 // New initializes a new user service with required dependencies and returns it.
-func New(loggerIns port.Logger, tokenIns port.Token, emailIns port.Emailer, messageIns port.Messager, mysqlIns port.RepositoryMySQL, appName string, userConfIns config.User) port.UserSvr {
+func New(loggerIns port.Logger, tokenIns port.Token, messageIns port.Messager, mysqlIns port.RepositoryMySQL, appName string, userConfIns config.User) port.UserSvr {
 	return &userusecase{
 		logger:   loggerIns,
 		mysql:    mysqlIns,
 		conf:     userConfIns,
 		token:    tokenIns,
-		emailer:  emailIns,
 		messager: messageIns,
 	}
 }
@@ -439,23 +437,9 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 			}
 		}
 
-		emailContent, subject, err := u.emailer.PrepareActivationEmail(userData.Name, activationToken)
-		if err != nil {
-			// Log error and return response indicating failure to send the email
-			u.logger.Errorw(ctx, "failed to prepare the email",
-				"event", "register_failed",
-				"userId", userData.Id,
-				"error", err,
-				"code", http.StatusInternalServerError,
-			)
-			return domain.UserRegisterClientResponse{}, domain.ErrorRes{
-				Code:    http.StatusInternalServerError,
-				Message: "Internal server error",
-				Err:     err,
-			}
-		}
+		activationLink := u.getActivationLink(activationToken)
+		err = u.messager.PublishActivationEmail(userData.Username, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, activationLink)
 
-		err = u.messager.PublishActivationEmail(userData.Username, subject, emailContent)
 		if err != nil {
 			// Log error and return response indicating failure to send the email
 			u.logger.Errorw(ctx, "failed to publish the email",
@@ -713,22 +697,9 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 		}
 	}
 
-	emailContent, subject, err := u.emailer.PrepareActivationEmail(userData.Name, token)
-	if err != nil {
-		u.logger.Errorw(ctx, "failed to prepare the email",
-			"event", "user_resend_activation_failed",
-			"userId", userData.Id,
-			"error", err,
-			"code", http.StatusInternalServerError,
-		)
-		return domain.UserResendActivationClientResponse{}, domain.ErrorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Internal server error",
-			Err:     err,
-		}
-	}
+	activationLink := u.getActivationLink(token)
+	err = u.messager.PublishActivationEmail(userData.Username, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, activationLink)
 
-	err = u.messager.PublishActivationEmail(userData.Username, subject, emailContent)
 	if err != nil {
 		// Log error and return response indicating failure to send the email
 		u.logger.Errorw(ctx, "failed to publish the email",
@@ -847,7 +818,8 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 		}
 	}
 
-	emailContent, subject, err := u.emailer.PreparePasswordResetEmail(userData.Name, token)
+	passwordResetLink := u.getPasswordResetLink(token)
+	err = u.messager.PublishPasswordResetEmail(userData.Username, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, passwordResetLink)
 	if err != nil {
 		statusCode := http.StatusInternalServerError
 		u.logger.Errorw(ctx, "failed to prepare the email",
