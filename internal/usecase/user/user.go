@@ -821,22 +821,6 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 	passwordResetLink := u.getPasswordResetLink(token)
 	err = u.messager.PublishPasswordResetEmail(userData.Username, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, passwordResetLink)
 	if err != nil {
-		statusCode := http.StatusInternalServerError
-		u.logger.Errorw(ctx, "failed to prepare the email",
-			"event", "user_forgot_password_failed",
-			"userId", userData.Id,
-			"error", err,
-			"code", statusCode,
-		)
-		return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
-			Code:    statusCode,
-			Message: "Internal server error",
-			Err:     err,
-		}
-	}
-
-	err = u.messager.PublishPasswordResetEmail(userData.Username, subject, emailContent)
-	if err != nil {
 		// Log error and return response indicating failure to send the email
 		u.logger.Errorw(ctx, "failed to publish the email",
 			"event", "user_forgot_password_failed",
@@ -850,6 +834,7 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 			Err:     err,
 		}
 	}
+
 	// Success
 	u.logger.Infow(ctx, "password reset link sent successfully",
 		"event", "user_forgot_password_success",
