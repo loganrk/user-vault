@@ -17,14 +17,6 @@ middleware:
     - "bLiaBYhfYGr1ZXp6VfIEeaipGXWFAqxtw7LgaYaDcNMmHyz73BBnxMgK78YcfpUp"
     - "qIAJeZ7qzrUZ2CjsR2vvmhfnDOz8hMnKH2BwlpvCHkmc7TP0poxeqrCmU8ZV7q9q"  # Keys used for verifying internal middleware calls
 
-email:
-  activation:
-    templatePath: "/path/to/activation_email_template.html"  # Template for activation email
-    link: "https://example.com/activate?token={{token}}"  # Activation link with token macro
-  passwordReset:
-    templatePath: "/path/to/password_reset_email_template.html"  # Template for reset email
-    link: "https://example.com/password-reset?token={{token}}"  # Reset link with token macro
-
 kafka:
   brokers:
     - "g7kd8v84u4d..." # Encrypted kafka host
@@ -84,8 +76,10 @@ user:
   loginAttemptSessionPeriod: 60  # Time period (in seconds) to count failed attempts
   passwordHashCost: 12  # bcrypt cost factor for password hashing
   activation:
+    link: "https://example.com/activate?token={{token}}"  # Activation link with token macro
     linkExpiry: 1800  # Expiry time for activation link in seconds (30 min)
   passwordReset:
+    link: "https://example.com/password-reset?token={{token}}"  # Reset link with token macro
     linkExpiry: 1800  # Expiry time for reset link in seconds (30 min)
   refreshToken:
     enabled: true  # Whether refresh token system is enabled

@@ -2,7 +2,9 @@ package user
 
 import (
 	"context"
+	"strings"
 	"time"
+	"userVault/internal/constant"
 	"userVault/internal/domain"
 )
 
@@ -176,4 +178,20 @@ func (u *userusecase) getMaxLoginAttempt() int {
 // getPasswordResetLinkExpiry calculates and returns the expiry time for the password reset link based on configuration.
 func (u *userusecase) getPasswordResetLinkExpiry() time.Time {
 	return time.Now().Add(time.Duration(u.conf.GetPasswordResetLinkExpiry()) * time.Second)
+}
+
+// activationLinkMacroReplacement replaces macros in the activation link with the provided token data.
+func (u *userusecase) getActivationLink(token string) string {
+	s := strings.NewReplacer(
+		constant.USER_ACTIVATION_TOKEN_MACRO, token)
+
+	return s.Replace(u.conf.GetActivationLink())
+}
+
+// passwordResetLinkMacroReplacement replaces macros in the password reset link with the provided token.
+func (u *userusecase) getPasswordResetLink(token string) string {
+	s := strings.NewReplacer(
+		constant.USER_PASSWORD_RESET_TOKEN_MACRO, token)
+
+	return s.Replace(u.conf.GetPasswordResetLink())
 }
