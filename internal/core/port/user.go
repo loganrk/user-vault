@@ -2,7 +2,7 @@ package port
 
 import (
 	"context"
-	"userVault/internal/domain"
+	"user-vault/internal/core/domain"
 )
 
 type SvrList struct {

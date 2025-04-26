@@ -2,9 +2,9 @@ package mysql
 
 import (
 	"context"
-	"userVault/internal/constant"
-	"userVault/internal/domain"
-	"userVault/internal/port"
+	"user-vault/internal/constant"
+	"user-vault/internal/core/domain"
+	"user-vault/internal/core/port"
 
 	gormMysql "gorm.io/driver/mysql"
 

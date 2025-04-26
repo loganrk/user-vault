@@ -5,11 +5,11 @@ import (
 	"errors"
 	"net/http"
 	"time"
-	"userVault/config"
-	"userVault/internal/constant"
-	"userVault/internal/domain"
-	"userVault/internal/port"
-	"userVault/internal/utils"
+	"user-vault/config"
+	"user-vault/internal/constant"
+	"user-vault/internal/core/domain"
+	"user-vault/internal/core/port"
+	"user-vault/internal/utils"
 
 	"golang.org/x/crypto/bcrypt"
 )

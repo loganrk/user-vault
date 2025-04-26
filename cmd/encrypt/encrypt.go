@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	cipherAes "userVault/internal/adapters/cipher/aes"
+	cipherAes "user-vault/internal/adapters/cipher/aes"
 )
 
 func main() {

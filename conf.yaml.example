@@ -1,6 +1,6 @@
 application:
   port: 8000  # Port the application will run on
-  name: "userVault"  # Name of the application
+  name: "user-vault"  # Name of the application
 
 logger:
   level: "debug"  # Options: debug, info, warn, error
@@ -23,7 +23,7 @@ kafka:
   topics:
     activationEmail: "email_activation"
     passwordResetEmail: "email_password_reset"
-  clientID: "userVault"
+  clientID: "user-vault"
   version: "2.6.0"
   retryMax: 5
 

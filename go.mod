@@ -1,4 +1,4 @@
-module userVault
+module user-vault
 
 go 1.20
 
