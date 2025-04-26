@@ -82,7 +82,6 @@ go run main.go
 ├── internal/
 │   ├── adapters/                  # Infrastructure layer (driven adapters)
 │   │   ├── cipher/aes/            # AES encryption helpers
-│   │   ├── email/                 # Email template and content builder
 │   │   ├── handler/http/v1/       # HTTP API handlers (v1)
 │   │   ├── logger/zapLogger/      # Zap-based logging adapter
 │   │   ├── message/kafka/         # Kafka producer for email events

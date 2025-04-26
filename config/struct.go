@@ -88,8 +88,8 @@ type tokenJWT struct {
 type kafka struct {
 	Brokers []string `mapstructure:"brokers"`
 	Topics  struct {
-		ActivationEmail    string `mapstructure:"activationEmail"`
-		PasswordResetEmail string `mapstructure:"passwordResetEmail"`
+		UserActivation    string `mapstructure:"userActivation"`
+		UserPasswordReset string `mapstructure:"userPasswordReset"`
 	} `mapstructure:"topics"`
 	ClientID string `mapstructure:"clientID"`
 	Version  string `mapstructure:"version"`

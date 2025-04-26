@@ -10,11 +10,11 @@ type Kafka interface {
 }
 
 func (k kafka) GetActivationTopic() string {
-	return k.Topics.ActivationEmail
+	return k.Topics.UserActivation
 }
 
 func (k kafka) GetPasswordResetTopic() string {
-	return k.Topics.PasswordResetEmail
+	return k.Topics.UserActivation
 }
 
 func (k kafka) GetClientID() string {

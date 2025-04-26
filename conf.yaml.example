@@ -21,8 +21,8 @@ kafka:
   brokers:
     - "g7kd8v84u4d..." # Encrypted kafka host
   topics:
-    activationEmail: "email_activation"
-    passwordResetEmail: "email_password_reset"
+    userActivation: "user_activation"
+    userPasswordReset: "user_password_reset"
   clientID: "user-vault"
   version: "2.6.0"
   retryMax: 5
