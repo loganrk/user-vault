@@ -2,7 +2,8 @@ package port
 
 import (
 	"context"
-	"user-vault/internal/core/domain"
+
+	"github.com/loganrk/user-vault/internal/core/domain"
 )
 
 type SvrList struct {

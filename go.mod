@@ -1,4 +1,4 @@
-module user-vault
+module github.com/loganrk/user-vault
 
 go 1.20
 
