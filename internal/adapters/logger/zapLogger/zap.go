@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"userVault/internal/core/port"
+	"user-vault/internal/core/port"
 
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"

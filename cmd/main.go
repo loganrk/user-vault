@@ -7,18 +7,18 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"userVault/config"
-	"userVault/internal/core/port"
+	"user-vault/config"
+	"user-vault/internal/core/port"
 
-	aesCipher "userVault/internal/adapters/cipher/aes"
-	httpHandler "userVault/internal/adapters/handler/http/v1"
-	zapLogger "userVault/internal/adapters/logger/zapLogger"
-	kafkaMessage "userVault/internal/adapters/message/kafka"
-	authMiddleware "userVault/internal/adapters/middleware/auth"
-	mysqlRepo "userVault/internal/adapters/repository/mysql"
-	ginRouter "userVault/internal/adapters/router/gin"
-	jwtToken "userVault/internal/adapters/token/jwt"
-	userUsecase "userVault/internal/core/usecase/user"
+	aesCipher "user-vault/internal/adapters/cipher/aes"
+	httpHandler "user-vault/internal/adapters/handler/http/v1"
+	zapLogger "user-vault/internal/adapters/logger/zapLogger"
+	kafkaMessage "user-vault/internal/adapters/message/kafka"
+	authMiddleware "user-vault/internal/adapters/middleware/auth"
+	mysqlRepo "user-vault/internal/adapters/repository/mysql"
+	ginRouter "user-vault/internal/adapters/router/gin"
+	jwtToken "user-vault/internal/adapters/token/jwt"
+	userUsecase "user-vault/internal/core/usecase/user"
 )
 
 func main() {

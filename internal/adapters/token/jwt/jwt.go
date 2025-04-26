@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 	"time"
-	"userVault/internal/core/port"
-	"userVault/internal/utils"
+	"user-vault/internal/core/port"
+	"user-vault/internal/utils"
 
 	"github.com/golang-jwt/jwt/v5"
 )

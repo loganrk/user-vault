@@ -3,7 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"net/http"
-	"userVault/internal/core/port"
+	"user-vault/internal/core/port"
 )
 
 // handler struct represents the handler for handling HTTP requests.

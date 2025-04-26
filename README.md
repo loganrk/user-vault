@@ -1,15 +1,15 @@
 # User Vault - Secure User Authentication System
 
-UserVault is a Go-based microservice for secure and scalable user authentication. It supports full account lifecycle operations like registration, login, logout, password reset, token validation, and account activation, with a clean hexagonal architecture.
+User Vault is a Go-based microservice for secure and scalable user authentication. It supports full account lifecycle operations like registration, login, logout, password reset, token validation, and account activation, with a clean hexagonal architecture.
 
 The project is structured using a clean **Hexagonal Architecture** to ensure maintainability and testability.
 
-## 📘 [Project Wiki](https://github.com/loganrk/userVault/wiki)
+## 📘 [Project Wiki](https://github.com/loganrk/user-vault/wiki)
 
-Detailed documentation is available in the [Wiki](https://github.com/loganrk/userVault/wiki), including setup guides, API reference, and architectural overviews.
+Detailed documentation is available in the [Wiki](https://github.com/loganrk/user-vault/wiki), including setup guides, API reference, and architectural overviews.
 
 ## Table of Contents
-- [Wiki](https://github.com/loganrk/userVault/wiki)
+- [Wiki](https://github.com/loganrk/user-vault/wiki)
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -34,8 +34,8 @@ Detailed documentation is available in the [Wiki](https://github.com/loganrk/use
 1. Clone the repository:
 
     ```sh
-    git clone https://github.com/loganrk/userVault
-    cd userVault
+    git clone https://github.com/loganrk/user-vault
+    cd user-vault
     ```
 
 2. Initialize dependencies:

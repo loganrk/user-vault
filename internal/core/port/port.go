@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 	"time"
-	"userVault/config"
-	"userVault/internal/core/domain"
+	"user-vault/config"
+	"user-vault/internal/core/domain"
 )
 
 // Handler defines the interface for user authentication and account-related HTTP handlers.

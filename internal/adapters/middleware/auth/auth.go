@@ -3,8 +3,8 @@ package auth
 import (
 	"net/http"
 	"time"
-	"userVault/internal/core/port"
-	"userVault/internal/utils"
+	"user-vault/internal/core/port"
+	"user-vault/internal/utils"
 
 	"golang.org/x/exp/slices"
 )

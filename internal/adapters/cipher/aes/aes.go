@@ -7,7 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
-	"userVault/internal/core/port"
+	"user-vault/internal/core/port"
 )
 
 type aesCipher struct {

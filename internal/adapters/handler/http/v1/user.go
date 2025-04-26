@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"userVault/internal/core/domain"
-	"userVault/internal/utils"
+	"user-vault/internal/core/domain"
+	"user-vault/internal/utils"
 
 	"net/http"
 
