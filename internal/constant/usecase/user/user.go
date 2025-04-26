@@ -7,8 +7,8 @@ import (
 	"time"
 	"userVault/config"
 	"userVault/internal/constant"
-	"userVault/internal/domain"
-	"userVault/internal/port"
+	"userVault/internal/core/domain"
+	"userVault/internal/core/port"
 	"userVault/internal/utils"
 
 	"golang.org/x/crypto/bcrypt"

@@ -90,9 +90,10 @@ go run main.go
 │   │   ├── repository/mysql/      # MySQL persistence adapter
 │   │   ├── router/gin/            # Gin router setup
 │   │   └── token/jwt/             # JWT token generation and validation
-│   ├── domain/                    # Core domain models and logic
-│   ├── port/                      # Interface ports for adapters/usecases
-│   ├── usecase/                   # Business logic and services
+│   ├── core/      
+│   │    ├── domain/               # Core domain models and logic
+│   │    ├── port/                 # Interface ports for adapters/usecases
+│   │    └── usecase/              # Business logic and services
 │   └── utils/                     # Utility helpers (crypto, random, etc.)
 ├── conf.yml                       # YAML-based application configuration
 └── README.md                      # Project documentation

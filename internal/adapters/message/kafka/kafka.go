@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"userVault/config"
-	"userVault/internal/port"
+	"userVault/internal/core/port"
 
 	"github.com/IBM/sarama"
 )

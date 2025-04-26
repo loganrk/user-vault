@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 	"userVault/internal/constant"
-	"userVault/internal/domain"
+	"userVault/internal/core/domain"
 )
 
 // getUserByUsername retrieves the user data based on the provided username.

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"userVault/internal/domain"
+	"userVault/internal/core/domain"
 	"userVault/internal/utils"
 
 	"net/http"

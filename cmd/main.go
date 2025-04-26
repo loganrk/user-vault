@@ -8,7 +8,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"userVault/config"
-	"userVault/internal/port"
+	"userVault/internal/core/port"
 
 	aesCipher "userVault/internal/adapters/cipher/aes"
 	httpHandler "userVault/internal/adapters/handler/http/v1"
@@ -18,7 +18,7 @@ import (
 	mysqlRepo "userVault/internal/adapters/repository/mysql"
 	ginRouter "userVault/internal/adapters/router/gin"
 	jwtToken "userVault/internal/adapters/token/jwt"
-	userUsecase "userVault/internal/usecase/user"
+	userUsecase "userVault/internal/core/usecase/user"
 )
 
 func main() {
