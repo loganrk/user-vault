@@ -3,8 +3,9 @@ package gin
 import (
 	"net/http"
 	"time"
-	"user-vault/config"
-	"user-vault/internal/core/port"
+
+	"github.com/loganrk/user-vault/config"
+	"github.com/loganrk/user-vault/internal/core/port"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"

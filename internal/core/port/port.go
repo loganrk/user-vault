@@ -4,8 +4,9 @@ import (
 	"context"
 	"net/http"
 	"time"
-	"user-vault/config"
-	"user-vault/internal/core/domain"
+
+	"github.com/loganrk/user-vault/config"
+	"github.com/loganrk/user-vault/internal/core/domain"
 )
 
 // Handler defines the interface for user authentication and account-related HTTP handlers.

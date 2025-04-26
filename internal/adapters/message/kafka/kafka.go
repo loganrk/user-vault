@@ -3,8 +3,9 @@ package kafka
 import (
 	"encoding/json"
 	"fmt"
-	"user-vault/config"
-	"user-vault/internal/core/port"
+
+	"github.com/loganrk/user-vault/config"
+	"github.com/loganrk/user-vault/internal/core/port"
 
 	"github.com/IBM/sarama"
 )

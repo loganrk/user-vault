@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"user-vault/internal/core/domain"
-	"user-vault/internal/utils"
+	"github.com/loganrk/user-vault/internal/core/domain"
+	"github.com/loganrk/user-vault/internal/utils"
 
 	"net/http"
 
