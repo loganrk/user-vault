@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/loganrk/user-vault/config"
 	"github.com/loganrk/user-vault/internal/core/port"
 
 	"github.com/IBM/sarama"
@@ -19,33 +18,35 @@ type kafkaMessager struct {
 
 // New initializes a new Kafka producer with client ID, version, and retry configuration.
 // It returns a Messager adapter for publishing email-related events.
-func New(appName string, broker []string, conf config.Kafka) (port.Messager, error) {
+func New(appName string, brokers []string, activationTopic, passwordResetTopic, clientID, version string, retryMax int) (port.Messager, error) {
 	kConfig := sarama.NewConfig()
 
 	// Set client ID for Kafka tracing and logging
-	kConfig.ClientID = conf.GetClientID()
+	kConfig.ClientID = clientID
 
 	// Parse and apply Kafka protocol version
-	version, err := sarama.ParseKafkaVersion(conf.GetVersion())
+	parsedVersion, err := sarama.ParseKafkaVersion(version)
 	if err != nil {
 		return nil, fmt.Errorf("invalid Kafka version: %w", err)
 	}
-	kConfig.Version = version
+	kConfig.Version = parsedVersion
 
 	// Enable delivery reporting and retry settings
 	kConfig.Producer.Return.Successes = true
-	kConfig.Producer.Retry.Max = conf.GetRetryMax()
+	kConfig.Producer.Retry.Max = retryMax
 
-	producer, err := sarama.NewSyncProducer(broker, kConfig)
+	// Create Kafka producer
+	producer, err := sarama.NewSyncProducer(brokers, kConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Kafka producer: %w", err)
 	}
 
+	// Return the Messager instance
 	return &kafkaMessager{
 		appName:            appName,
 		producer:           producer,
-		topicActivation:    conf.GetActivationTopic(),
-		topicPasswordReset: conf.GetPasswordResetTopic(),
+		topicActivation:    activationTopic,
+		topicPasswordReset: passwordResetTopic,
 	}, nil
 }
 
