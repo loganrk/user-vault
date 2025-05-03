@@ -12,6 +12,7 @@ import (
 // Handler defines the interface for user authentication and account-related HTTP handlers.
 type Handler interface {
 	UserLogin(w http.ResponseWriter, r *http.Request)            // Handles user login requests
+	UserOAuthLogin(w http.ResponseWriter, r *http.Request)       // Handles user login requests with oAuth
 	UserLogout(w http.ResponseWriter, r *http.Request)           // Handles user logout requests
 	UserActivation(w http.ResponseWriter, r *http.Request)       // Handles account activation using a token
 	UserPasswordReset(w http.ResponseWriter, r *http.Request)    // Handles user password reset via token
@@ -25,27 +26,21 @@ type Handler interface {
 type RepositoryMySQL interface {
 	AutoMigrate() // Performs automatic database schema migration
 
-	GetUserByUserID(ctx context.Context, id int) (domain.User, error)                                        // Retrieves a user by user ID
-	GetUserByUsername(ctx context.Context, username string) (domain.User, error)                             // Retrieves a user by username
+	GetUserByUserID(ctx context.Context, id int) (domain.User, error)            // Retrieves a user by user ID
+	GetUserByUsername(ctx context.Context, username string) (domain.User, error) // Retrieves a user by username
+	GetUserByEmail(ctx context.Context, email string) (domain.User, error)       // Retrieves a user by email
+
 	GetUserDetailsWithPasswordByUserID(ctx context.Context, id int) (domain.User, error)                     // Retrieves a user by user ID
 	GetUserLoginFailedAttemptCount(ctx context.Context, userId int, sessionStartTime time.Time) (int, error) // Gets the count of failed login attempts since the session start time
 	CreateUserLoginAttempt(ctx context.Context, userLoginAttempt domain.UserLoginAttempt) (int, error)       // Creates a new user login attempt record
 	CreateUser(ctx context.Context, userData domain.User) (int, error)                                       // Creates a new user
+	UpdateUserStatus(ctx context.Context, userid int, status int) error                                      // Updates a user’s account status (e.g., active/inactive)
+	UpdatePassword(ctx context.Context, userid int, password string) error                                   // Updates the user’s password
 
-	GetActivationByToken(ctx context.Context, token string) (domain.UserActivationToken, error) // Retrieves activation data by token
-	CreateActivation(ctx context.Context, tokenData domain.UserActivationToken) (int, error)    // Creates a new activation token record
-	UpdatedActivationStatus(ctx context.Context, tokenId int, status int) error                 // Updates the status of an activation token
-	UpdateUserStatus(ctx context.Context, userid int, status int) error                         // Updates a user’s account status (e.g., active/inactive)
-
-	CreatePasswordReset(ctx context.Context, tokenData domain.UserPasswordReset) (int, error)         // Creates a password reset token
-	GetPasswordResetByToken(ctx context.Context, token string) (domain.UserPasswordReset, error)      // Retrieves a password reset record using token
-	UpdatePasswordResetStatus(ctx context.Context, id int, status int) error                          // Updates the status of a password reset token
-	GetActivePasswordResetByUserID(ctx context.Context, userid int) (domain.UserPasswordReset, error) // Retrieves the active password reset request for a user
-	UpdatePassword(ctx context.Context, userid int, password string) error                            // Updates the user’s password
-
-	CreateRefreshToken(ctx context.Context, refreshTokenData domain.UserRefreshToken) (int, error) // Stores a refresh token in the database
-	RevokeRefreshToken(ctx context.Context, userid int, refreshToken string) error                 // Revokes a user's refresh token
-	GetRefreshTokenData(ctx context.Context, refreshToken string) (domain.UserRefreshToken, error) // Retrieves refresh token data
+	CreateToken(ctx context.Context, tokenData domain.UserTokens) (int, error)                 // Creates a new token record
+	RevokeToken(ctx context.Context, id int) error                                             // Revokes a user's token
+	GetUserToken(ctx context.Context, tokenType int8, token string) (domain.UserTokens, error) // Retrieves token data
+	GetUserLastTokenByUserId(ctx context.Context, tokenType int8, userId int) (domain.UserTokens, error)
 }
 
 // Router defines the interface for setting up and starting HTTP routes and middleware.
@@ -98,6 +93,9 @@ type Logger interface {
 }
 
 type Messager interface {
-	PublishActivationEmail(toAddress, subject, name, link string) error
-	PublishPasswordResetEmail(toAddress, subject, name, link string) error
+	PublishActivationEmail(toAddress, subject, name, token string) error
+	PublishPasswordResetEmail(toAddress, subject, name, token string) error
+}
+type OAuthProvider interface {
+	VerifyToken(ctx context.Context, provider string, token string) (string, string, error)
 }

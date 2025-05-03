@@ -16,6 +16,7 @@ type UserForgotPasswordClientRequest struct {
 }
 
 type UserResetPasswordClientRequest struct {
+	Username string `json:"username" schema:"username" validate:"required,email"`
 	Token    string `json:"token" schema:"token" validate:"required"`
 	Password string `json:"password" schema:"password" validate:"required,password"`
 }
@@ -29,9 +30,15 @@ type UserLogoutClientRequest struct {
 }
 
 type UserActivationClientRequest struct {
-	Token string `json:"token" schema:"token" validate:"required"`
+	Username string `json:"username" schema:"username" validate:"required,email"`
+	Token    string `json:"token" schema:"token" validate:"required"`
 }
 
 type UserRefreshTokenClientRequest struct {
 	RefreshToken string `json:"refresh_token" schema:"refresh_token" validate:"required"`
+}
+
+type UserOAuthLoginClientRequest struct {
+	Provider string `json:"provider" validate:"required,oneof=google"`
+	Token    string `json:"token" validate:"required"`
 }

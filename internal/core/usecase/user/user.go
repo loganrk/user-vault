@@ -18,11 +18,12 @@ import (
 // userusecase struct holds the dependencies for the user service, including
 // configuration, logger, MySQL repository, and token management.
 type userusecase struct {
-	logger   port.Logger
-	mysql    port.RepositoryMySQL
-	conf     config.User
-	token    port.Token
-	messager port.Messager
+	logger        port.Logger
+	mysql         port.RepositoryMySQL
+	conf          config.User
+	token         port.Token
+	messager      port.Messager
+	oAuthProvider port.OAuthProvider
 }
 
 // New initializes a new user service with required dependencies and returns it.
@@ -217,9 +218,8 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 // Logout handles the user logout process, including the validation of the refresh token,
 // revocation of the token, and logging of the logout event.
 func (u *userusecase) Logout(ctx context.Context, req domain.UserLogoutClientRequest) (domain.UserLogoutClientResponse, domain.ErrorRes) {
-
 	// Retrieve refresh token data
-	refreshData, err := u.getRefreshTokenData(ctx, req.RefreshToken)
+	refreshData, err := u.getUserToken(ctx, constant.TOKEN_TYPE_REFRESH, req.RefreshToken)
 	if err != nil {
 		u.logger.Errorw(ctx, "failed to fetch refresh token data",
 			"event", "user_refresh_token_fetch_failed",
@@ -264,7 +264,7 @@ func (u *userusecase) Logout(ctx context.Context, req domain.UserLogoutClientReq
 	}
 
 	// Revoke the refresh token
-	if err := u.RevokeRefreshToken(ctx, refreshData.UserId, req.RefreshToken); err != nil {
+	if err := u.revokeToken(ctx, refreshData.Id); err != nil {
 		u.logger.Errorw(ctx, "unable to revoke refresh token",
 			"event", "logout_failed",
 			"userId", refreshData.UserId,
@@ -388,7 +388,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 	}
 
 	// Retrieve the newly created user data to verify successful creation
-	userData, err = u.getUserByUsername(ctx, req.Username)
+	userData, err = u.getUserByUserID(ctx, userID)
 	if err != nil {
 		// Log error and return response indicating failure to fetch newly created user
 		u.logger.Errorw(ctx, "failed to fetch newly created user",
@@ -438,8 +438,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 			}
 		}
 
-		activationLink := u.getActivationLink(activationToken)
-		err = u.messager.PublishActivationEmail(userData.Username, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, activationLink)
+		err = u.messager.PublishActivationEmail(userData.Username, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, activationToken)
 
 		if err != nil {
 			// Log error and return response indicating failure to send the email
@@ -471,8 +470,25 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 }
 
 func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivationClientRequest) (domain.UserActivationClientResponse, domain.ErrorRes) {
+
+	userData, err := u.getUserByUsername(ctx, req.Username)
+	if err != nil {
+		// Log error and return response indicating failure to check if username exists
+		u.logger.Errorw(ctx, "failed to check if username exists",
+			"event", "register_failed",
+			"username", req.Username,
+			"error", err,
+			"code", http.StatusInternalServerError,
+		)
+		return domain.UserActivationClientResponse{}, domain.ErrorRes{
+			Code:    http.StatusInternalServerError,
+			Message: "Internal server error",
+			Err:     err,
+		}
+	}
+
 	// Fetch the activation token data by token
-	tokenData, err := u.getUserActivationByToken(ctx, req.Token)
+	tokenData, err := u.getUserLastTokenByUserId(ctx, constant.TOKEN_TYPE_ACTIVATION, userData.Id)
 	if err != nil {
 		// Log error if token is invalid or expired
 		u.logger.Errorw(ctx, "failed to fetch activation token",
@@ -501,8 +517,21 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 		}
 	}
 
+	if tokenData.Token != req.Token {
+		u.logger.Warnw(ctx, "activation token not matched",
+			"event", "user_activation_failed",
+			"token", req.Token,
+			"code", http.StatusBadRequest,
+		)
+		return domain.UserActivationClientResponse{}, domain.ErrorRes{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid activation token",
+			Err:     nil,
+		}
+	}
+
 	// Check if the activation token is still active
-	if tokenData.Status != constant.USER_ACTIVATION_TOKEN_STATUS_ACTIVE {
+	if tokenData.Revoked {
 		u.logger.Warnw(ctx, "activation token already used",
 			"event", "user_activation_failed",
 			"token", req.Token,
@@ -510,38 +539,22 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 		)
 		return domain.UserActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
-			Message: "Activation link already used",
+			Message: "Activation token already used",
 			Err:     nil,
 		}
 	}
 
 	// Check if the activation token has expired
 	if tokenData.ExpiresAt.Before(time.Now()) {
-		u.logger.Warnw(ctx, "activation link expired",
+		u.logger.Warnw(ctx, "activation token expired",
 			"event", "user_activation_failed",
 			"token", req.Token,
 			"code", http.StatusBadRequest,
 		)
 		return domain.UserActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
-			Message: "Activation link expired",
+			Message: "Activation token expired",
 			Err:     nil,
-		}
-	}
-	// Fetch user data based on the user ID from the token
-	userData, err := u.getUserByUserID(ctx, tokenData.UserId)
-	if err != nil {
-		u.logger.Errorw(ctx, "failed to fetch user data for activation",
-			"event", "user_activation_failed",
-			"token", req.Token,
-			"userId", tokenData.UserId,
-			"error", err,
-			"code", http.StatusInternalServerError,
-		)
-		return domain.UserActivationClientResponse{}, domain.ErrorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Internal server error",
-			Err:     err,
 		}
 	}
 
@@ -569,21 +582,6 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 		}
 	}
 
-	// Update the activation token status to inactive
-	err = u.UpdatedActivationStatus(ctx, tokenData.Id, constant.USER_ACTIVATION_TOKEN_STATUS_INACTIVE)
-	if err != nil {
-		u.logger.Errorw(ctx, "failed to update activation token status",
-			"event", "user_activation_failed",
-			"token", req.Token,
-			"error", err,
-			"code", http.StatusInternalServerError,
-		)
-		return domain.UserActivationClientResponse{}, domain.ErrorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Internal server error",
-			Err:     err,
-		}
-	}
 	// Update the user status to active
 	err = u.updateUserStatus(ctx, userData.Id, constant.USER_STATUS_ACTIVE)
 	if err != nil {
@@ -596,6 +594,22 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 		return domain.UserActivationClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
+			Err:     err,
+		}
+	}
+
+	// Revoke the refresh token
+	if err := u.revokeToken(ctx, tokenData.Id); err != nil {
+		u.logger.Errorw(ctx, "unable to revoke activation token",
+			"event", "user_activation_failed",
+			"userId", userData.Id,
+			"error", err,
+			"code", http.StatusInternalServerError,
+		)
+
+		return domain.UserActivationClientResponse{}, domain.ErrorRes{
+			Code:    http.StatusInternalServerError,
+			Message: "Unable to revoke token",
 			Err:     err,
 		}
 	}
@@ -698,8 +712,7 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 		}
 	}
 
-	activationLink := u.getActivationLink(token)
-	err = u.messager.PublishActivationEmail(userData.Username, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, activationLink)
+	err = u.messager.PublishActivationEmail(userData.Username, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, token)
 
 	if err != nil {
 		// Log error and return response indicating failure to send the email
@@ -819,8 +832,7 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 		}
 	}
 
-	passwordResetLink := u.getPasswordResetLink(token)
-	err = u.messager.PublishPasswordResetEmail(userData.Username, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, passwordResetLink)
+	err = u.messager.PublishPasswordResetEmail(userData.Username, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, token)
 	if err != nil {
 		// Log error and return response indicating failure to send the email
 		u.logger.Errorw(ctx, "failed to publish the email",
@@ -837,22 +849,39 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 	}
 
 	// Success
-	u.logger.Infow(ctx, "password reset link sent successfully",
+	u.logger.Infow(ctx, "password reset request sent successfully",
 		"event", "user_forgot_password_success",
 		"userId", userData.Id,
 		"code", http.StatusOK,
 	)
 
 	return domain.UserForgotPasswordClientResponse{
-		Message: "Reset link sent to your email",
+		Message: "Password reset request sent successfully",
 	}, domain.ErrorRes{}
 }
 
-// ResetPassword handles the password reset process after the user clicks the reset link.
+// ResetPassword handles the password reset process.
 // updates the user's password, and returns the appropriate response.
 func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPasswordClientRequest) (domain.UserResetPasswordClientResponse, domain.ErrorRes) {
+
+	userData, err := u.getUserByUsername(ctx, req.Username)
+	if err != nil {
+		// Log error and return response indicating failure to check if username exists
+		u.logger.Errorw(ctx, "failed to check if username exists",
+			"event", "register_failed",
+			"username", req.Username,
+			"error", err,
+			"code", http.StatusInternalServerError,
+		)
+		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
+			Code:    http.StatusInternalServerError,
+			Message: "Internal server error",
+			Err:     err,
+		}
+	}
+
 	//  Fetch token
-	tokenData, err := u.getPasswordResetByToken(ctx, req.Token)
+	tokenData, err := u.getUserLastTokenByUserId(ctx, constant.TOKEN_TYPE_PASSWORD_RESET, userData.Id)
 	if err != nil {
 		u.logger.Errorw(ctx, "error fetching password reset token",
 			"event", "user_reset_password_failed",
@@ -876,12 +905,25 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 		)
 		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
-			Message: "Invalid reset link",
+			Message: "Invalid reset token",
+		}
+	}
+
+	if tokenData.Token != req.Token {
+		u.logger.Warnw(ctx, "reset token not matched",
+			"event", "user_reset_password_failed",
+			"token", req.Token,
+			"code", http.StatusBadRequest,
+		)
+		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid activation token",
+			Err:     nil,
 		}
 	}
 
 	// Check if token is already used
-	if tokenData.Status != constant.USER_PASSWORD_RESET_STATUS_ACTIVE {
+	if tokenData.Revoked {
 		u.logger.Warnw(ctx, "reset token already used",
 			"event", "user_reset_password_failed",
 			"tokenId", tokenData.Id,
@@ -889,7 +931,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 		)
 		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
-			Message: "Link already used",
+			Message: "token already used",
 		}
 	}
 
@@ -902,23 +944,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 		)
 		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
-			Message: "Link expired",
-		}
-	}
-
-	//  Fetch user
-	userData, err := u.getUserDetailsWithPasswordByUserID(ctx, tokenData.UserId)
-	if err != nil {
-		u.logger.Errorw(ctx, "failed to fetch user",
-			"event", "user_reset_password_failed",
-			"userId", tokenData.UserId,
-			"error", err,
-			"code", http.StatusInternalServerError,
-		)
-		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Internal server error",
-			Err:     err,
+			Message: "token expired",
 		}
 	}
 
@@ -935,7 +961,6 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 		}
 	}
 
-	// 3. Hash password
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password+userData.Salt), u.conf.GetPasswordHashCost())
 	if err != nil {
 		u.logger.Errorw(ctx, "failed to hash password",
@@ -951,7 +976,6 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 		}
 	}
 
-	// 4. Update password
 	err = u.UpdatePassword(ctx, userData.Id, hashPassword)
 	if err != nil {
 		u.logger.Errorw(ctx, "failed to update user password",
@@ -967,18 +991,17 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 		}
 	}
 
-	// 5. Invalidate reset token
-	err = u.updatePasswordResetStatus(ctx, tokenData.Id, constant.USER_PASSWORD_RESET_STATUS_INACTIVE)
-	if err != nil {
-		u.logger.Errorw(ctx, "failed to mark reset token as inactive",
+	// Revoke the refresh token
+	if err := u.revokeToken(ctx, tokenData.Id); err != nil {
+		u.logger.Errorw(ctx, "unable to revoke password reset token",
 			"event", "user_reset_password_failed",
-			"tokenId", tokenData.Id,
+			"userId", userData.Id,
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
 		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
-			Message: "Internal server error",
+			Message: "Unable to revoke token",
 			Err:     err,
 		}
 	}
@@ -999,7 +1022,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 // RefreshToken validates the refresh token, ensuring it's not expired, not revoked, and that the associated user account is active.
 func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTokenClientRequest) (domain.UserRefreshTokenClientResponse, domain.ErrorRes) {
 	// Fetch refresh token data
-	refreshData, err := u.getRefreshTokenData(ctx, req.RefreshToken)
+	refreshData, err := u.getUserToken(ctx, constant.TOKEN_TYPE_REFRESH, req.RefreshToken)
 	if err != nil {
 		u.logger.Errorw(ctx, "error fetching refresh token",
 			"event", "user_refresh_token_validation_failed",
@@ -1104,17 +1127,18 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 	if u.refreshTokenRotationEnabled() {
 		refreshTokenType = constant.REFRESH_TOKEN_TYPE_ROTATING
 
-		// Revoke old refresh token
-		if err := u.RevokeRefreshToken(ctx, userData.Id, req.RefreshToken); err != nil {
-			u.logger.Errorw(ctx, "failed to revoke old refresh token",
+		// Revoke the refresh token
+		if err := u.revokeToken(ctx, refreshData.Id); err != nil {
+			u.logger.Errorw(ctx, "unable to revoke refresh token",
 				"event", "user_refresh_token_failed",
 				"userId", userData.Id,
 				"error", err,
 				"code", http.StatusInternalServerError,
 			)
+
 			return domain.UserRefreshTokenClientResponse{}, domain.ErrorRes{
 				Code:    http.StatusInternalServerError,
-				Message: "Internal server error",
+				Message: "Unable to revoke token",
 				Err:     err,
 			}
 		}
@@ -1167,13 +1191,154 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 	}, domain.ErrorRes{}
 }
 
+func (u *userusecase) OAuthLogin(ctx context.Context, req domain.UserOAuthLoginClientRequest) (domain.UserLoginClientResponse, domain.ErrorRes) {
+	email, name, err := u.oAuthProvider.VerifyToken(ctx, req.Provider, req.Token)
+	if err != nil {
+		u.logger.Warnw(ctx, "oauth2 token verification failed", "provider", req.Provider, "error", err)
+		return domain.UserLoginClientResponse{}, domain.ErrorRes{
+			Code:    http.StatusUnauthorized,
+			Message: "Invalid OAuth token",
+		}
+	}
+
+	userData, err := u.getUserByEmail(ctx, email)
+	if err != nil {
+		u.logger.Errorw(ctx, "failed to fetch user by email", "email", email, "error", err)
+		return domain.UserLoginClientResponse{}, domain.ErrorRes{
+			Code:    http.StatusInternalServerError,
+			Message: "internal server error",
+			Err:     err,
+		}
+	}
+
+	if userData.Id == 0 {
+		// Generate a new salt hash for password hashing
+		saltHash, err := u.newSaltHash()
+		if err != nil {
+			// Log error and return response indicating failure to generate salt hash
+			u.logger.Errorw(ctx, "failed to generate salt hash",
+				"event", "oauth_register_failed",
+				"username", email,
+				"error", err,
+				"code", http.StatusInternalServerError,
+			)
+			return domain.UserLoginClientResponse{}, domain.ErrorRes{
+				Code:    http.StatusInternalServerError,
+				Message: "Internal server error",
+				Err:     err,
+			}
+		}
+
+		// Prepare user data to be saved in the database
+		var userData = domain.User{
+			Username: email,
+			Salt:     saltHash,
+			Name:     name,
+			State:    constant.USER_STATE_INITIAL,
+			Status:   constant.USER_STATUS_ACTIVE,
+		}
+
+		// Create a new user in the database
+		userID, err := u.createUser(ctx, userData)
+		if err != nil {
+			// Log error and return response indicating failure to create user
+			u.logger.Errorw(ctx, "failed to create new user",
+				"event", "oauth_register_failed",
+				"username", email,
+				"error", err,
+				"code", http.StatusInternalServerError,
+			)
+			return domain.UserLoginClientResponse{}, domain.ErrorRes{
+				Code:    http.StatusInternalServerError,
+				Message: "Internal server error",
+				Err:     err,
+			}
+		}
+
+		// Retrieve the newly created user data to verify successful creation
+		userData, err = u.getUserByUserID(ctx, userID)
+		if err != nil {
+			// Log error and return response indicating failure to fetch newly created user
+			u.logger.Errorw(ctx, "failed to fetch newly created user",
+				"event", "register_failed",
+				"userId", userID,
+				"error", err,
+				"code", http.StatusInternalServerError,
+			)
+
+			return domain.UserLoginClientResponse{}, domain.ErrorRes{
+				Code:    http.StatusInternalServerError,
+				Message: "Internal server error",
+				Err:     err,
+			}
+
+		}
+	}
+
+	if userData.Status != constant.USER_STATUS_ACTIVE {
+		return domain.UserLoginClientResponse{}, domain.ErrorRes{
+			Code:    http.StatusForbidden,
+			Message: "Your account is not active. Please contact support.",
+		}
+	}
+
+	// Prepare refresh token if enabled
+	var refreshToken string
+	if u.refreshTokenEnabled() {
+		refreshTokenExpireAt := u.getRefreshTokenExpiry()
+		refreshToken, err = u.token.CreateRefreshToken(userData.Id, refreshTokenExpireAt)
+		if err != nil {
+			u.logger.Errorw(ctx, "failed to create refresh token",
+				"event", "refresh_token_generation_failed",
+				"userId", userData.Id,
+				"error", err,
+				"code", http.StatusInternalServerError,
+			)
+
+			return domain.UserLoginClientResponse{}, domain.ErrorRes{
+				Code:    http.StatusInternalServerError,
+				Message: "internal server error",
+				Err:     err,
+			}
+		}
+
+		_, err = u.createRefreshToken(ctx, userData.Id, refreshToken, refreshTokenExpireAt)
+		if err != nil {
+			u.logger.Errorw(ctx, "failed to store refresh token",
+				"event", "refresh_token_storage_failed",
+				"userId", userData.Id,
+				"error", err,
+				"code", http.StatusInternalServerError,
+			)
+
+			return domain.UserLoginClientResponse{}, domain.ErrorRes{
+				Code:    http.StatusInternalServerError,
+				Message: "internal server error",
+				Err:     err,
+			}
+		}
+	}
+
+	// Log successful login
+	u.logger.Infow(ctx, "user login successful",
+		"event", "user_login_success",
+		"userId", userData.Id,
+		"code", http.StatusOK,
+	)
+
+	// Return tokens
+	return domain.UserLoginClientResponse{
+		RefreshToken: refreshToken,
+	}, domain.ErrorRes{}
+}
+
 // createActivationToken generates a new activation token for the user and ensures its uniqueness by checking the database.
 func (u *userusecase) createActivationToken(ctx context.Context, userid int) (int, string, error) {
 	// Generate a random activation token
 	activationToken := utils.GenerateRandomString(25)
 
 	// Check if the token already exists in the database
-	tokenData, err := u.getActivationByToken(ctx, activationToken)
+	tokenData, err := u.getUserToken(ctx, constant.TOKEN_TYPE_ACTIVATION, activationToken)
 	if err != nil {
 		return 0, "", err
 	}
@@ -1184,15 +1349,15 @@ func (u *userusecase) createActivationToken(ctx context.Context, userid int) (in
 	}
 
 	// Prepare the token data for storage
-	tokenData = domain.UserActivationToken{
+	tokenData = domain.UserTokens{
 		UserId:    userid,
 		Token:     activationToken,
-		Status:    constant.USER_ACTIVATION_TOKEN_STATUS_ACTIVE,
-		ExpiresAt: u.getActivationLinkExpiry(),
+		Type:      constant.TOKEN_TYPE_ACTIVATION,
+		ExpiresAt: u.getActivationTokenExpiry(),
 	}
 
 	// Store the token in the database
-	tokenId, err := u.createActivation(ctx, tokenData)
+	tokenId, err := u.createToken(ctx, tokenData)
 	if err != nil {
 		return 0, "", err
 	}
@@ -1202,15 +1367,15 @@ func (u *userusecase) createActivationToken(ctx context.Context, userid int) (in
 // createRefreshToken generates a new refresh token for the user and stores it in the database.
 func (u *userusecase) createRefreshToken(ctx context.Context, userid int, token string, expiresAt time.Time) (int, error) {
 	// Prepare the refresh token data
-	refreshTokenData := domain.UserRefreshToken{
+	refreshTokenData := domain.UserTokens{
 		UserId:    userid,
 		Token:     token,
+		Type:      constant.TOKEN_TYPE_REFRESH,
 		ExpiresAt: expiresAt,
-		Revoked:   false,
 	}
 
 	// Store the refresh token in the database
-	refreshTokenId, err := u.storeRefreshToken(ctx, refreshTokenData)
+	refreshTokenId, err := u.createToken(ctx, refreshTokenData)
 	if err != nil {
 		return 0, err
 	}
@@ -1219,41 +1384,20 @@ func (u *userusecase) createRefreshToken(ctx context.Context, userid int, token 
 
 // createPasswordResetToken generates a new password reset token for the user, ensuring its uniqueness.
 func (u *userusecase) createPasswordResetToken(ctx context.Context, userid int) (int, string, error) {
-	// Check if there's an active password reset for the user
-	passwordResetData, err := u.getActivePasswordResetByUserID(ctx, userid)
-	if err != nil {
-		return 0, "", err
-	}
-
-	// If an active reset token exists, return it
-	if passwordResetData.Id != 0 && passwordResetData.Token != "" {
-		return passwordResetData.Id, passwordResetData.Token, nil
-	}
 
 	// Generate a new password reset token
 	passwordResetToken := utils.GenerateRandomString(25)
 
-	// Ensure the token is unique by checking the database
-	alreadyExiststData, err := u.getPasswordResetByToken(ctx, passwordResetToken)
-	if err != nil {
-		return 0, "", err
-	}
-
-	// If the token already exists, recursively generate a new one
-	if alreadyExiststData.Id != 0 {
-		return u.createPasswordResetToken(ctx, userid)
-	}
-
 	// Prepare the password reset data for storage
-	passwordResetData = domain.UserPasswordReset{
+	passwordResetData := domain.UserTokens{
 		UserId:    userid,
+		Type:      constant.TOKEN_TYPE_PASSWORD_RESET,
 		Token:     passwordResetToken,
-		Status:    constant.USER_PASSWORD_RESET_STATUS_ACTIVE,
-		ExpiresAt: u.getPasswordResetLinkExpiry(),
+		ExpiresAt: u.getPasswordResetTokenExpiry(),
 	}
 
 	// Store the password reset token in the database
-	passwordResetId, err := u.mysql.CreatePasswordReset(ctx, passwordResetData)
+	passwordResetId, err := u.createToken(ctx, passwordResetData)
 	if err != nil {
 		return 0, "", err
 	}

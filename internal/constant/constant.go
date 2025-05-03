@@ -20,19 +20,13 @@ const (
 
 	REFRESH_TOKEN_TYPE_ROTATING = "rotating"
 	REFRESH_TOKEN_TYPE_STATIC   = "static"
+
+	TOKEN_TYPE_ACTIVATION     = 1
+	TOKEN_TYPE_PASSWORD_RESET = 2
+	TOKEN_TYPE_REFRESH        = 3
 )
 
 const (
-	USER_ACTIVATION_TOKEN_MACRO    = "{{token}}"
-	USER_ACTIVATION_LINK_MACRO     = "{{link}}"
-	USER_ACTIVATION_NAME_MACRO     = "{{name}}"
-	USER_ACTIVATION_APP_NAME_MACRO = "{{appName}}"
-
-	USER_PASSWORD_RESET_TOKEN_MACRO    = "{{token}}"
-	USER_PASSWORD_RESET_LINK_MACRO     = "{{link}}"
-	USER_PASSWORD_RESET_NAME_MACRO     = "{{name}}"
-	USER_PASSWORD_RESET_APP_NAME_MACRO = "{{appName}}"
-
 	USER_ACTIVATION_EMAIL_SUBJECT     = "{{appName}} - Activate your account"
 	USER_PASSWORD_RESET_EMAIL_SUBJECT = "{{appName}} - Password reset request"
 )

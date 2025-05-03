@@ -11,7 +11,7 @@ import (
 	"github.com/loganrk/user-vault/internal/core/port"
 
 	cipher "github.com/loganrk/user-vault/internal/adapters/cipher/aes"
-	handler "github.com/loganrk/user-vault/internal/adapters/handler/http/v1"
+	handler "github.com/loganrk/user-vault/internal/adapters/handler/http"
 	logger "github.com/loganrk/user-vault/internal/adapters/logger/zapLogger"
 	Message "github.com/loganrk/user-vault/internal/adapters/message/kafka"
 	middleware "github.com/loganrk/user-vault/internal/adapters/middleware/auth"

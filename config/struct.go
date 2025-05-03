@@ -42,6 +42,7 @@ type logger struct {
 
 type api struct {
 	UserLogin            apiData `mapstructure:"userLogin"`
+	UserOAuthLogin       apiData `mapstructure:"userOAuthLogin"`
 	UserRegister         apiData `mapstructure:"userRegister"`
 	UserActivation       apiData `mapstructure:"userActivation"`
 	UserResendActivation apiData `mapstructure:"userResendActivation"`
@@ -61,12 +62,10 @@ type user struct {
 	LoginAttemptSessionPeriod int `mapstructure:"loginAttemptSessionPeriod"`
 	PasswordHashCost          int `mapstructure:"passwordHashCost"`
 	Activation                struct {
-		Link       string `mapstructure:"link"`
-		LinkExpiry int    `mapstructure:"linkExpiry"`
+		TokenExpiry int `mapstructure:"tokenExpiry"`
 	} `mapstructure:"activation"`
 	PasswordReset struct {
-		Link       string `mapstructure:"link"`
-		LinkExpiry int    `mapstructure:"linkExpiry"`
+		TokenExpiry int `mapstructure:"tokenExpiry"`
 	} `mapstructure:"passwordReset"`
 	RefreshToken struct {
 		Enabled  bool `mapstructure:"enabled"`

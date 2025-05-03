@@ -4,6 +4,9 @@ type Api interface {
 	GetUserLoginEnabled() bool
 	GetUserLoginProperties() (string, string)
 
+	GetUserOauthLoginEnabled() bool
+	GetUserOauthLoginProperties() (string, string)
+
 	GetUserRegisterEnabled() bool
 	GetUserRegisterProperties() (string, string)
 
@@ -33,6 +36,17 @@ func (a api) GetUserLoginEnabled() bool {
 
 func (a api) GetUserLoginProperties() (string, string) {
 	apiData := a.UserLogin
+
+	return apiData.Method, apiData.Route
+}
+
+func (a api) GetUserOauthLoginEnabled() bool {
+
+	return a.UserOAuthLogin.Enabled
+}
+
+func (a api) GetUserOauthLoginProperties() (string, string) {
+	apiData := a.UserOAuthLogin
 
 	return apiData.Method, apiData.Route
 }
