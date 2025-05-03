@@ -50,8 +50,8 @@ func New(appName string, brokers []string, activationTopic, passwordResetTopic, 
 	}, nil
 }
 
-// PublishActivationEmail sends a user activation email event to the Kafka topic.
-func (k *kafkaMessager) PublishActivationEmail(toAddress, subject, name, link string) error {
+// PublishActivation sends a user activation email event to the Kafka topic.
+func (k *kafkaMessager) PublishActivationEmail(toAddress, subject, name, token string) error {
 
 	payload := struct {
 		Type    string            `json:"type"`
@@ -63,9 +63,9 @@ func (k *kafkaMessager) PublishActivationEmail(toAddress, subject, name, link st
 		To:      toAddress,
 		Subject: subject,
 		Macros: map[string]string{
-			"name":           name,
-			"activationLink": link,
-			"appName":        k.appName,
+			"name":    name,
+			"token":   token,
+			"appName": k.appName,
 		},
 	}
 
@@ -73,7 +73,7 @@ func (k *kafkaMessager) PublishActivationEmail(toAddress, subject, name, link st
 }
 
 // PublishPasswordResetEmail sends a password reset email event to the Kafka topic.
-func (k *kafkaMessager) PublishPasswordResetEmail(toAddress, subject, name, link string) error {
+func (k *kafkaMessager) PublishPasswordResetEmail(toAddress, subject, name, token string) error {
 	payload := struct {
 		Type    string            `json:"type"`
 		To      string            `json:"to"`
@@ -84,9 +84,9 @@ func (k *kafkaMessager) PublishPasswordResetEmail(toAddress, subject, name, link
 		To:      toAddress,
 		Subject: subject,
 		Macros: map[string]string{
-			"name":           name,
-			"activationLink": link,
-			"appName":        k.appName,
+			"name":    name,
+			"token":   token,
+			"appName": k.appName,
 		},
 	}
 

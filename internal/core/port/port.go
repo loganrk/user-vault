@@ -93,8 +93,8 @@ type Logger interface {
 }
 
 type Messager interface {
-	PublishActivationEmail(toAddress, subject, name, link string) error
-	PublishPasswordResetEmail(toAddress, subject, name, link string) error
+	PublishActivationEmail(toAddress, subject, name, token string) error
+	PublishPasswordResetEmail(toAddress, subject, name, token string) error
 }
 type OAuthProvider interface {
 	VerifyToken(ctx context.Context, provider string, token string) (string, string, error)
