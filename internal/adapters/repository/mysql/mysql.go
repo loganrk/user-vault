@@ -54,18 +54,7 @@ func (m *MySQL) CreateUser(ctx context.Context, userData domain.User) (int, erro
 func (m *MySQL) GetUserByUserID(ctx context.Context, userID int) (domain.User, error) {
 	var userData domain.User
 	// Select specific user fields to reduce data fetching overhead
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "username", "name", "state", "status").First(&userData, userID)
-	if result.Error == gorm.ErrRecordNotFound {
-		result.Error = nil // Return nil error if no user found
-	}
-	return userData, result.Error
-}
-
-// GetUserByUsername retrieves a user record by their username.
-func (m *MySQL) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
-	var userData domain.User
-	// Select specific fields for user data fetching
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "password", "salt", "state", "status").Where("username = ?", username).First(&userData)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "email", "phone", "name", "state", "status").First(&userData, userID)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no user found
 	}
@@ -76,18 +65,29 @@ func (m *MySQL) GetUserByUsername(ctx context.Context, username string) (domain.
 func (m *MySQL) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
 	var userData domain.User
 	// Select specific fields for user data fetching
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "name", "state", "status").Where("username = ?", email).First(&userData)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "email", "phone", "name", "state", "status").Where("email = ?", email).First(&userData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no user found
 	}
 	return userData, result.Error
 }
 
-// GetUserDetailsWithPasswordByUserID retrieves a user record by their userID.
-func (m *MySQL) GetUserDetailsWithPasswordByUserID(ctx context.Context, userID int) (domain.User, error) {
+// GetUserByPhone retrieves a user record by their phone.
+func (m *MySQL) GetUserByPhone(ctx context.Context, phone string) (domain.User, error) {
 	var userData domain.User
 	// Select specific fields for user data fetching
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "password", "salt", "state", "status").Where("id = ?", userID).First(&userData)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "name", "state", "status").Where("phone = ?", phone).First(&userData)
+	if result.Error == gorm.ErrRecordNotFound {
+		result.Error = nil // Return nil error if no user found
+	}
+	return userData, result.Error
+}
+
+// GetUserByEmail retrieves a user record by their phone or email.
+func (m *MySQL) GetUserByEmailOrPhone(ctx context.Context, email, phone string) (domain.User, error) {
+	var userData domain.User
+	// Select specific fields for user data fetching
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "email", "phone", "name", "state", "status").Where("email = ? or phone = ?", email, phone).First(&userData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no user found
 	}
