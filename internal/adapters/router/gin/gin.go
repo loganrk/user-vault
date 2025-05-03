@@ -46,6 +46,12 @@ func (r *route) SetupRoutes(apiConfig config.Api, logger port.Logger, authMiddle
 		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserLogin)
 	}
 
+	// User Logout
+	if apiConfig.GetUserOauthLoginEnabled() {
+		method, route := apiConfig.GetUserOauthLoginProperties()
+		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserOAuthLogin)
+	}
+
 	// User Register
 	if apiConfig.GetUserRegisterEnabled() {
 		method, route := apiConfig.GetUserRegisterProperties()

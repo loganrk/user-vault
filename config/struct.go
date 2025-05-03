@@ -42,6 +42,7 @@ type logger struct {
 
 type api struct {
 	UserLogin            apiData `mapstructure:"userLogin"`
+	UserOAuthLogin       apiData `mapstructure:"userOAuthLogin"`
 	UserRegister         apiData `mapstructure:"userRegister"`
 	UserActivation       apiData `mapstructure:"userActivation"`
 	UserResendActivation apiData `mapstructure:"userResendActivation"`

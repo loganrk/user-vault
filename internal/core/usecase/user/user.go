@@ -18,11 +18,12 @@ import (
 // userusecase struct holds the dependencies for the user service, including
 // configuration, logger, MySQL repository, and token management.
 type userusecase struct {
-	logger   port.Logger
-	mysql    port.RepositoryMySQL
-	conf     config.User
-	token    port.Token
-	messager port.Messager
+	logger        port.Logger
+	mysql         port.RepositoryMySQL
+	conf          config.User
+	token         port.Token
+	messager      port.Messager
+	oAuthProvider port.OAuthProvider
 }
 
 // New initializes a new user service with required dependencies and returns it.
@@ -388,7 +389,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 	}
 
 	// Retrieve the newly created user data to verify successful creation
-	userData, err = u.getUserByUsername(ctx, req.Username)
+	userData, err = u.getUserByUserID(ctx, userID)
 	if err != nil {
 		// Log error and return response indicating failure to fetch newly created user
 		u.logger.Errorw(ctx, "failed to fetch newly created user",
@@ -1164,6 +1165,147 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 		AccessToken:      accessToken,
 		RefreshTokenType: refreshTokenType,
 		RefreshToken:     refreshToken,
+	}, domain.ErrorRes{}
+}
+
+func (u *userusecase) OAuthLogin(ctx context.Context, req domain.UserOAuthLoginClientRequest) (domain.UserLoginClientResponse, domain.ErrorRes) {
+	email, name, err := u.oAuthProvider.VerifyToken(ctx, req.Provider, req.Token)
+	if err != nil {
+		u.logger.Warnw(ctx, "oauth2 token verification failed", "provider", req.Provider, "error", err)
+		return domain.UserLoginClientResponse{}, domain.ErrorRes{
+			Code:    http.StatusUnauthorized,
+			Message: "Invalid OAuth token",
+		}
+	}
+
+	userData, err := u.getUserByEmail(ctx, email)
+	if err != nil {
+		u.logger.Errorw(ctx, "failed to fetch user by email", "email", email, "error", err)
+		return domain.UserLoginClientResponse{}, domain.ErrorRes{
+			Code:    http.StatusInternalServerError,
+			Message: "internal server error",
+			Err:     err,
+		}
+	}
+
+	if userData.Id == 0 {
+		// Generate a new salt hash for password hashing
+		saltHash, err := u.newSaltHash()
+		if err != nil {
+			// Log error and return response indicating failure to generate salt hash
+			u.logger.Errorw(ctx, "failed to generate salt hash",
+				"event", "oauth_register_failed",
+				"username", email,
+				"error", err,
+				"code", http.StatusInternalServerError,
+			)
+			return domain.UserLoginClientResponse{}, domain.ErrorRes{
+				Code:    http.StatusInternalServerError,
+				Message: "Internal server error",
+				Err:     err,
+			}
+		}
+
+		// Prepare user data to be saved in the database
+		var userData = domain.User{
+			Username: email,
+			Salt:     saltHash,
+			Name:     name,
+			State:    constant.USER_STATE_INITIAL,
+			Status:   constant.USER_STATUS_ACTIVE,
+		}
+
+		// Create a new user in the database
+		userID, err := u.createUser(ctx, userData)
+		if err != nil {
+			// Log error and return response indicating failure to create user
+			u.logger.Errorw(ctx, "failed to create new user",
+				"event", "oauth_register_failed",
+				"username", email,
+				"error", err,
+				"code", http.StatusInternalServerError,
+			)
+			return domain.UserLoginClientResponse{}, domain.ErrorRes{
+				Code:    http.StatusInternalServerError,
+				Message: "Internal server error",
+				Err:     err,
+			}
+		}
+
+		// Retrieve the newly created user data to verify successful creation
+		userData, err = u.getUserByUserID(ctx, userID)
+		if err != nil {
+			// Log error and return response indicating failure to fetch newly created user
+			u.logger.Errorw(ctx, "failed to fetch newly created user",
+				"event", "register_failed",
+				"userId", userID,
+				"error", err,
+				"code", http.StatusInternalServerError,
+			)
+
+			return domain.UserLoginClientResponse{}, domain.ErrorRes{
+				Code:    http.StatusInternalServerError,
+				Message: "Internal server error",
+				Err:     err,
+			}
+
+		}
+	}
+
+	if userData.Status != constant.USER_STATUS_ACTIVE {
+		return domain.UserLoginClientResponse{}, domain.ErrorRes{
+			Code:    http.StatusForbidden,
+			Message: "Your account is not active. Please contact support.",
+		}
+	}
+
+	// Prepare refresh token if enabled
+	var refreshToken string
+	if u.refreshTokenEnabled() {
+		refreshTokenExpireAt := u.getRefreshTokenExpiry()
+		refreshToken, err = u.token.CreateRefreshToken(userData.Id, refreshTokenExpireAt)
+		if err != nil {
+			u.logger.Errorw(ctx, "failed to create refresh token",
+				"event", "refresh_token_generation_failed",
+				"userId", userData.Id,
+				"error", err,
+				"code", http.StatusInternalServerError,
+			)
+
+			return domain.UserLoginClientResponse{}, domain.ErrorRes{
+				Code:    http.StatusInternalServerError,
+				Message: "internal server error",
+				Err:     err,
+			}
+		}
+
+		_, err = u.createRefreshToken(ctx, userData.Id, refreshToken, refreshTokenExpireAt)
+		if err != nil {
+			u.logger.Errorw(ctx, "failed to store refresh token",
+				"event", "refresh_token_storage_failed",
+				"userId", userData.Id,
+				"error", err,
+				"code", http.StatusInternalServerError,
+			)
+
+			return domain.UserLoginClientResponse{}, domain.ErrorRes{
+				Code:    http.StatusInternalServerError,
+				Message: "internal server error",
+				Err:     err,
+			}
+		}
+	}
+
+	// Log successful login
+	u.logger.Infow(ctx, "user login successful",
+		"event", "user_login_success",
+		"userId", userData.Id,
+		"code", http.StatusOK,
+	)
+
+	// Return tokens
+	return domain.UserLoginClientResponse{
+		RefreshToken: refreshToken,
 	}, domain.ErrorRes{}
 }
 

@@ -16,6 +16,13 @@ func (u *userusecase) getUserByUsername(ctx context.Context, username string) (d
 	return userData, err
 }
 
+// getUserByEmail retrieves the user data based on the provided email.
+// Returns the user data if found or an error if the user is not found or there's an issue with the DB query.
+func (u *userusecase) getUserByEmail(ctx context.Context, email string) (domain.User, error) {
+	userData, err := u.mysql.GetUserByEmail(ctx, email)
+	return userData, err
+}
+
 // getUserByUserID retrieves the user data based on the provided user ID.
 // Returns the user data if found or an error if the user is not found or there's an issue with the DB query.
 func (u *userusecase) getUserByUserID(ctx context.Context, userid int) (domain.User, error) {

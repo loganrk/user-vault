@@ -72,6 +72,17 @@ func (m *MySQL) GetUserByUsername(ctx context.Context, username string) (domain.
 	return userData, result.Error
 }
 
+// GetUserByEmail retrieves a user record by their email.
+func (m *MySQL) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
+	var userData domain.User
+	// Select specific fields for user data fetching
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "name", "state", "status").Where("username = ?", email).First(&userData)
+	if result.Error == gorm.ErrRecordNotFound {
+		result.Error = nil // Return nil error if no user found
+	}
+	return userData, result.Error
+}
+
 // GetUserDetailsWithPasswordByUserID retrieves a user record by their userID.
 func (m *MySQL) GetUserDetailsWithPasswordByUserID(ctx context.Context, userID int) (domain.User, error) {
 	var userData domain.User

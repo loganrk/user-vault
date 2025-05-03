@@ -33,6 +33,10 @@ api:
     enabled: true
     route: "/api/v1/login"
     method: "POST"
+  userOAuthLogin:
+    enabled: true
+    route: "/api/v2/oAuthlogin"
+    method: "POST"
   userRegister:
     enabled: true
     route: "/api/v1/register"

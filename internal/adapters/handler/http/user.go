@@ -1,4 +1,4 @@
-package v1
+package http
 
 import (
 	"context"
@@ -274,6 +274,28 @@ func (h *handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Successful resend activation response
+	res.SetData(respData)
+	res.Send(w)
+}
+
+func (h *handler) UserOAuthLogin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var res response
+
+	var req domain.UserOAuthLoginClientRequest
+	if !h.bindAndValidate(w, r, &req) {
+		return
+	}
+
+	respData, resErr := h.usecases.User.OAuthLogin(ctx, req)
+	if resErr.Code != 0 {
+		res.SetStatus(resErr.Code)
+		res.SetError(resErr.Message)
+		res.Send(w)
+		return
+	}
+
+	res.SetStatus(http.StatusOK)
 	res.SetData(respData)
 	res.Send(w)
 }

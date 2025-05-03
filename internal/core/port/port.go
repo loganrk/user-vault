@@ -12,6 +12,7 @@ import (
 // Handler defines the interface for user authentication and account-related HTTP handlers.
 type Handler interface {
 	UserLogin(w http.ResponseWriter, r *http.Request)            // Handles user login requests
+	UserOAuthLogin(w http.ResponseWriter, r *http.Request)       // Handles user login requests with oAuth
 	UserLogout(w http.ResponseWriter, r *http.Request)           // Handles user logout requests
 	UserActivation(w http.ResponseWriter, r *http.Request)       // Handles account activation using a token
 	UserPasswordReset(w http.ResponseWriter, r *http.Request)    // Handles user password reset via token
@@ -25,8 +26,10 @@ type Handler interface {
 type RepositoryMySQL interface {
 	AutoMigrate() // Performs automatic database schema migration
 
-	GetUserByUserID(ctx context.Context, id int) (domain.User, error)                                        // Retrieves a user by user ID
-	GetUserByUsername(ctx context.Context, username string) (domain.User, error)                             // Retrieves a user by username
+	GetUserByUserID(ctx context.Context, id int) (domain.User, error)            // Retrieves a user by user ID
+	GetUserByUsername(ctx context.Context, username string) (domain.User, error) // Retrieves a user by username
+	GetUserByEmail(ctx context.Context, email string) (domain.User, error)       // Retrieves a user by email
+
 	GetUserDetailsWithPasswordByUserID(ctx context.Context, id int) (domain.User, error)                     // Retrieves a user by user ID
 	GetUserLoginFailedAttemptCount(ctx context.Context, userId int, sessionStartTime time.Time) (int, error) // Gets the count of failed login attempts since the session start time
 	CreateUserLoginAttempt(ctx context.Context, userLoginAttempt domain.UserLoginAttempt) (int, error)       // Creates a new user login attempt record
@@ -100,4 +103,7 @@ type Logger interface {
 type Messager interface {
 	PublishActivationEmail(toAddress, subject, name, link string) error
 	PublishPasswordResetEmail(toAddress, subject, name, link string) error
+}
+type OAuthProvider interface {
+	VerifyToken(ctx context.Context, provider string, token string) (string, string, error)
 }
