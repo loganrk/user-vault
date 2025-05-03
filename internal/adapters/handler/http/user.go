@@ -110,6 +110,13 @@ func (h *handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Email == "" && req.Phone == "" {
+		res.SetStatus(http.StatusBadRequest)
+		res.SetError("validation failed: email address or phone number is required ") // Validation error message
+		res.Send(w)
+		return
+	}
+
 	// Call the registration usecase
 	respData, resErr := h.usecases.User.Register(ctx, req)
 	if resErr.Code != 0 {

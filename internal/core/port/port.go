@@ -26,11 +26,11 @@ type Handler interface {
 type RepositoryMySQL interface {
 	AutoMigrate() // Performs automatic database schema migration
 
-	GetUserByUserID(ctx context.Context, id int) (domain.User, error)            // Retrieves a user by user ID
-	GetUserByUsername(ctx context.Context, username string) (domain.User, error) // Retrieves a user by username
-	GetUserByEmail(ctx context.Context, email string) (domain.User, error)       // Retrieves a user by email
+	GetUserByUserID(ctx context.Context, id int) (domain.User, error)      // Retrieves a user by user ID
+	GetUserByEmail(ctx context.Context, email string) (domain.User, error) // Retrieves a user by email
+	GetUserByEmailOrPhone(ctx context.Context, email string, phone string) (domain.User, error)
+	GetUserByPhone(ctx context.Context, phone string) (domain.User, error)
 
-	GetUserDetailsWithPasswordByUserID(ctx context.Context, id int) (domain.User, error)                     // Retrieves a user by user ID
 	GetUserLoginFailedAttemptCount(ctx context.Context, userId int, sessionStartTime time.Time) (int, error) // Gets the count of failed login attempts since the session start time
 	CreateUserLoginAttempt(ctx context.Context, userLoginAttempt domain.UserLoginAttempt) (int, error)       // Creates a new user login attempt record
 	CreateUser(ctx context.Context, userData domain.User) (int, error)                                       // Creates a new user
@@ -94,7 +94,9 @@ type Logger interface {
 
 type Messager interface {
 	PublishActivationEmail(toAddress, subject, name, token string) error
+	PublishActivationPhone(phone, name, token string) error
 	PublishPasswordResetEmail(toAddress, subject, name, token string) error
+	PublishPasswordResetPhone(phone, name, token string) error
 }
 type OAuthProvider interface {
 	VerifyToken(ctx context.Context, provider string, token string) (string, string, error)

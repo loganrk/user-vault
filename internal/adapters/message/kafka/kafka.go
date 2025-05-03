@@ -93,6 +93,45 @@ func (k *kafkaMessager) PublishPasswordResetEmail(toAddress, subject, name, toke
 	return k.publish(k.topicPasswordReset, toAddress, payload)
 }
 
+// PublishActivationPhone sends a user activation phone event to the Kafka topic.
+func (k *kafkaMessager) PublishActivationPhone(phone, name, token string) error {
+
+	payload := struct {
+		Type   string            `json:"type"`
+		To     string            `json:"to"`
+		Macros map[string]string `json:"macros"`
+	}{
+		Type: "activation-phone",
+		To:   phone,
+		Macros: map[string]string{
+			"name":    name,
+			"token":   token,
+			"appName": k.appName,
+		},
+	}
+
+	return k.publish(k.topicActivation, phone, payload)
+}
+
+// PublishPasswordResetPhone sends a password reset phone event to the Kafka topic.
+func (k *kafkaMessager) PublishPasswordResetPhone(phone, name, token string) error {
+	payload := struct {
+		Type   string            `json:"type"`
+		To     string            `json:"to"`
+		Macros map[string]string `json:"macros"`
+	}{
+		Type: "password-reset-email",
+		To:   phone,
+		Macros: map[string]string{
+			"name":    name,
+			"token":   token,
+			"appName": k.appName,
+		},
+	}
+
+	return k.publish(k.topicPasswordReset, phone, payload)
+}
+
 // publish marshals the payload and sends it to the specified Kafka topic with the given key.
 func (k *kafkaMessager) publish(topic string, key string, payload any) error {
 	value, err := json.Marshal(payload)

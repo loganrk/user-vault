@@ -11,6 +11,8 @@ import (
 	"os"
 	"strings"
 	"unicode"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -140,4 +142,17 @@ func ExtractBearerToken(token string) string {
 		return parts[1] // Return the token part of the "Bearer <token>" format.
 	}
 	return "" // Return an empty string if the token is not in the correct format.
+}
+
+// NewSaltHash generates a new salt for password hashing.
+func NewSaltHash() (string, error) {
+	// Generate a random salt string
+	saltRaw := GenerateRandomString(10)
+
+	// Hash the salt using bcrypt
+	salt, err := bcrypt.GenerateFromPassword([]byte(saltRaw), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(salt), nil
 }

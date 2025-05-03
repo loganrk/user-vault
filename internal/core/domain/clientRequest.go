@@ -1,28 +1,33 @@
 package domain
 
 type UserLoginClientRequest struct {
-	Username string `json:"username" schema:"username" validate:"required,email"`
+	Email    string `json:"email" schema:"email" validate:"email"`
+	Phone    string `json:"phone" schema:"phone" validate:"e164"`
 	Password string `json:"password" schema:"password" validate:"required,min=8,max=32"`
 }
 
 type UserRegisterClientRequest struct {
-	Username string `json:"username" schema:"username" validate:"required,email"`
+	Email    string `json:"email" schema:"email" validate:"email"`
+	Phone    string `json:"phone" schema:"phone" validate:"e164"`
 	Password string `json:"password" schema:"password" validate:"required,password"`
 	Name     string `json:"name" schema:"name" validate:"required"`
 }
 
 type UserForgotPasswordClientRequest struct {
-	Username string `json:"username" schema:"username" validate:"required,email"`
+	Email string `json:"email" schema:"email" validate:"email"`
+	Phone string `json:"phone" schema:"phone" validate:"e164"`
 }
 
 type UserResetPasswordClientRequest struct {
-	Username string `json:"username" schema:"username" validate:"required,email"`
+	Email    string `json:"email" schema:"email" validate:"email"`
+	Phone    string `json:"phone" schema:"phone" validate:"e164"`
 	Token    string `json:"token" schema:"token" validate:"required"`
 	Password string `json:"password" schema:"password" validate:"required,password"`
 }
 
 type UserResendActivationClientRequest struct {
-	Username string `json:"username" schema:"username" validate:"required,email"`
+	Email string `json:"email" schema:"username" validate:"email"`
+	Phone string `json:"phone" schema:"phone" validate:"e164"`
 }
 
 type UserLogoutClientRequest struct {
@@ -30,8 +35,9 @@ type UserLogoutClientRequest struct {
 }
 
 type UserActivationClientRequest struct {
-	Username string `json:"username" schema:"username" validate:"required,email"`
-	Token    string `json:"token" schema:"token" validate:"required"`
+	Email string `json:"email" schema:"username" validate:"email"`
+	Phone string `json:"phone" schema:"phone" validate:"e164"`
+	Token string `json:"token" schema:"token" validate:"required"`
 }
 
 type UserRefreshTokenClientRequest struct {
