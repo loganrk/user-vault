@@ -143,6 +143,13 @@ func (h *handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Email == "" && req.Phone == "" {
+		res.SetStatus(http.StatusBadRequest)
+		res.SetError("validation failed: email address or phone number is required ") // Validation error message
+		res.Send(w)
+		return
+	}
+
 	// Call the forgot password usecase
 	respData, resErr := h.usecases.User.ForgotPassword(ctx, req)
 	if resErr.Code != 0 {
@@ -166,6 +173,12 @@ func (h *handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 	var req domain.UserActivationClientRequest
 	// Bind and validate the incoming request
 	if !h.bindAndValidate(w, r, &req) {
+		return
+	}
+	if req.Email == "" && req.Phone == "" {
+		res.SetStatus(http.StatusBadRequest)
+		res.SetError("validation failed: email address or phone number is required ") // Validation error message
+		res.Send(w)
 		return
 	}
 
@@ -218,6 +231,12 @@ func (h *handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 	if !h.bindAndValidate(w, r, &req) {
 		return
 	}
+	if req.Email == "" && req.Phone == "" {
+		res.SetStatus(http.StatusBadRequest)
+		res.SetError("validation failed: email address or phone number is required ") // Validation error message
+		res.Send(w)
+		return
+	}
 
 	// Call the reset password usecase
 	respData, resErr := h.usecases.User.ResetPassword(ctx, req)
@@ -268,6 +287,12 @@ func (h *handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 	var req domain.UserResendActivationClientRequest
 	// Bind and validate the incoming request
 	if !h.bindAndValidate(w, r, &req) {
+		return
+	}
+	if req.Email == "" && req.Phone == "" {
+		res.SetStatus(http.StatusBadRequest)
+		res.SetError("validation failed: email address or phone number is required ") // Validation error message
+		res.Send(w)
 		return
 	}
 

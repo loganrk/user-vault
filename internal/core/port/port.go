@@ -38,9 +38,10 @@ type RepositoryMySQL interface {
 	UpdatePassword(ctx context.Context, userid int, password string) error                                   // Updates the user’s password
 
 	CreateToken(ctx context.Context, tokenData domain.UserTokens) (int, error)                 // Creates a new token record
-	RevokeToken(ctx context.Context, id int) error                                             // Revokes a user's token
 	GetUserToken(ctx context.Context, tokenType int8, token string) (domain.UserTokens, error) // Retrieves token data
 	GetUserLastTokenByUserId(ctx context.Context, tokenType int8, userId int) (domain.UserTokens, error)
+	RevokeToken(ctx context.Context, id int) error // Revokes a user's token
+	RevokeAllTokens(ctx context.Context, tokenType int8, userID int) error
 }
 
 // Router defines the interface for setting up and starting HTTP routes and middleware.

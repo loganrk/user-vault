@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
@@ -125,7 +124,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 	}
 
 	// Fetch and validate the activation token
-	tokenData, errRes := u.fetchAndValidateResetPasswordToken(ctx, tokenType, req.Token, userData.Id)
+	tokenData, errRes := u.validateUserToken(ctx, tokenType, req.Token, userData.Id)
 	if errRes.Code != 0 {
 		return domain.UserResetPasswordClientResponse{}, errRes
 	}
@@ -149,47 +148,34 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 	return domain.UserResetPasswordClientResponse{Message: "Password has been reset successfully"}, domain.ErrorRes{}
 }
 
-// fetchAndValidateResetPasswordToken retrieves and validates activation token for the user.
-func (u *userusecase) fetchAndValidateResetPasswordToken(ctx context.Context, tokenType int8, token string, userID int) (*domain.UserTokens, domain.ErrorRes) {
-	tokenData, err := u.mysql.GetUserLastTokenByUserId(ctx, tokenType, userID)
-	if err != nil || tokenData.Id == 0 {
-		u.logger.Errorw(ctx, "invalid or expired token", "token", token, "error", err)
-		return nil, domain.ErrorRes{Code: http.StatusBadRequest, Message: "Invalid or expired token", Err: err}
-	}
-
-	// Validate token properties such as mismatch, already used, or expired
-	if tokenData.Token != token {
-		u.logger.Warnw(ctx, "token mismatch", "token", token)
-		return nil, domain.ErrorRes{Code: http.StatusBadRequest, Message: "Invalid password reset token"}
-	}
-
-	if tokenData.Revoked {
-		u.logger.Warnw(ctx, "token already used", "token", token)
-		return nil, domain.ErrorRes{Code: http.StatusBadRequest, Message: "Password reset token already used"}
-	}
-
-	if tokenData.ExpiresAt.Before(time.Now()) {
-		u.logger.Warnw(ctx, "token expired", "token", token)
-		return nil, domain.ErrorRes{Code: http.StatusBadRequest, Message: "Password reset token expired"}
-	}
-
-	return &tokenData, domain.ErrorRes{}
-}
-
+// updateUserPassword hashes and updates the user's password in the database.
 func (u *userusecase) updateUserPassword(ctx context.Context, userData *domain.User, password string) domain.ErrorRes {
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password+userData.Salt), u.conf.GetPasswordHashCost())
 	if err != nil {
+		u.logger.Errorw(ctx, "password hashing failed",
+			"event", "hashing_failed",
+			"userID", userData.Id,
+			"error", err,
+			"code", http.StatusInternalServerError,
+		)
 		return domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
-			Message: "Internal server error",
+			Message: "Failed to reset password",
 			Err:     err,
 		}
 	}
 
-	if err := u.mysql.UpdatePassword(ctx, userData.Id, string(hashPassword)); err != nil {
+	err = u.mysql.UpdatePassword(ctx, userData.Id, string(hashPassword))
+	if err != nil {
+		u.logger.Errorw(ctx, "failed to update user password",
+			"event", "update_password_failed",
+			"userID", userData.Id,
+			"error", err,
+			"code", http.StatusInternalServerError,
+		)
 		return domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
-			Message: "Internal server error",
+			Message: "Failed to update password",
 			Err:     err,
 		}
 	}
@@ -197,13 +183,22 @@ func (u *userusecase) updateUserPassword(ctx context.Context, userData *domain.U
 	return domain.ErrorRes{}
 }
 
-// createActivationToken generates a new activation token and stores it in the DB.
+// generatePasswordResetToken revokes old tokens and creates a new one for password reset.
 func (u *userusecase) generatePasswordResetToken(ctx context.Context, tokenType int8, userID int) (int, string, error) {
+	// Revoke all previous tokens
+	if err := u.mysql.RevokeAllTokens(ctx, tokenType, userID); err != nil {
+		u.logger.Errorw(ctx, "failed to revoke old tokens",
+			"event", "revoke_tokens_failed",
+			"userID", userID,
+			"tokenType", tokenType,
+			"error", err,
+		)
+		return 0, "", err
+	}
+
+	// Generate a new token
 	activationToken := utils.GenerateRandomString(25)
 
-	// TODO: Revoke all existing tokens of same type for userID
-
-	// Create token data object
 	tokenData := domain.UserTokens{
 		UserId:    userID,
 		Token:     activationToken,
@@ -211,9 +206,14 @@ func (u *userusecase) generatePasswordResetToken(ctx context.Context, tokenType 
 		ExpiresAt: u.getPasswordResetTokenExpiry(),
 	}
 
-	// Store the generated token in DB
+	// Store the token in the database
 	tokenId, err := u.mysql.CreateToken(ctx, tokenData)
 	if err != nil {
+		u.logger.Errorw(ctx, "failed to store password reset token",
+			"event", "create_token_failed",
+			"userID", userID,
+			"error", err,
+		)
 		return 0, "", err
 	}
 

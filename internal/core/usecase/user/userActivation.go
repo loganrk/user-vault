@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
@@ -121,7 +120,7 @@ func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivatio
 	}
 
 	// Fetch and validate the activation token
-	tokenData, errRes := u.fetchAndValidateActivationToken(ctx, tokenType, req.Token, userData.Id)
+	tokenData, errRes := u.validateUserToken(ctx, tokenType, req.Token, userData.Id)
 	if errRes.Code != 0 {
 		return domain.UserActivationClientResponse{}, errRes
 	}
@@ -346,38 +345,16 @@ func (u *userusecase) createUserForOAuth(ctx context.Context, email, name string
 	return userID, domain.ErrorRes{}
 }
 
-// fetchAndValidateActivationToken retrieves and validates activation token for the user.
-func (u *userusecase) fetchAndValidateActivationToken(ctx context.Context, tokenType int8, token string, userID int) (*domain.UserTokens, domain.ErrorRes) {
-	tokenData, err := u.mysql.GetUserLastTokenByUserId(ctx, tokenType, userID)
-	if err != nil || tokenData.Id == 0 {
-		u.logger.Errorw(ctx, "invalid or expired token", "token", token, "error", err)
-		return nil, domain.ErrorRes{Code: http.StatusBadRequest, Message: "Invalid or expired token", Err: err}
-	}
-
-	// Validate token properties such as mismatch, already used, or expired
-	if tokenData.Token != token {
-		u.logger.Warnw(ctx, "token mismatch", "token", token)
-		return nil, domain.ErrorRes{Code: http.StatusBadRequest, Message: "Invalid activation token"}
-	}
-
-	if tokenData.Revoked {
-		u.logger.Warnw(ctx, "token already used", "token", token)
-		return nil, domain.ErrorRes{Code: http.StatusBadRequest, Message: "Activation token already used"}
-	}
-
-	if tokenData.ExpiresAt.Before(time.Now()) {
-		u.logger.Warnw(ctx, "token expired", "token", token)
-		return nil, domain.ErrorRes{Code: http.StatusBadRequest, Message: "Activation token expired"}
-	}
-
-	return &tokenData, domain.ErrorRes{}
-}
-
-// createActivationToken generates a new activation token and stores it in the DB.
+// generateActivationToken generates a new activation token and stores it in the DB.
 func (u *userusecase) generateActivationToken(ctx context.Context, tokenType int8, userID int) (int, string, error) {
-	activationToken := utils.GenerateRandomString(25)
 
-	// TODO: Revoke all existing tokens of same type for userID
+	err := u.mysql.RevokeAllTokens(ctx, tokenType, userID)
+	if err != nil {
+		return 0, "", err
+
+	}
+
+	activationToken := utils.GenerateRandomString(25)
 
 	// Create token data object
 	tokenData := domain.UserTokens{

@@ -73,6 +73,7 @@ func (u *userusecase) getPasswordResetTokenExpiry() time.Time {
 	return time.Now().Add(time.Duration(u.conf.GetPasswordResetTokenExpiry()) * time.Second)
 }
 
+// fetchUserByID retrieves the user record using the provided user ID.
 func (u *userusecase) fetchUserByID(ctx context.Context, userID int) (*domain.User, domain.ErrorRes) {
 	userData, err := u.mysql.GetUserByUserID(ctx, userID)
 	if err != nil {
@@ -82,9 +83,9 @@ func (u *userusecase) fetchUserByID(ctx context.Context, userID int) (*domain.Us
 			"error", err,
 			"code", http.StatusInternalServerError,
 		)
-		return &domain.User{}, domain.ErrorRes{
+		return nil, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
-			Message: "internal server error",
+			Message: "Failed to retrieve user",
 			Err:     err,
 		}
 	}
@@ -92,71 +93,152 @@ func (u *userusecase) fetchUserByID(ctx context.Context, userID int) (*domain.Us
 	if userData.Id == 0 {
 		return nil, domain.ErrorRes{
 			Code:    http.StatusNotFound,
-			Message: "Username is incorrect",
-			Err:     nil,
+			Message: "User not found",
 		}
 	}
+
 	return &userData, domain.ErrorRes{}
 }
 
-// fetchUserByEmail validates if email is associated with a pending user account.
+// fetchUserByEmail retrieves a user using the provided email address.
 func (u *userusecase) fetchUserByEmail(ctx context.Context, email string) (*domain.User, domain.ErrorRes) {
 	userData, err := u.mysql.GetUserByEmail(ctx, email)
 	if err != nil {
-		u.logger.Errorw(ctx, "failed to fetch user by email", "email", email, "error", err)
-		return nil, domain.ErrorRes{Code: http.StatusInternalServerError, Message: "Internal server error", Err: err}
+		u.logger.Errorw(ctx, "failed to fetch user by email",
+			"event", "fetch_user_by_email_failed",
+			"email", email,
+			"error", err,
+			"code", http.StatusInternalServerError,
+		)
+		return nil, domain.ErrorRes{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to retrieve user by email",
+			Err:     err,
+		}
 	}
+
 	if userData.Id == 0 {
 		return nil, domain.ErrorRes{
 			Code:    http.StatusNotFound,
-			Message: "Username is incorrect",
-			Err:     nil,
+			Message: "No user found with this email",
 		}
 	}
+
 	return &userData, domain.ErrorRes{}
 }
 
-// fetchUserByPhone validates if phone is associated with a pending user account.
+// fetchUserByPhone retrieves a user using the provided phone number.
 func (u *userusecase) fetchUserByPhone(ctx context.Context, phone string) (*domain.User, domain.ErrorRes) {
 	userData, err := u.mysql.GetUserByPhone(ctx, phone)
 	if err != nil {
-		u.logger.Errorw(ctx, "failed to fetch user by phone", "phone", phone, "error", err)
-		return nil, domain.ErrorRes{Code: http.StatusInternalServerError, Message: "Internal server error", Err: err}
+		u.logger.Errorw(ctx, "failed to fetch user by phone",
+			"event", "fetch_user_by_phone_failed",
+			"phone", phone,
+			"error", err,
+			"code", http.StatusInternalServerError,
+		)
+		return nil, domain.ErrorRes{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to retrieve user by phone",
+			Err:     err,
+		}
 	}
 
 	if userData.Id == 0 {
 		return nil, domain.ErrorRes{
 			Code:    http.StatusNotFound,
-			Message: "Username is incorrect",
-			Err:     nil,
+			Message: "No user found with this phone number",
 		}
 	}
+
 	return &userData, domain.ErrorRes{}
 }
 
-// checkAccountIsPending checks whether the user account is in a pending state.
+// checkAccountIsPending verifies if the user's account status is 'PENDING'.
 func (u *userusecase) checkAccountIsPending(ctx context.Context, userData *domain.User) (bool, domain.ErrorRes) {
 	if userData.Status != constant.USER_STATUS_PENDING {
+		u.logger.Warnw(ctx, "account is not in pending state",
+			"event", "pending_user_check_failed",
+			"userId", userData.Id,
+			"status", userData.Status,
+			"code", http.StatusBadRequest,
+		)
 		return false, domain.ErrorRes{
 			Code:    http.StatusBadRequest,
-			Message: "Account is not pending",
+			Message: "Account is not in a pending state",
 		}
 	}
 	return true, domain.ErrorRes{}
 }
 
+// checkAccountIsActive verifies if the user's account status is 'ACTIVE'.
 func (u *userusecase) checkAccountIsActive(ctx context.Context, user *domain.User) domain.ErrorRes {
 	if user.Status != constant.USER_STATUS_ACTIVE {
 		u.logger.Warnw(ctx, "account is not active",
 			"event", "inactive_user_check",
 			"userId", user.Id,
+			"status", user.Status,
 			"code", http.StatusForbidden,
 		)
 		return domain.ErrorRes{
 			Code:    http.StatusForbidden,
 			Message: "Your account is not active. Please contact support.",
-			Err:     nil,
 		}
 	}
 	return domain.ErrorRes{}
+}
+
+func (u *userusecase) validateUserToken(ctx context.Context, tokenType int8, token string, userID int) (*domain.UserTokens, domain.ErrorRes) {
+	tokenData, err := u.mysql.GetUserLastTokenByUserId(ctx, tokenType, userID)
+	if err != nil {
+		u.logger.Errorw(ctx, "failed to fetch token",
+			"userID", userID,
+			"token", token,
+			"error", err,
+		)
+		return nil, domain.ErrorRes{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to validate token",
+			Err:     err,
+		}
+	}
+
+	if tokenData.Id == 0 || tokenData.Token != token {
+		u.logger.Warnw(ctx, "invalid or mismatched token",
+			"userID", userID,
+			"providedToken", token,
+			"storedToken", tokenData.Token,
+		)
+
+		return nil, domain.ErrorRes{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid or expired token",
+		}
+	}
+
+	if tokenData.Revoked {
+		u.logger.Warnw(ctx, "token already used",
+			"userID", userID,
+			"token", token,
+		)
+
+		return nil, domain.ErrorRes{
+			Code:    http.StatusBadRequest,
+			Message: "Token already used",
+		}
+	}
+
+	if tokenData.ExpiresAt.Before(time.Now()) {
+		u.logger.Warnw(ctx, "token expired",
+			"userID", userID,
+			"token", token,
+			"expiresAt", tokenData.ExpiresAt,
+		)
+		return nil, domain.ErrorRes{
+			Code:    http.StatusBadRequest,
+			Message: "Token expired",
+		}
+	}
+
+	return &tokenData, domain.ErrorRes{}
 }
