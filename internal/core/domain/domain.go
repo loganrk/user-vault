@@ -21,31 +21,12 @@ type UserLoginAttempt struct {
 	CreatedAt time.Time `gorm:"autoCreateTime;column:created_at"`
 }
 
-type UserActivationToken struct {
+type UserTokens struct {
 	Id        int       `gorm:"primarykey;size:16"`
+	Type      int8      `gorm:"column:type;"`
 	UserId    int       `gorm:"column:user_id;size:16"`
 	Token     string    `gorm:"column:token;size:255"`
-	Status    int       `gorm:"column:status;size:16"`
-	CreatedAt time.Time `gorm:"autoCreateTime;column:created_at"`
-	ExpiresAt time.Time `gorm:"column:expires_at"`
-}
-
-type UserPasswordReset struct {
-	Id        int       `gorm:"primarykey;size:16"`
-	UserId    int       `gorm:"column:user_id;size:16"`
-	Token     string    `gorm:"column:token;size:255"`
-	Status    int       `gorm:"column:status;size:16;default:1"`
-	ExpiresAt time.Time `gorm:"column:expires_at"`
-	CreatedAt time.Time `gorm:"autoCreateTime;column:created_at"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime;column:updated_at"`
-}
-
-type UserRefreshToken struct {
-	Id        int       `gorm:"primarykey;size:16"`
-	UserId    int       `gorm:"column:user_id;size:16"`
-	Token     string    `gorm:"column:token;size:1055"`
 	Revoked   bool      `gorm:"column:revoked"`
-	ExpiresAt time.Time `gorm:"column:expires_at"`
 	CreatedAt time.Time `gorm:"autoCreateTime;column:created_at"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime;column:updated_at"`
+	ExpiresAt time.Time `gorm:"column:expires_at"`
 }
