@@ -54,7 +54,7 @@ func (m *MySQL) CreateUser(ctx context.Context, userData domain.User) (int, erro
 func (m *MySQL) GetUserByUserID(ctx context.Context, userID int) (domain.User, error) {
 	var userData domain.User
 	// Select specific user fields to reduce data fetching overhead
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "email", "phone", "name", "state", "status").First(&userData, userID)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "email", "email_verified", "phone", "phone_verified", "name", "state", "status").First(&userData, userID)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no user found
 	}
@@ -65,7 +65,7 @@ func (m *MySQL) GetUserByUserID(ctx context.Context, userID int) (domain.User, e
 func (m *MySQL) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
 	var userData domain.User
 	// Select specific fields for user data fetching
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "email", "phone", "name", "state", "status").Where("email = ?", email).First(&userData)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "email", "email_verified", "phone", "phone_verified", "name", "state", "status").Where("email = ?", email).First(&userData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no user found
 	}
@@ -76,7 +76,7 @@ func (m *MySQL) GetUserByEmail(ctx context.Context, email string) (domain.User, 
 func (m *MySQL) GetUserByPhone(ctx context.Context, phone string) (domain.User, error) {
 	var userData domain.User
 	// Select specific fields for user data fetching
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "name", "state", "status").Where("phone = ?", phone).First(&userData)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "email", "email_verified", "phone", "phone_verified", "name", "state", "status").Where("phone = ?", phone).First(&userData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no user found
 	}
@@ -87,7 +87,18 @@ func (m *MySQL) GetUserByPhone(ctx context.Context, phone string) (domain.User, 
 func (m *MySQL) GetUserByEmailOrPhone(ctx context.Context, email, phone string) (domain.User, error) {
 	var userData domain.User
 	// Select specific fields for user data fetching
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "email", "phone", "name", "state", "status").Where("email = ? or phone = ?", email, phone).First(&userData)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "email", "email_verified", "phone", "phone_verified", "name", "state", "status").Where("email = ? or phone = ?", email, phone).First(&userData)
+	if result.Error == gorm.ErrRecordNotFound {
+		result.Error = nil // Return nil error if no user found
+	}
+	return userData, result.Error
+}
+
+// GetUserPasswordByUserID retrieves a user record by their userID.
+func (m *MySQL) GetUserPasswordByUserID(ctx context.Context, userID int) (domain.User, error) {
+	var userData domain.User
+	// Select specific fields for user data fetching
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "password", "salt").Where("id =? ", userID).First(&userData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no user found
 	}
@@ -129,14 +140,17 @@ func (m *MySQL) UpdatePassword(ctx context.Context, userID int, password string)
 	return nil
 }
 
-// UpdateUserStatus updates the status of a user by their user ID.
-func (m *MySQL) UpdateUserStatus(ctx context.Context, userID int, status int) error {
-	// Update the status for the user based on their ID
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Where("id = ?", userID).Update("status", status)
+func (m *MySQL) UpdateEmailVerfied(ctx context.Context, userID int) error {
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Where("id = ?", userID).Update("email_verfied", true)
 	return result.Error
 }
 
-// CreateToken creates a new user activation token record.
+func (m *MySQL) UpdatePhoneVerfied(ctx context.Context, userID int) error {
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Where("id = ?", userID).Update("phone_verfied", true)
+	return result.Error
+}
+
+// CreateToken creates a new user verify token record.
 func (m *MySQL) CreateToken(ctx context.Context, tokenData domain.UserTokens) (int, error) {
 	// Create and store new token record
 	result := m.dialer.WithContext(ctx).Model(&domain.UserTokens{}).Create(&tokenData)

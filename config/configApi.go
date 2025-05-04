@@ -10,11 +10,11 @@ type Api interface {
 	GetUserRegisterEnabled() bool
 	GetUserRegisterProperties() (string, string)
 
-	GetUserActivationEnabled() bool
-	GetUserActivationProperties() (string, string)
+	GetUserVerifyEnabled() bool
+	GetUserVerifyProperties() (string, string)
 
-	GetUserResendActivationEnabled() bool
-	GetUserResendActivationProperties() (string, string)
+	GetUserResendVerificationEnabled() bool
+	GetUserResendVerificationProperties() (string, string)
 
 	GetUserForgotPasswordEnabled() bool
 	GetUserForgotPasswordProperties() (string, string)
@@ -62,24 +62,24 @@ func (a api) GetUserRegisterProperties() (string, string) {
 	return apiData.Method, apiData.Route
 }
 
-func (a api) GetUserActivationEnabled() bool {
+func (a api) GetUserVerifyEnabled() bool {
 
-	return a.UserActivation.Enabled
+	return a.UserVerify.Enabled
 }
 
-func (a api) GetUserActivationProperties() (string, string) {
-	apiData := a.UserActivation
+func (a api) GetUserVerifyProperties() (string, string) {
+	apiData := a.UserVerify
 
 	return apiData.Method, apiData.Route
 }
 
-func (a api) GetUserResendActivationEnabled() bool {
+func (a api) GetUserResendVerificationEnabled() bool {
 
-	return a.UserResendActivation.Enabled
+	return a.UserResendVerification.Enabled
 }
 
-func (a api) GetUserResendActivationProperties() (string, string) {
-	apiData := a.UserResendActivation
+func (a api) GetUserResendVerificationProperties() (string, string) {
+	apiData := a.UserResendVerification
 
 	return apiData.Method, apiData.Route
 }

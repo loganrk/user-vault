@@ -41,15 +41,15 @@ type logger struct {
 }
 
 type api struct {
-	UserLogin            apiData `mapstructure:"userLogin"`
-	UserOAuthLogin       apiData `mapstructure:"userOAuthLogin"`
-	UserRegister         apiData `mapstructure:"userRegister"`
-	UserActivation       apiData `mapstructure:"userActivation"`
-	UserResendActivation apiData `mapstructure:"userResendActivation"`
-	UserForgotPassword   apiData `mapstructure:"userForgotPassword"`
-	UserPasswordReset    apiData `mapstructure:"userPasswordReset"`
-	UserRefreshToken     apiData `mapstructure:"userRefreshToken"`
-	UserLogout           apiData `mapstructure:"userLogout"`
+	UserLogin              apiData `mapstructure:"userLogin"`
+	UserOAuthLogin         apiData `mapstructure:"userOAuthLogin"`
+	UserRegister           apiData `mapstructure:"userRegister"`
+	UserVerify             apiData `mapstructure:"userVerify"`
+	UserResendVerification apiData `mapstructure:"userResendVerification"`
+	UserForgotPassword     apiData `mapstructure:"userForgotPassword"`
+	UserPasswordReset      apiData `mapstructure:"userPasswordReset"`
+	UserRefreshToken       apiData `mapstructure:"userRefreshToken"`
+	UserLogout             apiData `mapstructure:"userLogout"`
 }
 type apiData struct {
 	Enabled bool   `mapstructure:"enabled"`
@@ -61,9 +61,9 @@ type user struct {
 	MaxLoginAttempt           int `mapstructure:"maxLoginAttempt"`
 	LoginAttemptSessionPeriod int `mapstructure:"loginAttemptSessionPeriod"`
 	PasswordHashCost          int `mapstructure:"passwordHashCost"`
-	Activation                struct {
+	Verification              struct {
 		TokenExpiry int `mapstructure:"tokenExpiry"`
-	} `mapstructure:"activation"`
+	} `mapstructure:"verification"`
 	PasswordReset struct {
 		TokenExpiry int `mapstructure:"tokenExpiry"`
 	} `mapstructure:"passwordReset"`
@@ -87,7 +87,7 @@ type tokenJWT struct {
 type kafka struct {
 	Brokers []string `mapstructure:"brokers"`
 	Topics  struct {
-		UserActivation    string `mapstructure:"userActivation"`
+		UserVerify        string `mapstructure:"userVerify"`
 		UserPasswordReset string `mapstructure:"userPasswordReset"`
 	} `mapstructure:"topics"`
 	ClientID string `mapstructure:"clientID"`

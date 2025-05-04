@@ -42,5 +42,5 @@ func (a *oauthAdapter) verifyGoogle(ctx context.Context, token string) (string, 
 	givenName, _ := payload.Claims["given_name"].(string)
 	familyName, _ := payload.Claims["family_name"].(string)
 
-	return email, givenName + "" + familyName
+	return email, givenName + "" + familyName, nil
 }

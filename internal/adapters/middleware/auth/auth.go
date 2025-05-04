@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -80,6 +81,11 @@ func (a *auth) ValidateRefreshToken() http.Handler {
 			http.Error(w, "token is expired", http.StatusBadRequest)
 			return
 		}
+
+		ctx := context.WithValue(r.Context(), "userID", userid)
+		r = r.WithContext(ctx)
+
+		// userID := r.Context().Value("userID")
 
 	})
 }

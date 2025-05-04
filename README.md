@@ -1,6 +1,6 @@
 # User Vault - Secure User Authentication System
 
-User Vault is a Go-based microservice for secure and scalable user authentication. It supports full account lifecycle operations like registration, login, logout, password reset, token validation, and account activation, with a clean hexagonal architecture.
+User Vault is a Go-based microservice for secure and scalable user authentication. It supports full account lifecycle operations like registration, login, logout, password reset, token validation, and account verification, with a clean hexagonal architecture.
 
 The project is structured using a clean **Hexagonal Architecture** to ensure maintainability and testability.
 
@@ -19,11 +19,11 @@ Detailed documentation is available in the [Wiki](https://github.com/loganrk/use
 
 ## Features
 
-- ✅ User Registration with Activation Email  
+- ✅ User Registration with Verification Email  
 - 🔐 Secure Password Hashing using bcrypt + salt  
 - 🔑 JWT Access and Refresh Token Authentication (HS256/RS256)  
 - 🔁 Refresh Token Rotation and Validation  
-- 📧 Kafka-based Email Delivery for Account Activation and Password Reset  
+- 📧 Kafka-based Email Delivery for Account Verification and Password Reset  
 - 🧪 Validator-Based Request Validation (GET or POST)  
 - 📦 Hexagonal Architecture with Domain-Driven Design  
 - 🧱 Modular Adapters for DB, Messaging, Email, Tokens, Logging  
@@ -67,7 +67,7 @@ go run main.go
 | POST/GET | `/api/v1/forgot-password`   | Send password reset link            |
 | POST/GET | `/api/v1/reset-password`    | Reset password using token          |
 | POST/GET | `/api/v1/refresh-token`     | Validate and rotate refresh token   |
-| POST/GET | `/api/v1/resend-activation` | Resend activation email             |
+| POST/GET | `/api/v1/resend-verification` | Resend verification email             |
 
 > 🔒 All routes support both `application/json` POST and query-based GET formats.
 

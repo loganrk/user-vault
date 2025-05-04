@@ -129,7 +129,7 @@ func initMessager(appName string, conf config.Kafka) (port.Messager, error) {
 	// Pass the individual Kafka configuration parameters to the Message.New function
 	return Message.New(appName,
 		brokers,
-		conf.GetActivationTopic(),
+		conf.GetVerificationTopic(),
 		conf.GetPasswordResetTopic(),
 		conf.GetClientID(),
 		conf.GetVersion(),

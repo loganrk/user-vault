@@ -16,7 +16,7 @@ type UserRefreshTokenClientResponse struct {
 	RefreshToken     string `json:"refresh_token,omitempty"`
 }
 
-type UserActivationClientResponse struct {
+type UserVerifyClientResponse struct {
 	Message string `json:"message"`
 }
 
@@ -36,6 +36,6 @@ type UserRegisterClientResponse struct {
 	Message string `json:"message"`
 }
 
-type UserResendActivationClientResponse struct {
+type UserResendVerificationClientResponse struct {
 	Message string `json:"message"`
 }

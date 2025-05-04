@@ -1,7 +1,7 @@
 package config
 
 type Kafka interface {
-	GetActivationTopic() string
+	GetVerificationTopic() string
 	GetPasswordResetTopic() string
 	GetClientID() string
 	GetBrokers() []string
@@ -9,12 +9,12 @@ type Kafka interface {
 	GetRetryMax() int
 }
 
-func (k kafka) GetActivationTopic() string {
-	return k.Topics.UserActivation
+func (k kafka) GetVerificationTopic() string {
+	return k.Topics.UserVerify
 }
 
 func (k kafka) GetPasswordResetTopic() string {
-	return k.Topics.UserActivation
+	return k.Topics.UserVerify
 }
 
 func (k kafka) GetClientID() string {

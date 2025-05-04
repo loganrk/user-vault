@@ -21,7 +21,7 @@ kafka:
   brokers:
     - "g7kd8v84u4d..." # Encrypted kafka host
   topics:
-    userActivation: "user_activation"
+    userVerify: "user_verification"
     userPasswordReset: "user_password_reset"
   clientID: "user-vault"
   version: "2.6.0"
@@ -41,9 +41,9 @@ api:
     enabled: true
     route: "/api/v1/register"
     method: "POST"
-  userActivation:
+  userVerify:
     enabled: true
-    route: "/api/v1/activate"
+    route: "/api/v1/verify"
     method: "POST"
   userLogout:
     enabled: true
@@ -61,9 +61,9 @@ api:
     enabled: true
     route: "/api/v1/refresh-token"
     method: "POST"
-  userResendActivation:
+  userResendVerification:
     enabled: true
-    route: "/api/v1/resend-activation"
+    route: "/api/v1/resend-verification"
     method: "POST"
 
 store:
@@ -79,8 +79,8 @@ user:
   maxLoginAttempt: 5  # Maximum allowed failed login attempts before lockout
   loginAttemptSessionPeriod: 60  # Time period (in seconds) to count failed attempts
   passwordHashCost: 12  # bcrypt cost factor for password hashing
-  activation:
-    tokenExpiry: 1800  # Expiry time for activation token in seconds (30 min)
+  verification:
+    tokenExpiry: 1800  # Expiry time for verification token in seconds (30 min)
   passwordReset:
     tokenExpiry: 1800  # Expiry time for reset token in seconds (30 min)
   refreshToken:

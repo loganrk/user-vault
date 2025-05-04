@@ -17,8 +17,8 @@ type UserSvr interface {
 	Logout(ctx context.Context, req domain.UserLogoutClientRequest) (domain.UserLogoutClientResponse, domain.ErrorRes)
 	Register(ctx context.Context, req domain.UserRegisterClientRequest) (domain.UserRegisterClientResponse, domain.ErrorRes)
 
-	ActivateUser(ctx context.Context, req domain.UserActivationClientRequest) (domain.UserActivationClientResponse, domain.ErrorRes)
-	ResendActivation(ctx context.Context, req domain.UserResendActivationClientRequest) (domain.UserResendActivationClientResponse, domain.ErrorRes)
+	VerifyUser(ctx context.Context, req domain.UserVerifyClientRequest) (domain.UserVerifyClientResponse, domain.ErrorRes)
+	ResendVerification(ctx context.Context, req domain.UserResendVerificationClientRequest) (domain.UserResendVerificationClientResponse, domain.ErrorRes)
 	ForgotPassword(ctx context.Context, req domain.UserForgotPasswordClientRequest) (domain.UserForgotPasswordClientResponse, domain.ErrorRes)
 	ResetPassword(ctx context.Context, req domain.UserResetPasswordClientRequest) (domain.UserResetPasswordClientResponse, domain.ErrorRes)
 
