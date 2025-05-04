@@ -34,7 +34,6 @@ func New(appName string, brokers []string, verificationTopic, passwordResetTopic
 	// Enable delivery reporting and retry settings
 	kConfig.Producer.Return.Successes = true
 	kConfig.Producer.Retry.Max = retryMax
-
 	// Create Kafka producer
 	producer, err := sarama.NewSyncProducer(brokers, kConfig)
 	if err != nil {

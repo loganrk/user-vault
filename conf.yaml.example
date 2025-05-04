@@ -21,8 +21,8 @@ kafka:
   brokers:
     - "g7kd8v84u4d..." # Encrypted kafka host
   topics:
-    userVerify: "user_verification"
-    userPasswordReset: "user_password_reset"
+    userVerify: "user-verification"
+    userPasswordReset: "user-password-reset"
   clientID: "user-vault"
   version: "2.6.0"
   retryMax: 5

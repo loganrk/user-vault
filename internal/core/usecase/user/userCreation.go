@@ -152,9 +152,9 @@ func (u *userusecase) ResendVerification(ctx context.Context, req domain.UserRes
 		return domain.UserResendVerificationClientResponse{}, errRes
 	}
 
-	tokenType := constant.TOKEN_TYPE_PASSWORD_RESET_EMAIL
+	tokenType := constant.TOKEN_TYPE_ACTIVATION_EMAIL
 	if req.Phone != "" {
-		tokenType = constant.TOKEN_TYPE_PASSWORD_RESET_PHONE
+		tokenType = constant.TOKEN_TYPE_ACTIVATION_PHONE
 	}
 
 	tokenId, token, err := u.generateVerificationToken(ctx, tokenType, userData.Id)

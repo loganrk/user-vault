@@ -141,12 +141,12 @@ func (m *MySQL) UpdatePassword(ctx context.Context, userID int, password string)
 }
 
 func (m *MySQL) UpdateEmailVerfied(ctx context.Context, userID int) error {
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Where("id = ?", userID).Update("email_verfied", true)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Where("id = ?", userID).Update("email_verified", true)
 	return result.Error
 }
 
 func (m *MySQL) UpdatePhoneVerfied(ctx context.Context, userID int) error {
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Where("id = ?", userID).Update("phone_verfied", true)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Where("id = ?", userID).Update("phone_verified", true)
 	return result.Error
 }
 
@@ -171,7 +171,7 @@ func (m *MySQL) GetUserToken(ctx context.Context, tokenType int8, token string) 
 func (m *MySQL) GetUserLastTokenByUserId(ctx context.Context, tokenType int8, userId int) (domain.UserTokens, error) {
 	var tokenData domain.UserTokens
 	// Query the refresh token data by token value
-	result := m.dialer.WithContext(ctx).Model(&domain.UserTokens{}).Select("id", "user_id", "expires_at", "revoked").Where("type = ? and user_id = ?", tokenType, userId).Last(&tokenData)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserTokens{}).Select("id", "user_id", "token", "expires_at", "revoked").Where("type = ? and user_id = ?", tokenType, userId).Last(&tokenData)
 
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no token found
@@ -189,6 +189,6 @@ func (m *MySQL) RevokeToken(ctx context.Context, id int) error {
 // RevokeAllTokens marks a token as revoked in the database.
 func (m *MySQL) RevokeAllTokens(ctx context.Context, tokenType int8, userID int) error {
 	// Mark the specified token as revoked for the user
-	result := m.dialer.WithContext(ctx).Model(&domain.UserTokens{}).Where("type = ? and user_id", tokenType, userID).Update("revoked", true)
+	result := m.dialer.WithContext(ctx).Model(&domain.UserTokens{}).Where("type = ? and user_id =?", tokenType, userID).Update("revoked", true)
 	return result.Error
 }
