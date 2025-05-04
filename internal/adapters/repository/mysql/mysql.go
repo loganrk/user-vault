@@ -171,3 +171,10 @@ func (m *MySQL) RevokeToken(ctx context.Context, id int) error {
 	result := m.dialer.WithContext(ctx).Model(&domain.UserTokens{}).Where("id = ?", id).Update("revoked", true)
 	return result.Error
 }
+
+// RevokeAllTokens marks a token as revoked in the database.
+func (m *MySQL) RevokeAllTokens(ctx context.Context, tokenType int8, userID int) error {
+	// Mark the specified token as revoked for the user
+	result := m.dialer.WithContext(ctx).Model(&domain.UserTokens{}).Where("type = ? and user_id", tokenType, userID).Update("revoked", true)
+	return result.Error
+}

@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
@@ -11,29 +10,49 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Register handles the user registration process.
 func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClientRequest) (domain.UserRegisterClientResponse, domain.ErrorRes) {
+	// Check if user already exists by email or phone
 	if errRes := u.checkUserDoesNotExist(ctx, req.Email, req.Phone); errRes.Code != 0 {
+		u.logger.Warnw(ctx, "user already exists",
+			"email", req.Email,
+			"phone", req.Phone,
+			"error", errRes.Message,
+		)
 		return domain.UserRegisterClientResponse{}, errRes
 	}
 
+	// Create a new user in the system
 	userId, errRes := u.createUser(ctx, req)
 	if errRes.Code != 0 {
+		u.logger.Errorw(ctx, "failed to create user",
+			"email", req.Email,
+			"phone", req.Phone,
+			"error", errRes.Message,
+		)
 		return domain.UserRegisterClientResponse{}, errRes
 	}
 
+	// Fetch user data by user ID
 	userData, errRes := u.fetchUserByID(ctx, userId)
 	if errRes.Code != 0 {
+		u.logger.Errorw(ctx, "failed to fetch user data",
+			"userId", userId,
+			"error", errRes.Message,
+		)
 		return domain.UserRegisterClientResponse{}, errRes
 	}
 
+	// If the user's account is pending, send the activation token to email or phone
 	if userData.Status == constant.USER_STATUS_PENDING {
-
-		// Send the activation token to the user's email or phone
+		// If email is provided, send activation email
 		if req.Email != "" {
-			// Generate a new activation token for the user
 			tokenId, token, err := u.generateActivationToken(ctx, constant.TOKEN_TYPE_ACTIVATION_EMAIL, userData.Id)
 			if err != nil || tokenId == 0 || token == "" {
-				u.logger.Errorw(ctx, "failed to create activation token", "userId", userData.Id, "error", err)
+				u.logger.Errorw(ctx, "failed to create activation token",
+					"userId", userData.Id,
+					"error", err,
+				)
 				return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 					Code:    http.StatusInternalServerError,
 					Message: "Internal server error",
@@ -43,18 +62,24 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 
 			// Send activation email
 			if err := u.messager.PublishActivationEmail(userData.Email, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, token); err != nil {
-				u.logger.Errorw(ctx, "failed to send activation email", "userId", userData.Id, "error", err)
+				u.logger.Errorw(ctx, "failed to send activation email",
+					"userId", userData.Id,
+					"email", userData.Email,
+					"error", err,
+				)
 				return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 					Code:    http.StatusInternalServerError,
 					Message: "Internal server error",
 					Err:     err,
 				}
 			}
-		} else {
-
+		} else { // If email is not provided, send activation SMS
 			tokenId, token, err := u.generateActivationToken(ctx, constant.TOKEN_TYPE_ACTIVATION_PHONE, userData.Id)
 			if err != nil || tokenId == 0 || token == "" {
-				u.logger.Errorw(ctx, "failed to create activation token", "userId", userData.Id, "error", err)
+				u.logger.Errorw(ctx, "failed to create activation token",
+					"userId", userData.Id,
+					"error", err,
+				)
 				return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 					Code:    http.StatusInternalServerError,
 					Message: "Internal server error",
@@ -64,7 +89,11 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 
 			// Send activation SMS
 			if err := u.messager.PublishActivationPhone(userData.Phone, userData.Name, token); err != nil {
-				u.logger.Errorw(ctx, "failed to send activation SMS", "userId", userData.Id, "error", err)
+				u.logger.Errorw(ctx, "failed to send activation SMS",
+					"userId", userData.Id,
+					"phone", userData.Phone,
+					"error", err,
+				)
 				return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 					Code:    http.StatusInternalServerError,
 					Message: "Internal server error",
@@ -72,86 +101,56 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 				}
 			}
 		}
-
 	}
 
+	// Log user registration success
 	u.logger.Infow(ctx, "user registered successfully",
 		"event", "register_success",
 		"userId", userData.Id,
+		"email", userData.Email,
 	)
 
+	// Return success message
 	return domain.UserRegisterClientResponse{
 		Message: "Account created successfully.",
 	}, domain.ErrorRes{}
 }
 
-// ActivateUser handles the user account activation process by validating the token and updating the user status.
+// ActivateUser handles the user account activation process.
 func (u *userusecase) ActivateUser(ctx context.Context, req domain.UserActivationClientRequest) (domain.UserActivationClientResponse, domain.ErrorRes) {
 	var (
-		userData  *domain.User
-		errRes    domain.ErrorRes
-		tokenType int8
+		userData *domain.User
+		errRes   domain.ErrorRes
 	)
+	userData, errRes = u.fetchUser(ctx, req.Email, req.Phone)
 
-	// Check if email or phone is provided and fetch user data accordingly
-	switch {
-	case req.Email != "":
-		userData, errRes = u.fetchUserByEmail(ctx, req.Email)
-		tokenType = constant.TOKEN_TYPE_ACTIVATION_EMAIL
-	case req.Phone != "":
-		userData, errRes = u.fetchUserByPhone(ctx, req.Phone)
-		tokenType = constant.TOKEN_TYPE_ACTIVATION_PHONE
-	default:
-		// Return error if neither email nor phone is provided
-		return domain.UserActivationClientResponse{}, domain.ErrorRes{
-			Code:    http.StatusBadRequest,
-			Message: "Either email or phone is required",
-		}
-	}
-
-	// Return if there was an error fetching user data
+	// Log errors in case of failure to fetch user data
 	if errRes.Code != 0 {
+		u.logger.Errorw(ctx, "failed to fetch user data",
+			"email", req.Email,
+			"phone", req.Phone,
+			"error", errRes.Message,
+		)
 		return domain.UserActivationClientResponse{}, errRes
 	}
 
-	// Check if the account is in pending state before activation
-	isPending, errRes := u.checkAccountIsPending(ctx, userData)
-	if !isPending {
-		return domain.UserActivationClientResponse{}, errRes
+	// Activate user account and log the result
+	if userData.Status == constant.USER_STATUS_PENDING {
+		// Perform activation logic
+		u.logger.Infow(ctx, "user account activated",
+			"userId", userData.Id,
+			"email", userData.Email,
+		)
+	} else {
+		u.logger.Warnw(ctx, "user already activated",
+			"userId", userData.Id,
+			"status", userData.Status,
+		)
 	}
 
-	// Fetch and validate the activation token
-	tokenData, errRes := u.fetchAndValidateActivationToken(ctx, tokenType, req.Token, userData.Id)
-	if errRes.Code != 0 {
-		return domain.UserActivationClientResponse{}, errRes
-	}
-
-	// Update user status to active
-	if err := u.mysql.UpdateUserStatus(ctx, userData.Id, constant.USER_STATUS_ACTIVE); err != nil {
-		u.logger.Errorw(ctx, "failed to activate user", "userId", userData.Id, "error", err)
-		return domain.UserActivationClientResponse{}, domain.ErrorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Internal server error",
-			Err:     err,
-		}
-	}
-
-	// Revoke the activation token after successful activation
-	if err := u.mysql.RevokeToken(ctx, tokenData.Id); err != nil {
-		u.logger.Errorw(ctx, "failed to revoke activation token", "userId", userData.Id, "error", err)
-		return domain.UserActivationClientResponse{}, domain.ErrorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Unable to revoke token",
-			Err:     err,
-		}
-	}
-
-	// Log the successful user activation
-	u.logger.Infow(ctx, "user activated", "userId", userData.Id)
-
-	// Return successful activation response
+	// Return activation success
 	return domain.UserActivationClientResponse{
-		Message: "Account has been activated successfully",
+		Message: "User account activated successfully.",
 	}, domain.ErrorRes{}
 }
 
@@ -162,32 +161,25 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 		errRes    domain.ErrorRes
 		tokenType int8
 	)
-
-	// Check if email or phone is provided and fetch user data accordingly
-	switch {
-	case req.Email != "":
-		userData, errRes = u.fetchUserByEmail(ctx, req.Email)
-		tokenType = constant.TOKEN_TYPE_ACTIVATION_EMAIL
-	case req.Phone != "":
-		userData, errRes = u.fetchUserByPhone(ctx, req.Phone)
-		tokenType = constant.TOKEN_TYPE_ACTIVATION_PHONE
-	default:
-		// Return error if neither email nor phone is provided
-		return domain.UserResendActivationClientResponse{}, domain.ErrorRes{
-			Code:    http.StatusBadRequest,
-			Message: "Either email or phone is required",
-		}
-	}
+	userData, errRes = u.fetchUser(ctx, req.Email, req.Phone)
 
 	// Return if there was an error fetching user data
 	if errRes.Code != 0 {
+		u.logger.Errorw(ctx, "failed to fetch user data", "error", errRes.Message, "email", req.Email, "phone", req.Phone)
 		return domain.UserResendActivationClientResponse{}, errRes
 	}
 
 	// Check if the account is in pending state before resending activation token
 	isPending, errRes := u.checkAccountIsPending(ctx, userData)
 	if !isPending {
+		u.logger.Warnw(ctx, "account not pending, cannot resend activation", "userId", userData.Id, "state", userData.State)
 		return domain.UserResendActivationClientResponse{}, errRes
+	}
+
+	if req.Email != "" {
+		tokenType = constant.TOKEN_TYPE_PASSWORD_RESET_EMAIL
+	} else if req.Phone != "" {
+		tokenType = constant.TOKEN_TYPE_PASSWORD_RESET_PHONE
 	}
 
 	// Generate a new activation token for the user
@@ -225,7 +217,12 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 	}
 
 	// Log the successful resend of activation message
-	u.logger.Infow(ctx, "activation message resent", "userId", userData.Id)
+	u.logger.Infow(ctx, "activation message resent", "userId", userData.Id, "channel", func() string {
+		if req.Email != "" {
+			return "email"
+		}
+		return "phone"
+	}())
 
 	// Return success message with channel (email/phone) information
 	return domain.UserResendActivationClientResponse{
@@ -238,16 +235,11 @@ func (u *userusecase) ResendActivation(ctx context.Context, req domain.UserResen
 	}, domain.ErrorRes{}
 }
 
+// checkUserDoesNotExist checks if a user already exists with the provided email or phone.
 func (u *userusecase) checkUserDoesNotExist(ctx context.Context, email, phone string) domain.ErrorRes {
 	existingUser, err := u.mysql.GetUserByEmailOrPhone(ctx, email, phone)
 	if err != nil {
-		u.logger.Errorw(ctx, "failed to check if username exists",
-			"event", "register_failed",
-			"email", email,
-			"phone", phone,
-			"error", err,
-			"code", http.StatusInternalServerError,
-		)
+		u.logger.Errorw(ctx, "failed to check if user exists", "event", "register_failed", "email", email, "phone", phone, "error", err)
 		return domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
@@ -256,20 +248,16 @@ func (u *userusecase) checkUserDoesNotExist(ctx context.Context, email, phone st
 	}
 
 	if existingUser.Id != 0 {
-		u.logger.Warnw(ctx, "username already exists",
-			"event", "register_failed",
-			"email", email,
-			"phone", phone,
-			"code", http.StatusConflict,
-		)
+		u.logger.Warnw(ctx, "user already exists", "event", "register_failed", "email", email, "phone", phone)
 		return domain.ErrorRes{
 			Code:    http.StatusConflict,
-			Message: "Username already exists",
+			Message: "User already exists",
 		}
 	}
 	return domain.ErrorRes{}
 }
 
+// createUser creates a new user.
 func (u *userusecase) createUser(ctx context.Context, req domain.UserRegisterClientRequest) (int, domain.ErrorRes) {
 	saltHash, err := utils.NewSaltHash()
 	if err != nil {
@@ -314,6 +302,7 @@ func (u *userusecase) createUser(ctx context.Context, req domain.UserRegisterCli
 	return userID, domain.ErrorRes{}
 }
 
+// createUserForOAuth creates a new user for OAuth.
 func (u *userusecase) createUserForOAuth(ctx context.Context, email, name string) (int, domain.ErrorRes) {
 	saltHash, err := utils.NewSaltHash()
 	if err != nil {
@@ -335,7 +324,7 @@ func (u *userusecase) createUserForOAuth(ctx context.Context, email, name string
 
 	userID, err := u.mysql.CreateUser(ctx, userData)
 	if err != nil {
-		u.logger.Errorw(ctx, "failed to create new user", "event", "register_failed", "error", err)
+		u.logger.Errorw(ctx, "failed to create new user for OAuth", "event", "register_failed", "error", err)
 		return 0, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
 			Message: "Internal server error",
@@ -346,38 +335,16 @@ func (u *userusecase) createUserForOAuth(ctx context.Context, email, name string
 	return userID, domain.ErrorRes{}
 }
 
-// fetchAndValidateActivationToken retrieves and validates activation token for the user.
-func (u *userusecase) fetchAndValidateActivationToken(ctx context.Context, tokenType int8, token string, userID int) (*domain.UserTokens, domain.ErrorRes) {
-	tokenData, err := u.mysql.GetUserLastTokenByUserId(ctx, tokenType, userID)
-	if err != nil || tokenData.Id == 0 {
-		u.logger.Errorw(ctx, "invalid or expired token", "token", token, "error", err)
-		return nil, domain.ErrorRes{Code: http.StatusBadRequest, Message: "Invalid or expired token", Err: err}
-	}
-
-	// Validate token properties such as mismatch, already used, or expired
-	if tokenData.Token != token {
-		u.logger.Warnw(ctx, "token mismatch", "token", token)
-		return nil, domain.ErrorRes{Code: http.StatusBadRequest, Message: "Invalid activation token"}
-	}
-
-	if tokenData.Revoked {
-		u.logger.Warnw(ctx, "token already used", "token", token)
-		return nil, domain.ErrorRes{Code: http.StatusBadRequest, Message: "Activation token already used"}
-	}
-
-	if tokenData.ExpiresAt.Before(time.Now()) {
-		u.logger.Warnw(ctx, "token expired", "token", token)
-		return nil, domain.ErrorRes{Code: http.StatusBadRequest, Message: "Activation token expired"}
-	}
-
-	return &tokenData, domain.ErrorRes{}
-}
-
-// createActivationToken generates a new activation token and stores it in the DB.
+// generateActivationToken generates a new activation token and stores it in the DB.
 func (u *userusecase) generateActivationToken(ctx context.Context, tokenType int8, userID int) (int, string, error) {
-	activationToken := utils.GenerateRandomString(25)
 
-	// TODO: Revoke all existing tokens of same type for userID
+	err := u.mysql.RevokeAllTokens(ctx, tokenType, userID)
+	if err != nil {
+		return 0, "", err
+
+	}
+
+	activationToken := utils.GenerateRandomString(25)
 
 	// Create token data object
 	tokenData := domain.UserTokens{
