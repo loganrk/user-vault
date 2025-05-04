@@ -77,18 +77,20 @@ func (u *userusecase) getPasswordResetTokenExpiry() time.Time {
 func (u *userusecase) fetchUserByID(ctx context.Context, userID int) (*domain.User, domain.ErrorRes) {
 	userData, err := u.mysql.GetUserByUserID(ctx, userID)
 	if err != nil {
-		u.logger.Errorw(ctx, "failed to fetch user data by ID", "event", "fetch_user_by_id_failed", "userId", userID, "error", err, "code", http.StatusInternalServerError)
 		return nil, domain.ErrorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to retrieve user",
-			Err:     err,
+			Code:      http.StatusInternalServerError,
+			Message:   constant.MessageInternalServerError,
+			Err:       "failed to retrieve user by user id. error = " + err.Error(),
+			Exception: constant.DBException,
 		}
 	}
 
 	if userData.Id == 0 {
 		return nil, domain.ErrorRes{
-			Code:    http.StatusNotFound,
-			Message: "User not found",
+			Code:      http.StatusNotFound,
+			Message:   constant.MessageInvalidApiParameters,
+			Err:       "user not found for user id",
+			Exception: constant.ResourceNotFoundException,
 		}
 	}
 
@@ -107,8 +109,10 @@ func (u *userusecase) fetchUser(ctx context.Context, email, phone string) (*doma
 		userData, errRes = u.fetchUserByPhone(ctx, phone)
 	default:
 		return nil, domain.ErrorRes{
-			Code:    http.StatusBadRequest,
-			Message: "Either email or phone is required",
+			Code:      http.StatusNotFound,
+			Message:   constant.MessageInvalidApiParameters,
+			Err:       "email and phone both are empty",
+			Exception: constant.ResourceNotFoundException,
 		}
 	}
 
@@ -119,18 +123,20 @@ func (u *userusecase) fetchUser(ctx context.Context, email, phone string) (*doma
 func (u *userusecase) fetchUserByEmail(ctx context.Context, email string) (*domain.User, domain.ErrorRes) {
 	userData, err := u.mysql.GetUserByEmail(ctx, email)
 	if err != nil {
-		u.logger.Errorw(ctx, "failed to fetch user by email", "event", "fetch_user_by_email_failed", "email", email, "error", err, "code", http.StatusInternalServerError)
 		return nil, domain.ErrorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to retrieve user by email",
-			Err:     err,
+			Code:      http.StatusInternalServerError,
+			Message:   constant.MessageInternalServerError,
+			Err:       "failed to retrieve user by user email. error = " + err.Error(),
+			Exception: constant.DBException,
 		}
 	}
 
 	if userData.Id == 0 {
 		return nil, domain.ErrorRes{
-			Code:    http.StatusNotFound,
-			Message: "No user found with this email",
+			Code:      http.StatusNotFound,
+			Message:   constant.MessageInvalidApiParameters,
+			Err:       "user not found for user email",
+			Exception: constant.ResourceNotFoundException,
 		}
 	}
 
@@ -141,18 +147,20 @@ func (u *userusecase) fetchUserByEmail(ctx context.Context, email string) (*doma
 func (u *userusecase) fetchUserByPhone(ctx context.Context, phone string) (*domain.User, domain.ErrorRes) {
 	userData, err := u.mysql.GetUserByPhone(ctx, phone)
 	if err != nil {
-		u.logger.Errorw(ctx, "failed to fetch user by phone", "event", "fetch_user_by_phone_failed", "phone", phone, "error", err, "code", http.StatusInternalServerError)
 		return nil, domain.ErrorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to retrieve user by phone",
-			Err:     err,
+			Code:      http.StatusInternalServerError,
+			Message:   constant.MessageInternalServerError,
+			Err:       "failed to retrieve user by user phone. error = " + err.Error(),
+			Exception: constant.DBException,
 		}
 	}
 
 	if userData.Id == 0 {
 		return nil, domain.ErrorRes{
-			Code:    http.StatusNotFound,
-			Message: "No user found with this phone number",
+			Code:      http.StatusNotFound,
+			Message:   constant.MessageInvalidApiParameters,
+			Err:       "user not found for user phone",
+			Exception: constant.ResourceNotFoundException,
 		}
 	}
 
@@ -162,12 +170,13 @@ func (u *userusecase) fetchUserByPhone(ctx context.Context, phone string) (*doma
 // checkAccountIsActive verifies if the user's account status is 'ACTIVE'.
 func (u *userusecase) checkAccountIsActive(ctx context.Context, user *domain.User) domain.ErrorRes {
 	if user.Status != constant.USER_STATUS_ACTIVE {
-		u.logger.Warnw(ctx, "account is not active", "event", "inactive_user_check", "userId", user.Id, "status", user.Status, "code", http.StatusForbidden)
 		return domain.ErrorRes{
-			Code:    http.StatusForbidden,
-			Message: "Your account is not active. Please contact support",
+			Code:      http.StatusForbidden,
+			Message:   "account is not active",
+			Exception: constant.ForbiddenException,
 		}
 	}
+
 	return domain.ErrorRes{}
 }
 
@@ -176,38 +185,38 @@ func (u *userusecase) validateUserToken(ctx context.Context, tokenType int8, tok
 	// Fetch the last token for the user from the database using the provided user ID and token type.
 	tokenData, err := u.mysql.GetUserLastTokenByUserId(ctx, tokenType, userID)
 	if err != nil {
-		u.logger.Errorw(ctx, "failed to fetch token", "userID", userID, "token", token, "error", err)
 		return nil, domain.ErrorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to validate token",
-			Err:     err,
+			Code:      http.StatusInternalServerError,
+			Message:   constant.MessageInternalServerError,
+			Err:       "failed to retrieve last token by user id. error = " + err.Error(),
+			Exception: constant.DBException,
 		}
 	}
 
-	// Check if the token is missing or mismatched with the stored token.
-	if tokenData.Id == 0 || tokenData.Token != token {
-		u.logger.Warnw(ctx, "invalid or mismatched token", "userID", userID, "providedToken", token, "storedToken", tokenData.Token)
+	if tokenData.Token != token {
 		return nil, domain.ErrorRes{
-			Code:    http.StatusBadRequest,
-			Message: "Invalid or expired token",
+			Code:      http.StatusBadRequest,
+			Message:   "invalid token",
+			Exception: constant.ValidationException,
 		}
+
 	}
 
 	// Check if the token has been revoked.
 	if tokenData.Revoked {
-		u.logger.Warnw(ctx, "token already used", "userID", userID, "token", token)
 		return nil, domain.ErrorRes{
-			Code:    http.StatusBadRequest,
-			Message: "Token already used",
+			Code:      http.StatusBadRequest,
+			Message:   "token already invoked",
+			Exception: constant.ValidationException,
 		}
 	}
 
 	// Check if the token has expired.
 	if tokenData.ExpiresAt.Before(time.Now()) {
-		u.logger.Warnw(ctx, "token expired", "userID", userID, "token", token, "expiresAt", tokenData.ExpiresAt)
 		return nil, domain.ErrorRes{
-			Code:    http.StatusBadRequest,
-			Message: "Token expired",
+			Code:      http.StatusBadRequest,
+			Message:   "token already expired",
+			Exception: constant.ValidationException,
 		}
 	}
 
@@ -217,15 +226,17 @@ func (u *userusecase) validateUserToken(ctx context.Context, tokenType int8, tok
 func (u *userusecase) isEmailOrPhoneVerified(user *domain.User, email, phone string) domain.ErrorRes {
 	if email != "" && !user.EmailVerified {
 		return domain.ErrorRes{
-			Code:    http.StatusForbidden,
-			Message: "Your email is not verified",
+			Code:      http.StatusForbidden,
+			Message:   "email is not verified",
+			Exception: constant.ForbiddenException,
 		}
 	}
 
 	if phone != "" && !user.PhoneVerified {
 		return domain.ErrorRes{
-			Code:    http.StatusForbidden,
-			Message: "Your phone is not verified",
+			Code:      http.StatusForbidden,
+			Message:   "phone is not verified",
+			Exception: constant.ForbiddenException,
 		}
 	}
 

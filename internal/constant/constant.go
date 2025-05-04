@@ -34,3 +34,19 @@ const (
 	USER_ACTIVATION_EMAIL_SUBJECT     = "Activate your account"
 	USER_PASSWORD_RESET_EMAIL_SUBJECT = "Password reset request"
 )
+
+const (
+	MessageInternalServerError  = "internal server error"
+	MessageInvalidApiParameters = "invalid api parameters"
+
+	DBException               = "DBException"
+	ValidationException       = "ValidationException"
+	NetworkException          = "NetworkException"
+	TimeoutException          = "TimeoutException"
+	TokenException            = "TokenException"
+	AuthenticationException   = "AuthenticationException"
+	AuthorizationException    = "AuthorizationException"
+	ResourceNotFoundException = "ResourceNotFoundException"
+	ForbiddenException        = "ForbiddenException"
+	GenericException          = "GenericException"
+)

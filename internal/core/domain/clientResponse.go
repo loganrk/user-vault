@@ -1,9 +1,10 @@
 package domain
 
 type ErrorRes struct {
-	Code    int
-	Message string
-	Err     error
+	Code      int
+	Message   string
+	Err       string
+	Exception string
 }
 
 type UserLoginClientResponse struct {
