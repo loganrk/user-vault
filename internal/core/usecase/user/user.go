@@ -100,6 +100,28 @@ func (u *userusecase) fetchUserByID(ctx context.Context, userID int) (*domain.Us
 	return &userData, domain.ErrorRes{}
 }
 
+// fetchUser retrieves the user data based on either email or phone number.
+func (u *userusecase) fetchUser(ctx context.Context, email, phone string) (*domain.User, domain.ErrorRes) {
+	var userData *domain.User
+	var errRes domain.ErrorRes
+
+	switch {
+	case email != "":
+		userData, errRes = u.fetchUserByEmail(ctx, email)
+
+	case phone != "":
+		userData, errRes = u.fetchUserByPhone(ctx, phone)
+
+	default:
+		return nil, domain.ErrorRes{
+			Code:    http.StatusBadRequest,
+			Message: "Either email or phone is required",
+		}
+	}
+
+	return userData, errRes
+}
+
 // fetchUserByEmail retrieves a user using the provided email address.
 func (u *userusecase) fetchUserByEmail(ctx context.Context, email string) (*domain.User, domain.ErrorRes) {
 	userData, err := u.mysql.GetUserByEmail(ctx, email)

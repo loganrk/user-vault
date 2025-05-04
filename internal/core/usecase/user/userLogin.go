@@ -18,50 +18,79 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 		userData *domain.User
 		errRes   domain.ErrorRes
 	)
-
-	// Check if email or phone is provided and fetch user data accordingly
-	switch {
-	case req.Email != "":
-		userData, errRes = u.fetchUserByEmail(ctx, req.Email)
-	case req.Phone != "":
-		userData, errRes = u.fetchUserByPhone(ctx, req.Phone)
-	default:
-		// Return error if neither email nor phone is provided
-		return domain.UserLoginClientResponse{}, domain.ErrorRes{
-			Code:    http.StatusBadRequest,
-			Message: "Either email or phone is required",
-		}
-	}
+	userData, errRes = u.fetchUser(ctx, req.Email, req.Phone)
 
 	// Return if there was an error fetching user data
 	if errRes.Code != 0 {
+		u.logger.Warnw(ctx, "User fetch failed",
+			"event", "user_login_failed",
+			"user", req,
+			"error", errRes.Message,
+			"code", errRes.Code,
+		)
 		return domain.UserLoginClientResponse{}, errRes
 	}
 
+	// Check if login attempts limit is reached
 	if errRes := u.blockIfLoginAttemptLimitReached(ctx, userData.Id); errRes.Code != 0 {
+		u.logger.Warnw(ctx, "Login attempt limit reached",
+			"event", "user_login_failed",
+			"userId", userData.Id,
+			"code", errRes.Code,
+			"error", errRes.Message,
+		)
 		return domain.UserLoginClientResponse{}, errRes
 	}
 
+	// Validate password and log attempt
 	if errRes := u.validatePasswordAndLogAttempt(ctx, req.Password, userData.Password, userData.Salt, userData.Id); errRes.Code != 0 {
+		u.logger.Warnw(ctx, "Invalid password attempt",
+			"event", "user_login_failed",
+			"userId", userData.Id,
+			"code", errRes.Code,
+			"error", errRes.Message,
+		)
 		return domain.UserLoginClientResponse{}, errRes
 	}
 
+	// Fetch updated user data to check account status
 	userData, errRes = u.fetchUserByID(ctx, userData.Id)
 	if errRes.Code != 0 {
+		u.logger.Warnw(ctx, "Failed to fetch updated user data",
+			"event", "user_login_failed",
+			"userId", userData.Id,
+			"error", errRes.Message,
+			"code", errRes.Code,
+		)
 		return domain.UserLoginClientResponse{}, errRes
 	}
 
+	// Check if the account is active
 	errRes = u.checkAccountIsActive(ctx, userData)
 	if errRes.Code != 0 {
+		u.logger.Warnw(ctx, "Account inactive",
+			"event", "user_login_failed",
+			"userId", userData.Id,
+			"error", errRes.Message,
+			"code", errRes.Code,
+		)
 		return domain.UserLoginClientResponse{}, errRes
 	}
+
+	// Generate and store refresh token
 	refreshToken, errRes := u.generateAndStoreRefreshToken(ctx, userData.Id)
 	if errRes.Code != 0 {
+		u.logger.Warnw(ctx, "Failed to generate refresh token",
+			"event", "user_login_failed",
+			"userId", userData.Id,
+			"error", errRes.Message,
+			"code", errRes.Code,
+		)
 		return domain.UserLoginClientResponse{}, errRes
 	}
 
 	// Log successful login
-	u.logger.Infow(ctx, "user login successful",
+	u.logger.Infow(ctx, "User login successful",
 		"event", "user_login_success",
 		"userId", userData.Id,
 		"code", http.StatusOK,
@@ -73,142 +102,186 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 	}, domain.ErrorRes{}
 }
 
+// OAuthLogin handles the OAuth login process by verifying the OAuth token and retrieving the user data.
+// It generates and returns a refresh token if the login is successful or creates a new user if not found.
 func (u *userusecase) OAuthLogin(ctx context.Context, req domain.UserOAuthLoginClientRequest) (domain.UserLoginClientResponse, domain.ErrorRes) {
 
+	// Verify the OAuth token using the provided provider and token
 	email, name, err := u.oAuthProvider.VerifyToken(ctx, req.Provider, req.Token)
 	if err != nil {
-		u.logger.Warnw(ctx, "oauth2 token verification failed", "provider", req.Provider, "error", err)
+		// Log the error if token verification fails
+		u.logger.Warnw(ctx, "OAuth2 token verification failed", "provider", req.Provider, "error", err)
 		return domain.UserLoginClientResponse{}, domain.ErrorRes{
 			Code:    http.StatusUnauthorized,
 			Message: "Invalid OAuth token",
 		}
 	}
 
+	// Fetch user by email
 	userData, errRes := u.fetchUserByEmail(ctx, email)
 	if errRes.Code != 0 && errRes.Code != http.StatusNotFound {
+		// Log the error and return if fetching user data fails
+		u.logger.Warnw(ctx, "Failed to fetch user by email", "email", email, "error", errRes.Message)
 		return domain.UserLoginClientResponse{}, errRes
 	}
 
+	// If user not found, create a new user
 	if userData == nil || userData.Id == 0 {
 		userData.Id, errRes = u.createUserForOAuth(ctx, email, name)
 		if errRes.Code != 0 {
+			// Log the error and return if user creation fails
+			u.logger.Warnw(ctx, "Failed to create user for OAuth", "email", email, "error", errRes.Message)
 			return domain.UserLoginClientResponse{}, errRes
 		}
 	}
 
+	// Fetch updated user data by ID
 	userData, errRes = u.fetchUserByID(ctx, userData.Id)
 	if errRes.Code != 0 {
+		// Log the error and return if fetching updated user data fails
+		u.logger.Warnw(ctx, "Failed to fetch user by ID", "userId", userData.Id, "error", errRes.Message)
 		return domain.UserLoginClientResponse{}, errRes
 	}
 
-	// Check if account is active
+	// Check if the account is active
 	if errRes := u.checkAccountIsActive(ctx, userData); errRes.Code != 0 {
+		// Log the error and return if the account is inactive
+		u.logger.Warnw(ctx, "Account is inactive", "userId", userData.Id, "error", errRes.Message)
 		return domain.UserLoginClientResponse{}, errRes
 	}
 
-	// Generate and store refresh token
+	// Generate and store a refresh token
 	refreshToken, errRes := u.generateAndStoreRefreshToken(ctx, userData.Id)
 	if errRes.Code != 0 {
+		// Log the error and return if generating the refresh token fails
+		u.logger.Warnw(ctx, "Failed to generate refresh token", "userId", userData.Id, "error", errRes.Message)
 		return domain.UserLoginClientResponse{}, errRes
 	}
 
-	u.logger.Infow(ctx, "user login successful",
+	// Log successful login
+	u.logger.Infow(ctx, "User login successful",
 		"event", "user_login_success",
 		"userId", userData.Id,
 		"code", http.StatusOK,
 	)
 
+	// Return the refresh token to the client
 	return domain.UserLoginClientResponse{
 		RefreshToken: refreshToken,
 	}, domain.ErrorRes{}
-
 }
 
 // Logout handles user logout by validating the refresh token, revoking it, and logging the event.
 func (u *userusecase) Logout(ctx context.Context, req domain.UserLogoutClientRequest) (domain.UserLogoutClientResponse, domain.ErrorRes) {
+	// Validate the refresh token
 	refreshData, errRes := u.validateRefreshToken(ctx, req.RefreshToken)
 	if errRes.Code != 0 {
+		// Return error if the refresh token is invalid or expired
 		return domain.UserLogoutClientResponse{}, errRes
 	}
 
+	// Revoke the refresh token
 	errRes = u.revokeRefreshToken(ctx, refreshData.Id, refreshData.UserId, req.RefreshToken)
 	if errRes.Code != 0 {
+		// Return error if revoking the refresh token fails
 		return domain.UserLogoutClientResponse{}, errRes
 	}
 
-	u.logger.Infow(ctx, "user logged out successfully",
+	// Log successful logout
+	u.logger.Infow(ctx, "User logged out successfully",
 		"event", "logout_success",
 		"userId", refreshData.UserId,
 		"code", http.StatusOK,
 	)
-	return domain.UserLogoutClientResponse{}, domain.ErrorRes{}
 
+	// Return success response
+	return domain.UserLogoutClientResponse{}, domain.ErrorRes{}
 }
 
+// RefreshToken handles the refresh token process by validating the token, checking the user's account status, and rotating the refresh token.
 func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTokenClientRequest) (domain.UserRefreshTokenClientResponse, domain.ErrorRes) {
+	// Validate the refresh token
 	refreshData, errRes := u.validateRefreshToken(ctx, req.RefreshToken)
 	if errRes.Code != 0 {
+		// Return error if the refresh token is invalid or expired
 		return domain.UserRefreshTokenClientResponse{}, errRes
 	}
 
+	// Fetch the user by ID
 	userData, errRes := u.fetchUserByID(ctx, refreshData.UserId)
 	if errRes.Code != 0 {
+		// Return error if fetching the user fails
 		return domain.UserRefreshTokenClientResponse{}, errRes
 	}
 
+	// Check if the account is active
 	errRes = u.checkAccountIsActive(ctx, userData)
 	if errRes.Code != 0 {
+		// Return error if the account is inactive
 		return domain.UserRefreshTokenClientResponse{}, errRes
 	}
 
+	// Create a new access token
 	accessToken, errRes := u.createAccessToken(ctx, userData)
 	if errRes.Code != 0 {
+		// Return error if creating the access token fails
 		return domain.UserRefreshTokenClientResponse{}, errRes
 	}
 
+	// Rotate the refresh token
 	refreshTokenType, refreshToken, errRes := u.handleRefreshTokenRotation(ctx, userData.Id, req.RefreshToken, refreshData.Id)
 	if errRes.Code != 0 {
+		// Return error if rotating the refresh token fails
 		return domain.UserRefreshTokenClientResponse{}, errRes
 	}
 
-	u.logger.Infow(ctx, "refresh token rotated successfully",
+	// Log successful refresh token rotation
+	u.logger.Infow(ctx, "Refresh token rotated successfully",
 		"event", "user_refresh_token_success",
 		"userId", userData.Id,
 		"code", http.StatusOK,
 	)
 
+	// Return the new access and refresh tokens
 	return domain.UserRefreshTokenClientResponse{
 		AccessToken:      accessToken,
 		RefreshTokenType: refreshTokenType,
 		RefreshToken:     refreshToken,
 	}, domain.ErrorRes{}
-
 }
 
+// handleRefreshTokenRotation rotates the refresh token if enabled, otherwise returns the old token.
 func (u *userusecase) handleRefreshTokenRotation(ctx context.Context, userId int, oldToken string, oldTokenId int) (string, string, domain.ErrorRes) {
 	if !u.refreshTokenRotationEnabled() {
+		// Return static refresh token type if rotation is not enabled
 		return constant.REFRESH_TOKEN_TYPE_STATIC, oldToken, domain.ErrorRes{}
 	}
 
+	// Revoke the old refresh token
 	if err := u.mysql.RevokeToken(ctx, oldTokenId); err != nil {
-		u.logger.Errorw(ctx, "unable to revoke refresh token",
+		// Log and return error if revoking the old token fails
+		u.logger.Errorw(ctx, "Unable to revoke refresh token",
 			"event", "user_refresh_token_failed", "userId", userId, "error", err)
 		return "", "", domain.ErrorRes{Code: http.StatusInternalServerError, Message: "Unable to revoke token", Err: err}
 	}
 
+	// Generate and store a new refresh token
 	newToken, errRes := u.generateAndStoreRefreshToken(ctx, userId)
-
 	if errRes.Code != 0 {
+		// Return error if generating the new refresh token fails
 		return "", "", errRes
 	}
 
+	// Return the rotating refresh token type and the new token
 	return constant.REFRESH_TOKEN_TYPE_ROTATING, newToken, domain.ErrorRes{}
 }
 
+// validateRefreshToken validates the refresh token by checking its validity, expiry, and revocation status.
 func (u *userusecase) validateRefreshToken(ctx context.Context, token string) (domain.UserTokens, domain.ErrorRes) {
 	refreshData, err := u.mysql.GetUserToken(ctx, constant.TOKEN_TYPE_REFRESH, token)
 	if err != nil {
-		u.logger.Errorw(ctx, "failed to fetch refresh token data",
+		// Log and return error if fetching the token data fails
+		u.logger.Errorw(ctx, "Failed to fetch refresh token data",
 			"event", "user_refresh_token_fetch_failed",
 			"refreshToken", token,
 			"error", err,
@@ -216,13 +289,14 @@ func (u *userusecase) validateRefreshToken(ctx context.Context, token string) (d
 		)
 		return domain.UserTokens{}, domain.ErrorRes{
 			Code:    http.StatusInternalServerError,
-			Message: "internal server error",
+			Message: "Internal server error",
 			Err:     err,
 		}
 	}
 
+	// Check if the refresh token is revoked or invalid
 	if refreshData.Id == 0 || refreshData.Revoked {
-		u.logger.Warnw(ctx, "revoked or invalid refresh token",
+		u.logger.Warnw(ctx, "Revoked or invalid refresh token",
 			"event", "user_refresh_token_invalid",
 			"refreshToken", token,
 			"code", http.StatusBadRequest,
@@ -234,8 +308,9 @@ func (u *userusecase) validateRefreshToken(ctx context.Context, token string) (d
 		}
 	}
 
+	// Check if the refresh token has expired
 	if time.Now().After(refreshData.ExpiresAt) {
-		u.logger.Warnw(ctx, "refresh token expired",
+		u.logger.Warnw(ctx, "Refresh token expired",
 			"event", "refresh_token_expired",
 			"refreshToken", token,
 			"expiresAt", refreshData.ExpiresAt,
@@ -248,22 +323,28 @@ func (u *userusecase) validateRefreshToken(ctx context.Context, token string) (d
 		}
 	}
 
+	// Return the valid refresh token data
 	return refreshData, domain.ErrorRes{}
 }
 
+// createAccessToken creates an access token for the user.
 func (u *userusecase) createAccessToken(ctx context.Context, user *domain.User) (string, domain.ErrorRes) {
 	accessToken, err := u.token.CreateAccessToken(user.Id, user.Email, user.Name, u.getAccessTokenExpiry())
 	if err != nil {
-		u.logger.Errorw(ctx, "failed to create access token",
+		// Log and return error if creating the access token fails
+		u.logger.Errorw(ctx, "Failed to create access token",
 			"event", "user_refresh_token_failed", "userId", user.Id, "error", err)
 		return "", domain.ErrorRes{Code: http.StatusInternalServerError, Message: "Internal server error", Err: err}
 	}
+	// Return the generated access token
 	return accessToken, domain.ErrorRes{}
 }
 
+// revokeRefreshToken revokes the specified refresh token.
 func (u *userusecase) revokeRefreshToken(ctx context.Context, tokenID int, userID int, token string) domain.ErrorRes {
 	if err := u.mysql.RevokeToken(ctx, tokenID); err != nil {
-		u.logger.Errorw(ctx, "unable to revoke refresh token",
+		// Log and return error if revoking the token fails
+		u.logger.Errorw(ctx, "Unable to revoke refresh token",
 			"event", "logout_failed",
 			"userId", userID,
 			"refreshToken", token,
@@ -276,6 +357,7 @@ func (u *userusecase) revokeRefreshToken(ctx context.Context, tokenID int, userI
 			Err:     err,
 		}
 	}
+	// Return success response
 	return domain.ErrorRes{}
 }
 
