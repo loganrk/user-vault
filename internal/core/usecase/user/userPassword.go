@@ -20,65 +20,61 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 
 	// Return if there was an error fetching user data
 	if errRes.Code != 0 {
-		u.logger.Warnw(ctx, "User email or phone fetch failed", "event", "user_forgot_password_failed", "request", req, "error", errRes.Message, "code", errRes.Code)
+		if errRes.Err != "" {
+			u.logger.Errorw(ctx, "fetch_user failed", "email", req.Email, "phone", req.Phone, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+		}
+
 		return domain.UserForgotPasswordClientResponse{}, errRes
 	}
 
 	errRes = u.isEmailOrPhoneVerified(userData, req.Email, req.Phone)
-	// Return if there was an error fetching user data
 	if errRes.Code != 0 {
-		u.logger.Warnw(ctx, "User email or phone verification failed", "event", "user_forgot_password_failed", "userId", userData.Id, "error", errRes.Message, "code", errRes.Code)
+		u.logger.Warnw(ctx, errRes.Message, "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
 		return domain.UserForgotPasswordClientResponse{}, errRes
 	}
 
 	// Check if the account is active
 	errRes = u.checkAccountIsActive(ctx, userData)
 	if errRes.Code != 0 {
-		u.logger.Errorw(ctx, "User account validation failed", "event", "user_forgot_password_failed", "userId", userData.Id, "error", errRes.Err)
+		u.logger.Warnw(ctx, errRes.Message, "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
 		return domain.UserForgotPasswordClientResponse{}, errRes
 	}
 
 	// Generate and send the verification token to the user's email or phone
 	if req.Email != "" {
 		// Generate a new verification token for email-based password reset
-		tokenId, token, err := u.generatePasswordResetToken(ctx, constant.TOKEN_TYPE_PASSWORD_RESET_EMAIL, userData.Id)
-		if err != nil || tokenId == 0 || token == "" {
-			u.logger.Errorw(ctx, "failed to create verification token", "event", "user_forgot_password_failed", "userId", userData.Id, "error", err, "tokenId", tokenId, "token", token)
-			return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
-				Code:    http.StatusInternalServerError,
-				Message: "Internal server error",
-				Err:     err,
-			}
+		_, token, errRes := u.generatePasswordResetToken(ctx, constant.TOKEN_TYPE_PASSWORD_RESET_EMAIL, userData.Id)
+		if errRes.Code != 0 {
+			u.logger.Errorw(ctx, errRes.Message, "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+			return domain.UserForgotPasswordClientResponse{}, errRes
 		}
 
 		// Send verification email to the user
 		if err := u.messager.PublishPasswordResetEmail(userData.Email, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, token); err != nil {
-			u.logger.Errorw(ctx, "failed to send verification email", "event", "user_forgot_password_failed", "userId", userData.Id, "error", err)
+			u.logger.Errorw(ctx, "failed to send verification email", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
 			return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
-				Code:    http.StatusInternalServerError,
-				Message: "Internal server error",
-				Err:     err,
+				Code:      http.StatusInternalServerError,
+				Message:   constant.MessageInternalServerError,
+				Err:       err.Error(),
+				Exception: constant.NetworkException,
 			}
 		}
 	} else {
 		// Generate a new verification token for phone-based password reset
-		tokenId, token, err := u.generatePasswordResetToken(ctx, constant.TOKEN_TYPE_PASSWORD_RESET_PHONE, userData.Id)
-		if err != nil || tokenId == 0 || token == "" {
-			u.logger.Errorw(ctx, "failed to create verification token", "event", "user_forgot_password_failed", "userId", userData.Id, "error", err)
-			return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
-				Code:    http.StatusInternalServerError,
-				Message: "Internal server error",
-				Err:     err,
-			}
+		_, token, errRes := u.generatePasswordResetToken(ctx, constant.TOKEN_TYPE_PASSWORD_RESET_PHONE, userData.Id)
+		if errRes.Code != 0 {
+			u.logger.Errorw(ctx, errRes.Message, "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+			return domain.UserForgotPasswordClientResponse{}, errRes
 		}
 
 		// Send verification SMS to the user
 		if err := u.messager.PublishPasswordResetPhone(userData.Phone, userData.Name, token); err != nil {
-			u.logger.Errorw(ctx, "failed to send verification SMS", "event", "user_forgot_password_failed", "userId", userData.Id, "error", err)
+			u.logger.Errorw(ctx, "failed to send verification sms", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
 			return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
-				Code:    http.StatusInternalServerError,
-				Message: "Internal server error",
-				Err:     err,
+				Code:      http.StatusInternalServerError,
+				Message:   constant.MessageInternalServerError,
+				Err:       "failed to send verification sms" + err.Error(),
+				Exception: constant.NetworkException,
 			}
 		}
 	}
@@ -98,13 +94,15 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 	userData, errRes = u.fetchUser(ctx, req.Email, req.Phone)
 	// Return if there was an error fetching user data
 	if errRes.Code != 0 {
+		if errRes.Err != "" {
+			u.logger.Errorw(ctx, "fetch_user failed", "email", req.Email, "phone", req.Phone, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+		}
 		return domain.UserResetPasswordClientResponse{}, errRes
 	}
 
 	errRes = u.isEmailOrPhoneVerified(userData, req.Email, req.Phone)
 	// Return if there was an error fetching user data
 	if errRes.Code != 0 {
-		u.logger.Warnw(ctx, "User email or phone verification failed", "event", "user_reset_password_failed", "user", req, "error", errRes.Message, "code", errRes.Code)
 		return domain.UserResetPasswordClientResponse{}, errRes
 	}
 
@@ -123,36 +121,41 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 	// Fetch and validate the verification token
 	tokenData, errRes := u.validateUserToken(ctx, tokenType, req.Token, userData.Id)
 	if errRes.Code != 0 {
+		if errRes.Err != "" {
+			u.logger.Errorw(ctx, "validate_user_token failed", "userId", userData.Id, "tokenType", tokenType, "token", req.Token, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+		}
 		return domain.UserResetPasswordClientResponse{}, errRes
 	}
 
 	userPassword, err := u.mysql.GetUserPasswordByUserID(ctx, userData.Id)
 	if err != nil {
-		u.logger.Errorw(ctx, "Unable to fetch the user password", "event", "user_reset_password_success", "userId", userData.Id, "error", err)
+		u.logger.Errorw(ctx, "get_user_password_by_user_id failed", "userId", userData.Id, "error", err.Error(), "exception", constant.DBException)
 		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Internal server error",
-			Err:     err,
+			Code:      http.StatusInternalServerError,
+			Message:   constant.MessageInternalServerError,
+			Err:       err.Error(),
+			Exception: constant.DBException,
 		}
 	}
 
 	// Update the user's password
 	errRes = u.updateUserPassword(ctx, userData, userPassword.Salt, req.Password)
 	if errRes.Code != 0 {
+		u.logger.Errorw(ctx, "update_user_password failed", "userId", userData.Id, "error", errRes.Err, "exception", errRes.Exception)
 		return domain.UserResetPasswordClientResponse{}, errRes
 	}
 
 	// Revoke the verification token after successful password reset
 	if err := u.mysql.RevokeToken(ctx, tokenData.Id); err != nil {
-		u.logger.Errorw(ctx, "failed to revoke verification token", "event", "user_reset_password_success", "userId", userData.Id, "error", err)
+		u.logger.Errorw(ctx, "revoke_token failed", "tokenId", tokenData.Id, "error", err.Error(), "exception", constant.DBException)
 		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Unable to revoke token",
-			Err:     err,
+			Code:      http.StatusInternalServerError,
+			Message:   constant.MessageInternalServerError,
+			Err:       err.Error(),
+			Exception: constant.DBException,
 		}
 	}
 
-	u.logger.Infow(ctx, "user password reset successful", "event", "user_reset_password_success", "userId", userData.Id)
 	return domain.UserResetPasswordClientResponse{Message: "Password has been reset successfully"}, domain.ErrorRes{}
 }
 
@@ -161,36 +164,38 @@ func (u *userusecase) updateUserPassword(ctx context.Context, userData *domain.U
 	// Hash the new password using bcrypt
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password+salt), u.conf.GetPasswordHashCost())
 	if err != nil {
-		u.logger.Errorw(ctx, "password hashing failed", "event", "hashing_failed", "userID", userData.Id, "error", err, "code", http.StatusInternalServerError)
 		return domain.ErrorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to reset password",
-			Err:     err,
+			Code:      http.StatusInternalServerError,
+			Message:   constant.MessageInternalServerError,
+			Err:       "failed to create the hash password. error = " + err.Error(),
+			Exception: constant.GenericException,
 		}
 	}
 
 	// Update the password in the database
 	err = u.mysql.UpdatePassword(ctx, userData.Id, string(hashPassword))
 	if err != nil {
-		u.logger.Errorw(ctx, "failed to update user password", "event", "update_password_failed", "userID", userData.Id, "error", err, "code", http.StatusInternalServerError)
 		return domain.ErrorRes{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to update password",
-			Err:     err,
+			Code:      http.StatusInternalServerError,
+			Message:   constant.MessageInternalServerError,
+			Err:       "failed to update the user password. error = " + err.Error(),
+			Exception: constant.DBException,
 		}
 	}
 
-	// One-liner success log for password update success
-	u.logger.Infow(ctx, "password updated successfully", "event", "password_update_success", "userID", userData.Id)
 	return domain.ErrorRes{}
 }
 
 // generatePasswordResetToken revokes old tokens and creates a new one for password reset.
-func (u *userusecase) generatePasswordResetToken(ctx context.Context, tokenType int8, userID int) (int, string, error) {
+func (u *userusecase) generatePasswordResetToken(ctx context.Context, tokenType int8, userID int) (int, string, domain.ErrorRes) {
 	// Revoke all previous tokens for the user
 	if err := u.mysql.RevokeAllTokens(ctx, tokenType, userID); err != nil {
-		u.logger.Errorw(ctx, "failed to revoke old tokens", "event", "revoke_tokens_failed", "userID", userID, "tokenType", tokenType, "error", err)
-		return 0, "", err
+		return 0, "", domain.ErrorRes{
+			Code:      http.StatusInternalServerError,
+			Message:   constant.MessageInternalServerError,
+			Err:       "failed to revoke old tokens. error = " + err.Error(),
+			Exception: constant.DBException,
+		}
 	}
 
 	// Generate a new token for password reset
@@ -207,10 +212,13 @@ func (u *userusecase) generatePasswordResetToken(ctx context.Context, tokenType 
 	// Save the token to the database and return the token ID and value
 	tokenId, err := u.mysql.CreateToken(ctx, tokenData)
 	if err != nil {
-		u.logger.Errorw(ctx, "failed to store password reset token", "event", "create_token_failed", "userID", userID, "error", err)
-		return 0, "", err
+		return 0, "", domain.ErrorRes{
+			Code:      http.StatusInternalServerError,
+			Message:   constant.MessageInternalServerError,
+			Err:       "failed to create new token. error = " + err.Error(),
+			Exception: constant.DBException,
+		}
 	}
 
-	u.logger.Infow(ctx, "password reset token generated successfully", "event", "token_generation_success", "userID", userID)
-	return tokenId, verificationToken, nil
+	return tokenId, verificationToken, domain.ErrorRes{}
 }
