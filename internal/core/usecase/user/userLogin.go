@@ -26,16 +26,22 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 		return domain.UserLoginClientResponse{}, errRes
 	}
 
+	// Check if login attempts limit is reached
+	if errRes := u.blockIfLoginAttemptLimitReached(ctx, userData.Id); errRes.Code != 0 {
+		u.logger.Warnw(ctx, "Login attempt limit reached", "event", "user_login_failed", "userId", userData.Id, "code", errRes.Code, "error", errRes.Message)
+		return domain.UserLoginClientResponse{}, errRes
+	}
+	// Check if the account is active
+	errRes = u.checkAccountIsActive(ctx, userData)
+	if errRes.Code != 0 {
+		u.logger.Warnw(ctx, "Account inactive", "event", "user_login_failed", "userId", userData.Id, "error", errRes.Message, "code", errRes.Code)
+		return domain.UserLoginClientResponse{}, errRes
+	}
+
 	errRes = u.isEmailOrPhoneVerified(userData, req.Email, req.Phone)
 	// Return if there was an error fetching user data
 	if errRes.Code != 0 {
 		u.logger.Warnw(ctx, "User email or phone verification failed", "event", "user_login_failed", "user", req, "error", errRes.Message, "code", errRes.Code)
-		return domain.UserLoginClientResponse{}, errRes
-	}
-
-	// Check if login attempts limit is reached
-	if errRes := u.blockIfLoginAttemptLimitReached(ctx, userData.Id); errRes.Code != 0 {
-		u.logger.Warnw(ctx, "Login attempt limit reached", "event", "user_login_failed", "userId", userData.Id, "code", errRes.Code, "error", errRes.Message)
 		return domain.UserLoginClientResponse{}, errRes
 	}
 
@@ -52,20 +58,6 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 	// Validate password and log attempt
 	if errRes := u.validatePasswordAndLogAttempt(ctx, req.Password, userPassword.Password, userPassword.Salt, userData.Id); errRes.Code != 0 {
 		u.logger.Warnw(ctx, "Invalid password attempt", "event", "user_login_failed", "userId", userData.Id, "code", errRes.Code, "error", errRes.Message)
-		return domain.UserLoginClientResponse{}, errRes
-	}
-
-	// Fetch updated user data to check account status
-	userData, errRes = u.fetchUserByID(ctx, userData.Id)
-	if errRes.Code != 0 {
-		u.logger.Warnw(ctx, "Failed to fetch updated user data", "event", "user_login_failed", "userId", userData.Id, "error", errRes.Message, "code", errRes.Code)
-		return domain.UserLoginClientResponse{}, errRes
-	}
-
-	// Check if the account is active
-	errRes = u.checkAccountIsActive(ctx, userData)
-	if errRes.Code != 0 {
-		u.logger.Warnw(ctx, "Account inactive", "event", "user_login_failed", "userId", userData.Id, "error", errRes.Message, "code", errRes.Code)
 		return domain.UserLoginClientResponse{}, errRes
 	}
 
@@ -103,6 +95,18 @@ func (u *userusecase) OAuthLogin(ctx context.Context, req domain.UserOAuthLoginC
 	if errRes.Code != 0 && errRes.Code != http.StatusNotFound {
 		// Log the error and return if fetching user data fails
 		u.logger.Warnw(ctx, "Failed to fetch user by email", "email", email, "error", errRes.Message)
+		return domain.UserLoginClientResponse{}, errRes
+	}
+
+	// Check if login attempts limit is reached
+	if errRes := u.blockIfLoginAttemptLimitReached(ctx, userData.Id); errRes.Code != 0 {
+		u.logger.Warnw(ctx, "Login attempt limit reached", "event", "user_login_failed", "userId", userData.Id, "code", errRes.Code, "error", errRes.Message)
+		return domain.UserLoginClientResponse{}, errRes
+	}
+	// Check if the account is active
+	errRes = u.checkAccountIsActive(ctx, userData)
+	if errRes.Code != 0 {
+		u.logger.Warnw(ctx, "Account inactive", "event", "user_login_failed", "userId", userData.Id, "error", errRes.Message, "code", errRes.Code)
 		return domain.UserLoginClientResponse{}, errRes
 	}
 
