@@ -164,13 +164,13 @@ func (h *handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 	res.Send(w)
 }
 
-// UserActivation handles user account activation requests. It validates the activation token and
+// UserVerify handles user account verification requests. It validates the verification token and
 // invokes the usecase to activate the user account. Returns the response based on the outcome.
-func (h *handler) UserActivation(w http.ResponseWriter, r *http.Request) {
+func (h *handler) UserVerify(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var res response
 
-	var req domain.UserActivationClientRequest
+	var req domain.UserVerifyClientRequest
 	// Bind and validate the incoming request
 	if !h.bindAndValidate(w, r, &req) {
 		return
@@ -182,8 +182,8 @@ func (h *handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Call the user activation usecase
-	respData, resErr := h.usecases.User.ActivateUser(ctx, req)
+	// Call the user verify usecase
+	respData, resErr := h.usecases.User.VerifyUser(ctx, req)
 	if resErr.Code != 0 {
 		res.SetStatus(resErr.Code)
 		res.SetError(resErr.Message) // Set the error message if registration fails
@@ -191,7 +191,7 @@ func (h *handler) UserActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Successful account activation response
+	// Successful account verification response
 	res.SetData(respData)
 	res.Send(w)
 }
@@ -278,13 +278,13 @@ func (h *handler) UserRefreshToken(w http.ResponseWriter, r *http.Request) {
 	res.Send(w)
 }
 
-// UserResendActivation handles requests to resend an activation email. It decodes the request,
-// validates it, and invokes the resend activation usecase. Returns the response based on the outcome.
-func (h *handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
+// UserResendVerification handles requests to resend an verification email. It decodes the request,
+// validates it, and invokes the resend verification usecase. Returns the response based on the outcome.
+func (h *handler) UserResendVerification(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var res response
 
-	var req domain.UserResendActivationClientRequest
+	var req domain.UserResendVerificationClientRequest
 	// Bind and validate the incoming request
 	if !h.bindAndValidate(w, r, &req) {
 		return
@@ -296,8 +296,8 @@ func (h *handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Call the resend activation usecase
-	respData, resErr := h.usecases.User.ResendActivation(ctx, req)
+	// Call the resend verification usecase
+	respData, resErr := h.usecases.User.ResendVerification(ctx, req)
 	if resErr.Code != 0 {
 		res.SetStatus(resErr.Code)
 		res.SetError(resErr.Message) // Set the error message if registration fails
@@ -305,7 +305,7 @@ func (h *handler) UserResendActivation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Successful resend activation response
+	// Successful resend verification response
 	res.SetData(respData)
 	res.Send(w)
 }

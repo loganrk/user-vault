@@ -12,13 +12,13 @@ import (
 type kafkaMessager struct {
 	appName            string
 	producer           sarama.SyncProducer
-	topicActivation    string
+	topicVerification  string
 	topicPasswordReset string
 }
 
 // New initializes a new Kafka producer with client ID, version, and retry configuration.
 // It returns a Messager adapter for publishing email-related events.
-func New(appName string, brokers []string, activationTopic, passwordResetTopic, clientID, version string, retryMax int) (port.Messager, error) {
+func New(appName string, brokers []string, verificationTopic, passwordResetTopic, clientID, version string, retryMax int) (port.Messager, error) {
 	kConfig := sarama.NewConfig()
 
 	// Set client ID for Kafka tracing and logging
@@ -45,13 +45,13 @@ func New(appName string, brokers []string, activationTopic, passwordResetTopic, 
 	return &kafkaMessager{
 		appName:            appName,
 		producer:           producer,
-		topicActivation:    activationTopic,
+		topicVerification:  verificationTopic,
 		topicPasswordReset: passwordResetTopic,
 	}, nil
 }
 
-// PublishActivation sends a user activation email event to the Kafka topic.
-func (k *kafkaMessager) PublishActivationEmail(toAddress, subject, name, token string) error {
+// PublishVerification sends a user verify email event to the Kafka topic.
+func (k *kafkaMessager) PublishVerificationEmail(toAddress, subject, name, token string) error {
 
 	payload := struct {
 		Type    string            `json:"type"`
@@ -59,7 +59,7 @@ func (k *kafkaMessager) PublishActivationEmail(toAddress, subject, name, token s
 		Subject string            `json:"subject"`
 		Macros  map[string]string `json:"macros"`
 	}{
-		Type:    "activation-email",
+		Type:    "verification-email",
 		To:      toAddress,
 		Subject: subject,
 		Macros: map[string]string{
@@ -69,7 +69,7 @@ func (k *kafkaMessager) PublishActivationEmail(toAddress, subject, name, token s
 		},
 	}
 
-	return k.publish(k.topicActivation, toAddress, payload)
+	return k.publish(k.topicVerification, toAddress, payload)
 }
 
 // PublishPasswordResetEmail sends a password reset email event to the Kafka topic.
@@ -93,15 +93,15 @@ func (k *kafkaMessager) PublishPasswordResetEmail(toAddress, subject, name, toke
 	return k.publish(k.topicPasswordReset, toAddress, payload)
 }
 
-// PublishActivationPhone sends a user activation phone event to the Kafka topic.
-func (k *kafkaMessager) PublishActivationPhone(phone, name, token string) error {
+// PublishVerificationPhone sends a user verify phone event to the Kafka topic.
+func (k *kafkaMessager) PublishVerificationPhone(phone, name, token string) error {
 
 	payload := struct {
 		Type   string            `json:"type"`
 		To     string            `json:"to"`
 		Macros map[string]string `json:"macros"`
 	}{
-		Type: "activation-phone",
+		Type: "verification-phone",
 		To:   phone,
 		Macros: map[string]string{
 			"name":    name,
@@ -110,7 +110,7 @@ func (k *kafkaMessager) PublishActivationPhone(phone, name, token string) error 
 		},
 	}
 
-	return k.publish(k.topicActivation, phone, payload)
+	return k.publish(k.topicVerification, phone, payload)
 }
 
 // PublishPasswordResetPhone sends a password reset phone event to the Kafka topic.

@@ -58,16 +58,16 @@ func (r *route) SetupRoutes(apiConfig config.Api, logger port.Logger, authMiddle
 		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserRegister)
 	}
 
-	// User Activation
-	if apiConfig.GetUserActivationEnabled() {
-		method, route := apiConfig.GetUserActivationProperties()
-		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserActivation)
+	// User Verify
+	if apiConfig.GetUserVerifyEnabled() {
+		method, route := apiConfig.GetUserVerifyProperties()
+		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserVerify)
 	}
 
-	// User Resend Activation
-	if apiConfig.GetUserResendActivationEnabled() {
-		method, route := apiConfig.GetUserResendActivationProperties()
-		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserResendActivation)
+	// User Resend Verification
+	if apiConfig.GetUserResendVerificationEnabled() {
+		method, route := apiConfig.GetUserResendVerificationProperties()
+		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserResendVerification)
 	}
 
 	// User Forgot Password

@@ -11,15 +11,15 @@ import (
 
 // Handler defines the interface for user authentication and account-related HTTP handlers.
 type Handler interface {
-	UserLogin(w http.ResponseWriter, r *http.Request)            // Handles user login requests
-	UserOAuthLogin(w http.ResponseWriter, r *http.Request)       // Handles user login requests with oAuth
-	UserLogout(w http.ResponseWriter, r *http.Request)           // Handles user logout requests
-	UserActivation(w http.ResponseWriter, r *http.Request)       // Handles account activation using a token
-	UserPasswordReset(w http.ResponseWriter, r *http.Request)    // Handles user password reset via token
-	UserForgotPassword(w http.ResponseWriter, r *http.Request)   // Handles forgot password requests and sends a reset link
-	UserRefreshToken(w http.ResponseWriter, r *http.Request)     // Validates and refreshes user access tokens
-	UserRegister(w http.ResponseWriter, r *http.Request)         // Handles new user registration
-	UserResendActivation(w http.ResponseWriter, r *http.Request) // Resends account activation link/token to the user
+	UserLogin(w http.ResponseWriter, r *http.Request)              // Handles user login requests
+	UserOAuthLogin(w http.ResponseWriter, r *http.Request)         // Handles user login requests with oAuth
+	UserLogout(w http.ResponseWriter, r *http.Request)             // Handles user logout requests
+	UserVerify(w http.ResponseWriter, r *http.Request)             // Handles account verification using a token
+	UserPasswordReset(w http.ResponseWriter, r *http.Request)      // Handles user password reset via token
+	UserForgotPassword(w http.ResponseWriter, r *http.Request)     // Handles forgot password requests and sends a reset link
+	UserRefreshToken(w http.ResponseWriter, r *http.Request)       // Validates and refreshes user access tokens
+	UserRegister(w http.ResponseWriter, r *http.Request)           // Handles new user registration
+	UserResendVerification(w http.ResponseWriter, r *http.Request) // Resends account verification link/token to the user
 }
 
 // RepositoryMySQL defines the interface for all database operations using MySQL.
@@ -30,12 +30,14 @@ type RepositoryMySQL interface {
 	GetUserByEmail(ctx context.Context, email string) (domain.User, error) // Retrieves a user by email
 	GetUserByEmailOrPhone(ctx context.Context, email string, phone string) (domain.User, error)
 	GetUserByPhone(ctx context.Context, phone string) (domain.User, error)
+	GetUserPasswordByUserID(ctx context.Context, userID int) (domain.User, error)
 
 	GetUserLoginFailedAttemptCount(ctx context.Context, userId int, sessionStartTime time.Time) (int, error) // Gets the count of failed login attempts since the session start time
 	CreateUserLoginAttempt(ctx context.Context, userLoginAttempt domain.UserLoginAttempt) (int, error)       // Creates a new user login attempt record
 	CreateUser(ctx context.Context, userData domain.User) (int, error)                                       // Creates a new user
-	UpdateUserStatus(ctx context.Context, userid int, status int) error                                      // Updates a user’s account status (e.g., active/inactive)
-	UpdatePassword(ctx context.Context, userid int, password string) error                                   // Updates the user’s password
+	UpdateEmailVerfied(ctx context.Context, userid int) error
+	UpdatePhoneVerfied(ctx context.Context, userid int) error
+	UpdatePassword(ctx context.Context, userid int, password string) error // Updates the user’s password
 
 	CreateToken(ctx context.Context, tokenData domain.UserTokens) (int, error)                 // Creates a new token record
 	GetUserToken(ctx context.Context, tokenType int8, token string) (domain.UserTokens, error) // Retrieves token data
@@ -94,8 +96,8 @@ type Logger interface {
 }
 
 type Messager interface {
-	PublishActivationEmail(toAddress, subject, name, token string) error
-	PublishActivationPhone(phone, name, token string) error
+	PublishVerificationEmail(toAddress, subject, name, token string) error
+	PublishVerificationPhone(phone, name, token string) error
 	PublishPasswordResetEmail(toAddress, subject, name, token string) error
 	PublishPasswordResetPhone(phone, name, token string) error
 }
