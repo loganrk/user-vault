@@ -41,7 +41,7 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 	// Generate and send the verification token to the user's email or phone
 	if req.Email != "" {
 		// Generate a new verification token for email-based password reset
-		tokenId, token, err := u.generatePasswordResetToken(ctx, constant.TOKEN_TYPE_ACTIVATION_EMAIL, userData.Id)
+		tokenId, token, err := u.generatePasswordResetToken(ctx, constant.TOKEN_TYPE_PASSWORD_RESET_EMAIL, userData.Id)
 		if err != nil || tokenId == 0 || token == "" {
 			u.logger.Errorw(ctx, "failed to create verification token", "event", "user_forgot_password_failed", "userId", userData.Id, "error", err, "tokenId", tokenId, "token", token)
 			return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
@@ -62,7 +62,7 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 		}
 	} else {
 		// Generate a new verification token for phone-based password reset
-		tokenId, token, err := u.generatePasswordResetToken(ctx, constant.TOKEN_TYPE_ACTIVATION_PHONE, userData.Id)
+		tokenId, token, err := u.generatePasswordResetToken(ctx, constant.TOKEN_TYPE_PASSWORD_RESET_PHONE, userData.Id)
 		if err != nil || tokenId == 0 || token == "" {
 			u.logger.Errorw(ctx, "failed to create verification token", "event", "user_forgot_password_failed", "userId", userData.Id, "error", err)
 			return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{

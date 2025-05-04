@@ -31,6 +31,6 @@ const (
 )
 
 const (
-	USER_ACTIVATION_EMAIL_SUBJECT     = "{{appName}} - Activate your account"
-	USER_PASSWORD_RESET_EMAIL_SUBJECT = "{{appName}} - Password reset request"
+	USER_ACTIVATION_EMAIL_SUBJECT     = "Activate your account"
+	USER_PASSWORD_RESET_EMAIL_SUBJECT = "Password reset request"
 )

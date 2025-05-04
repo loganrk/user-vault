@@ -168,7 +168,7 @@ func (u *userusecase) Logout(ctx context.Context, req domain.UserLogoutClientReq
 	u.logger.Infow(ctx, "User logged out successfully", "event", "logout_success", "userId", refreshData.UserId, "code", http.StatusOK)
 
 	// Return success response
-	return domain.UserLogoutClientResponse{}, domain.ErrorRes{}
+	return domain.UserLogoutClientResponse{Message: "User logged out successfully"}, domain.ErrorRes{}
 }
 
 // RefreshToken handles the refresh token process by validating the token, checking the user's account status, and rotating the refresh token.
