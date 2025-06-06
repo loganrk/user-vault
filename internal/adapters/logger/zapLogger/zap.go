@@ -178,7 +178,7 @@ func stringToZapLevel(level string) (zapcore.Level, error) {
 		return zapcore.DebugLevel, nil
 	default:
 		// Return error for invalid log level
-		return zapcore.ErrorLevel, fmt.Errorf("invalid log level: %d", level)
+		return zapcore.ErrorLevel, fmt.Errorf("invalid log level: %s", level)
 	}
 }
 
