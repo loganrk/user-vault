@@ -17,7 +17,7 @@ type handler struct {
 }
 
 // New creates and returns a new handler instance with the provided logger, token engine, and service list.
-func New(loggerIns port.Logger, tokenEngineIns port.Token, svcList port.SvrList) port.Handler {
+func New(loggerIns port.Logger, tokenEngineIns port.Token, svcList port.SvrList) *handler {
 	return &handler{
 		usecases:       svcList,        // List of services that will handle specific business logic
 		logger:         loggerIns,      // Logger for capturing logs

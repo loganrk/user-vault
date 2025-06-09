@@ -17,7 +17,7 @@ type route struct {
 }
 
 // New creates a new instance of the Gin router with a custom access logger.
-func New(accessLoggerIns port.Logger) port.Router {
+func New(accessLoggerIns port.Logger) *route {
 	gin.DisableConsoleColor()
 
 	r := gin.Default()
@@ -37,10 +37,10 @@ func New(accessLoggerIns port.Logger) port.Router {
 	}
 }
 
-func (r *route) SetupRoutes(apiConfig config.Api, logger port.Logger, authMiddlewareIns port.Auth, handler port.Handler) {
+func (r *route) SetupRoutes(apiConfig config.Api, logger port.Logger, middlewareIns port.GinMiddleware, handler port.Handler) {
 
 	apiKeyProtectedRoutes := r.gin.Group("/")
-	apiKeyProtectedRoutes.Use(wrapHTTPMiddleware(authMiddlewareIns.ValidateApiKey()))
+	apiKeyProtectedRoutes.Use(wrapHTTPMiddleware(middlewareIns.ValidateApiKey()))
 	if apiConfig.GetUserLoginEnabled() {
 		method, route := apiConfig.GetUserLoginProperties()
 		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserLogin)
@@ -83,7 +83,7 @@ func (r *route) SetupRoutes(apiConfig config.Api, logger port.Logger, authMiddle
 	}
 
 	refreshTokenProtectedRoutes := r.gin.Group("/")
-	refreshTokenProtectedRoutes.Use(wrapHTTPMiddleware(authMiddlewareIns.ValidateRefreshToken()))
+	refreshTokenProtectedRoutes.Use(wrapHTTPMiddleware(middlewareIns.ValidateRefreshToken()))
 
 	// User Refresh Token Validate
 	if apiConfig.GetUserRefreshTokenEnabled() {

@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/loganrk/user-vault/internal/core/port"
-
 	"github.com/IBM/sarama"
 )
 
@@ -18,7 +16,7 @@ type kafkaMessager struct {
 
 // New initializes a new Kafka producer with client ID, version, and retry configuration.
 // It returns a Messager adapter for publishing email-related events.
-func New(appName string, brokers []string, verificationTopic, passwordResetTopic, clientID, version string, retryMax int) (port.Messager, error) {
+func New(appName string, brokers []string, verificationTopic, passwordResetTopic, clientID, version string, retryMax int) (*kafkaMessager, error) {
 	kConfig := sarama.NewConfig()
 
 	// Set client ID for Kafka tracing and logging

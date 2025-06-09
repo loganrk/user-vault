@@ -7,8 +7,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
-
-	"github.com/loganrk/user-vault/internal/core/port"
 )
 
 type aesCipher struct {
@@ -17,7 +15,7 @@ type aesCipher struct {
 
 // New initializes a new aesCipher instance with the provided cryptographic key.
 // This is the constructor function that returns a Cipher interface.
-func New(cryptoKey string) port.Cipher {
+func New(cryptoKey string) *aesCipher {
 	return &aesCipher{
 		cryptoKey: cryptoKey, // Assign the cryptoKey to the aesCipher instance
 	}

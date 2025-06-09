@@ -4,10 +4,8 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
-	"github.com/loganrk/user-vault/internal/core/port"
 	"github.com/loganrk/user-vault/internal/utils"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -23,7 +21,7 @@ type token struct {
 }
 
 // New function initializes and returns a new instance of token with the provided parameters
-func New(method string, hmacKey []byte, privateKeyPath, publicKeyPath string) (port.Token, error) {
+func New(method string, hmacKey []byte, privateKeyPath, publicKeyPath string) (*token, error) {
 	var privateKey *rsa.PrivateKey
 	var publicKey *rsa.PublicKey
 	var err error
@@ -33,9 +31,6 @@ func New(method string, hmacKey []byte, privateKeyPath, publicKeyPath string) (p
 			return nil, fmt.Errorf("HMAC key is missing for JWT method %s", method)
 		}
 	case "RSA", "RS256", "RS384", "RS512":
-		privateKeyPath := os.Getenv("JWT_RSA_PRIVATE_KEY_PATH")
-		publicKeyPath := os.Getenv("JWT_RSA_PUBLIC_KEY_PATH")
-
 		privateKey, err = utils.LoadRSAPrivKeyFromFile(privateKeyPath)
 		if err != nil {
 			return nil, err
@@ -121,25 +116,67 @@ func (t *token) CreateRefreshToken(uid int, expiry time.Time) (string, error) {
 	return t.signToken(claims) // Sign and return the token
 }
 
-// parseTokenWithoutVerification parses the token without verification (no signature validation)
-// This method allows for extracting claims without verifying the authenticity of the token
-func (t *token) parseTokenWithoutVerification(encryptedToken string) (jwt.MapClaims, error) {
-	token, _, err := jwt.NewParser().ParseUnverified(encryptedToken, jwt.MapClaims{})
+// parseTokenWithVerification parses and verifies the token using the appropriate key (hmacKey or rsaPubKey)
+// It returns the claims if the token is valid, or an error if verification fails
+func (t *token) parseTokenWithVerification(encryptedToken string) (jwt.MapClaims, error) {
+	var key interface{}
+	var signingMethod jwt.SigningMethod
+
+	// Select the appropriate key and signing method based on the configured method
+	switch t.method {
+	case "HS256":
+		signingMethod = jwt.SigningMethodHS256
+		key = t.hmacKey
+	case "HS384":
+		signingMethod = jwt.SigningMethodHS384
+		key = t.hmacKey
+	case "HS512":
+		signingMethod = jwt.SigningMethodHS512
+		key = t.hmacKey
+	case "RS256":
+		signingMethod = jwt.SigningMethodRS256
+		key = t.rsaPubKey
+	case "RS384":
+		signingMethod = jwt.SigningMethodRS384
+		key = t.rsaPubKey
+	case "RS512":
+		signingMethod = jwt.SigningMethodRS512
+		key = t.rsaPubKey
+	default:
+		return nil, fmt.Errorf("unsupported signing method: %s", t.method)
+	}
+
+	// Parse the token with verification
+	token, err := jwt.ParseWithClaims(encryptedToken, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+		// Verify that the signing method matches the expected one
+		if token.Method != signingMethod {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return key, nil
+	})
+
 	if err != nil {
-		return nil, err // Return error if token parsing fails
+		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		return claims, nil // Return the claims if successfully parsed
+	// Check if the token is valid
+	if !token.Valid {
+		return nil, errors.New("invalid token")
 	}
 
-	return nil, errors.New("invalid token claims") // Return error if claims are not valid
+	// Extract claims
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("invalid token claims")
+	}
+
+	return claims, nil
 }
 
 // GetRefreshTokenData extracts and returns the user ID and expiration time from a refresh token
 // It parses the token and validates the type and claims, returning an error if any validation fails
 func (t *token) GetRefreshTokenData(encryptedToken string) (int, time.Time, error) {
-	claims, err := t.parseTokenWithoutVerification(encryptedToken)
+	claims, err := t.parseTokenWithVerification(encryptedToken)
 	if err != nil {
 		return 0, time.Time{}, err // Return error if token parsing fails
 	}

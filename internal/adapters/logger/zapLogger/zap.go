@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/loganrk/user-vault/internal/core/port"
-
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -31,8 +29,7 @@ type zapLog struct {
 
 // New creates a new instance of zapLog using the provided config for logging.
 // It sets up the logger with a specified log level, encoder configuration, and output path.
-// It returns a port.Logger instance and any error encountered.
-func New(config Config) (port.Logger, error) {
+func New(config Config) (*zapLog, error) {
 
 	// Convert the provided log level to a zapcore.Level
 	zapLevel, err := stringToZapLevel(config.Level)
@@ -178,7 +175,7 @@ func stringToZapLevel(level string) (zapcore.Level, error) {
 		return zapcore.DebugLevel, nil
 	default:
 		// Return error for invalid log level
-		return zapcore.ErrorLevel, fmt.Errorf("invalid log level: %d", level)
+		return zapcore.ErrorLevel, fmt.Errorf("invalid log level: %s", level)
 	}
 }
 
