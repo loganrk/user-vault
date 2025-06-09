@@ -1,7 +1,8 @@
-package auth
+package gin
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -12,21 +13,21 @@ import (
 )
 
 // auth struct holds API keys and a Token instance for handling API authentication.
-type auth struct {
+type middleware struct {
 	apiKeys  []string   // List of valid API keys
 	tokenIns port.Token // Token interface for handling token-related operations
 }
 
 // New creates a new auth instance with the given API keys and Token instance.
-func New(apiKeys []string, tokenIns port.Token) port.Auth {
-	return &auth{
+func New(apiKeys []string, tokenIns port.Token) *middleware {
+	return &middleware{
 		apiKeys:  apiKeys,  // Initialize with the provided API keys
 		tokenIns: tokenIns, // Initialize with the provided Token instance
 	}
 }
 
 // ValidateApiKey returns an HTTP handler that checks if the request contains a valid API key.
-func (a *auth) ValidateApiKey() http.Handler {
+func (m *middleware) ValidateApiKey() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Extract the access token from the Authorization header
 		apiToken := r.Header.Get("Authorization")
@@ -39,7 +40,7 @@ func (a *auth) ValidateApiKey() http.Handler {
 		}
 
 		// Check if the provided API key is valid
-		if !slices.Contains(a.apiKeys, token) {
+		if !slices.Contains(m.apiKeys, token) {
 			// If the API key is invalid, respond with Unauthorized error.
 			http.Error(w, "api key is invalid", http.StatusUnauthorized)
 			return
@@ -51,11 +52,12 @@ func (a *auth) ValidateApiKey() http.Handler {
 }
 
 // ValidateRefreshToken returns an HTTP handler that validates the refresh token from the Authorization header.
-func (a *auth) ValidateRefreshToken() http.Handler {
+func (m *middleware) ValidateRefreshToken() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Extract the refresh token from the Authorization header
 		refreshToken := r.Header.Get("Authorization")
 		token := utils.ExtractBearerToken(refreshToken)
+		fmt.Println("token", token)
 		if token == "" {
 			// If no token is provided or token is malformed, respond with Unauthorized error.
 			http.Error(w, "authorization header required", http.StatusUnauthorized)
@@ -63,7 +65,7 @@ func (a *auth) ValidateRefreshToken() http.Handler {
 		}
 
 		// Get user ID and expiration time from the token
-		userid, expiresAt, err := a.tokenIns.GetRefreshTokenData(token)
+		userid, expiresAt, err := m.tokenIns.GetRefreshTokenData(token)
 		if err != nil {
 			// If there’s an internal error while fetching token data, respond with internal server error.
 			http.Error(w, "internal server error", http.StatusInternalServerError)

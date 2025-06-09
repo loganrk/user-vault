@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/loganrk/user-vault/config"
 	"github.com/loganrk/user-vault/internal/core/domain"
 )
 
@@ -46,12 +45,6 @@ type RepositoryMySQL interface {
 	RevokeAllTokens(ctx context.Context, tokenType int8, userID int) error
 }
 
-// Router defines the interface for setting up and starting HTTP routes and middleware.
-type Router interface {
-	SetupRoutes(apiConfig config.Api, logger Logger, authMiddlewareIns Auth, handler Handler)
-	StartServer(port string) error // Starts the HTTP server on the specified port
-}
-
 // Cipher defines the interface for encrypting and decrypting strings.
 type Cipher interface {
 	Encrypt(text string) (string, error)       // Encrypts a plain text string and returns the encrypted version
@@ -66,8 +59,8 @@ type Token interface {
 	GetRefreshTokenData(encryptedToken string) (int, time.Time, error)                      // Extracts user ID and expiry from a refresh token
 }
 
-// Auth defines the interface for API key and access token validation middleware.
-type Auth interface {
+// GinMiddleware defines the interface for API key and access token validation middleware.
+type GinMiddleware interface {
 	ValidateApiKey() http.Handler       // Returns middleware that validates API keys
 	ValidateRefreshToken() http.Handler // Returns middleware that validates refresh token
 }

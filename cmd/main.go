@@ -14,11 +14,11 @@ import (
 	handler "github.com/loganrk/user-vault/internal/adapters/handler/http"
 	logger "github.com/loganrk/user-vault/internal/adapters/logger/zapLogger"
 	Message "github.com/loganrk/user-vault/internal/adapters/message/kafka"
-	middleware "github.com/loganrk/user-vault/internal/adapters/middleware/auth"
+	ginmiddleware "github.com/loganrk/user-vault/internal/adapters/middleware/gin"
 	repo "github.com/loganrk/user-vault/internal/adapters/repository/mysql"
-	router "github.com/loganrk/user-vault/internal/adapters/router/gin"
 	token "github.com/loganrk/user-vault/internal/adapters/token/jwt"
 	userUsecase "github.com/loganrk/user-vault/internal/core/usecase/user"
+	router "github.com/loganrk/user-vault/internal/router/gin"
 )
 
 func main() {
@@ -74,15 +74,15 @@ func main() {
 	userService := userUsecase.New(loggerIns, tokenIns, kafkaIns, dbIns, appConfig.GetAppName(), appConfig.GetUser())
 	services := port.SvrList{User: userService}
 
-	// Initialize middleware for API authentication and authorization
-	middlewareIns := middleware.New(appConfig.GetMiddlewareApiKeys(), tokenIns)
+	// Initialize ginmiddlewareIns for API authentication and authorization
+	ginmiddlewareIns := ginmiddleware.New(appConfig.GetMiddlewareApiKeys(), tokenIns)
 
 	// Initialize HTTP handler to route requests to the appropriate services
 	handlerIns := handler.New(loggerIns, tokenIns, services)
 
 	// Set up and start the router with routes and handlers
 	router := router.New(loggerIns)
-	router.SetupRoutes(appConfig.GetApi(), loggerIns, middlewareIns, handlerIns)
+	router.SetupRoutes(appConfig.GetApi(), loggerIns, ginmiddlewareIns, handlerIns)
 
 	port := appConfig.GetAppPort()
 	loggerIns.Infow(context.Background(), "Starting server", "port", port)

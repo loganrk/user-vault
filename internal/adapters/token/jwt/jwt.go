@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/loganrk/user-vault/internal/core/port"
 	"github.com/loganrk/user-vault/internal/utils"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -22,7 +21,7 @@ type token struct {
 }
 
 // New function initializes and returns a new instance of token with the provided parameters
-func New(method string, hmacKey []byte, privateKeyPath, publicKeyPath string) (port.Token, error) {
+func New(method string, hmacKey []byte, privateKeyPath, publicKeyPath string) (*token, error) {
 	var privateKey *rsa.PrivateKey
 	var publicKey *rsa.PublicKey
 	var err error
