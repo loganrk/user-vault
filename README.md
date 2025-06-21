@@ -89,6 +89,7 @@ go run main.go
 │   │    ├── domain/               # Core domain models and logic
 │   │    ├── port/                 # Interface ports for adapters/usecases
 │   │    └── usecase/              # Business logic and services
+│   ├── router/gin/                # Gin router setup
 │   └── utils/                     # Utility helpers (crypto, random, etc.)
 ├── conf.yml                       # YAML-based application configuration
 └── README.md                      # Project documentation
