@@ -81,14 +81,10 @@ go run main.go
 ├── config/                        # YAML/ENV configuration loaders
 ├── internal/
 │   ├── adapters/                  # Infrastructure layer (driven adapters)
-│   │   ├── cipher/aes/            # AES encryption helpers
 │   │   ├── handler/http/v1/       # HTTP API handlers (v1)
-│   │   ├── logger/zapLogger/      # Zap-based logging adapter
-│   │   ├── message/kafka/         # Kafka producer for email events
 │   │   ├── middleware/auth/       # JWT/API key middleware
 │   │   ├── repository/mysql/      # MySQL persistence adapter
-│   │   ├── router/gin/            # Gin router setup
-│   │   └── token/jwt/             # JWT token generation and validation
+│   │   └── router/gin/            # Gin router setup
 │   ├── core/      
 │   │    ├── domain/               # Core domain models and logic
 │   │    ├── port/                 # Interface ports for adapters/usecases
