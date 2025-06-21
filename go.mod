@@ -11,6 +11,7 @@ require (
 	github.com/golang/mock v1.1.1
 	github.com/gorilla/schema v1.4.1
 	github.com/joho/godotenv v1.5.1
+	github.com/loganrk/utils-go v1.0.5-0.20250621102904-c0d621b836f8
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
