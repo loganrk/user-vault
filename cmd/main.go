@@ -10,15 +10,16 @@ import (
 	"github.com/loganrk/user-vault/config"
 	"github.com/loganrk/user-vault/internal/core/port"
 
-	cipher "github.com/loganrk/user-vault/internal/adapters/cipher/aes"
 	handler "github.com/loganrk/user-vault/internal/adapters/handler/http"
-	logger "github.com/loganrk/user-vault/internal/adapters/logger/zapLogger"
-	Message "github.com/loganrk/user-vault/internal/adapters/message/kafka"
 	ginmiddleware "github.com/loganrk/user-vault/internal/adapters/middleware/gin"
 	repo "github.com/loganrk/user-vault/internal/adapters/repository/mysql"
-	token "github.com/loganrk/user-vault/internal/adapters/token/jwt"
 	userUsecase "github.com/loganrk/user-vault/internal/core/usecase/user"
 	router "github.com/loganrk/user-vault/internal/router/gin"
+
+	cipher "github.com/loganrk/utils-go/adapters/cipher/aes"
+	logger "github.com/loganrk/utils-go/adapters/logger/zapLogger"
+	message "github.com/loganrk/utils-go/adapters/message/kafka"
+	token "github.com/loganrk/utils-go/adapters/token/jwt"
 )
 
 func main() {
@@ -127,8 +128,8 @@ func initMessager(appName string, conf config.Kafka) (port.Messager, error) {
 		brokers = append(brokers, broker)
 	}
 
-	// Pass the individual Kafka configuration parameters to the Message.New function
-	return Message.New(appName,
+	// Pass the individual Kafka configuration parameters to the message.New function
+	return message.NewUserProducer(appName,
 		brokers,
 		conf.GetVerificationTopic(),
 		conf.GetPasswordResetTopic(),
