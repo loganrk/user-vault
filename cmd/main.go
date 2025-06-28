@@ -63,13 +63,12 @@ func main() {
 		return
 	}
 
-	// Initialize Kafka message producer for event-driven messaging
-	// kafkaIns, err := initMessager(appConfig.GetAppName(), appConfig.GetKafka())
-	// if err != nil {
-	// 	log.Println("failed to setup kafka:", err)
-	// 	return
-	// }
-	var kafkaIns port.Messager
+	//Initialize Kafka message producer for event-driven messaging
+	kafkaIns, err := initMessager(appConfig.GetAppName(), appConfig.GetKafka())
+	if err != nil {
+		log.Println("failed to setup kafka:", err)
+		return
+	}
 
 	// Initialize user service with necessary dependencies
 	userService := userUsecase.New(loggerIns, tokenIns, kafkaIns, dbIns, appConfig.GetAppName(), appConfig.GetUser())
