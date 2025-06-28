@@ -50,7 +50,7 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 		}
 
 		// Send verification email to the user
-		if err := u.messager.PublishPasswordResetEmail(userData.Email, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, token); err != nil {
+		if err := u.messager.PublishPasswordResetEmail(userData.Email, constant.USER_PASSWORD_RESET_EMAIL_SUBJECT, userData.Name, token); err != nil {
 			u.logger.Errorw(ctx, "failed to send verification email", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
 			return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
 				Code:      http.StatusInternalServerError,

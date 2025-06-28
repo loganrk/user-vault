@@ -202,7 +202,7 @@ func (u *userusecase) ResendVerification(ctx context.Context, req domain.UserRes
 		}
 	}
 
-	return domain.UserResendVerificationClientResponse{Message: "Please activate your account"}, domain.ErrorRes{}
+	return domain.UserResendVerificationClientResponse{Message: "Activation Send Succefully.Please activate your account"}, domain.ErrorRes{}
 }
 
 // checkUserDoesNotExist checks if a user already exists with the provided email or phone.
