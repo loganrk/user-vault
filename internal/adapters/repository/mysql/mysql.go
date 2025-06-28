@@ -82,15 +82,35 @@ func (m *mySql) GetUserByPhone(ctx context.Context, phone string) (domain.User, 
 	return userData, result.Error
 }
 
-// GetUserByEmail retrieves a user record by their phone or email.
+// GetUserByEmailOrPhone retrieves a user record by their phone or email.
 func (m *mySql) GetUserByEmailOrPhone(ctx context.Context, email, phone string) (domain.User, error) {
 	var userData domain.User
-	// Select specific fields for user data fetching
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "email", "email_verified", "phone", "phone_verified", "name", "state", "status").Where("email = ? or phone = ?", email, phone).First(&userData)
-	if result.Error == gorm.ErrRecordNotFound {
-		result.Error = nil // Return nil error if no user found
+
+	// If both email and phone are empty, no need to query
+	if email == "" && phone == "" {
+		return userData, nil
 	}
+
+	query := m.dialer.WithContext(ctx).Model(&domain.User{}).
+		Select("id", "email", "email_verified", "phone", "phone_verified", "name", "state", "status")
+
+	// Apply conditions based on which field is present
+	if email != "" && phone != "" {
+		query = query.Where("email = ? OR phone = ?", email, phone)
+	} else if email != "" {
+		query = query.Where("email = ?", email)
+	} else if phone != "" {
+		query = query.Where("phone = ?", phone)
+	}
+
+	result := query.First(&userData)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		result.Error = nil // No user found is not an error
+	}
+
 	return userData, result.Error
+
 }
 
 // GetUserPasswordByUserID retrieves a user record by their userID.
