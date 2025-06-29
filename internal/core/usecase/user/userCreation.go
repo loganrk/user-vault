@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -52,7 +51,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 	}
 
 	if tokenType == constant.TOKEN_TYPE_ACTIVATION_EMAIL {
-		link := strings.Replace(token, constant.TOKEN_MACRO, u.conf.GetVerificationLink(), 1)
+		link := strings.Replace(u.conf.GetVerificationLink(), constant.TOKEN_MACRO, token, 1)
 		if err := u.messager.PublishVerificationEmail(userData.Email, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, link); err != nil {
 			u.logger.Errorw(ctx, "publish_verification_email failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
 			return domain.UserRegisterClientResponse{}, domain.ErrorRes{
@@ -184,8 +183,8 @@ func (u *userusecase) ResendVerification(ctx context.Context, req domain.UserRes
 	}
 
 	if req.Email != "" {
-		link := strings.Replace(token, constant.TOKEN_MACRO, u.conf.GetPasswordResetLink(), 1)
-		fmt.Println("link")
+
+		link := strings.Replace(u.conf.GetVerificationLink(), constant.TOKEN_MACRO, token, 1)
 		if err := u.messager.PublishVerificationEmail(userData.Email, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, link); err != nil {
 			u.logger.Errorw(ctx, "publish_verification_email failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
 			return domain.UserResendVerificationClientResponse{}, domain.ErrorRes{
