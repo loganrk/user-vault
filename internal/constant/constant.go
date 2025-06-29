@@ -50,3 +50,7 @@ const (
 	ForbiddenException        = "ForbiddenException"
 	GenericException          = "GenericException"
 )
+
+const (
+	TOKEN_MACRO = "{{token}}"
+)

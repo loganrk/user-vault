@@ -70,6 +70,9 @@ func main() {
 		return
 	}
 
+	kafkaIns.RegisterVerification(appConfig.GetKafka().GetPasswordResetTopic())
+	kafkaIns.RegisterPasswordReset(appConfig.GetKafka().GetPasswordResetTopic())
+
 	// Initialize user service with necessary dependencies
 	userService := userUsecase.New(loggerIns, tokenIns, kafkaIns, dbIns, appConfig.GetAppName(), appConfig.GetUser())
 	services := port.SvrList{User: userService}
@@ -128,14 +131,13 @@ func initMessager(appName string, conf config.Kafka) (port.Messager, error) {
 	}
 
 	// Pass the individual Kafka configuration parameters to the message.New function
-	return message.NewUserProducer(appName,
+	return message.New(appName,
 		brokers,
-		conf.GetVerificationTopic(),
-		conf.GetPasswordResetTopic(),
 		conf.GetClientID(),
 		conf.GetVersion(),
 		conf.GetRetryMax(),
 	)
+
 }
 
 // initDatabase connects to the MySQL database using decrypted credentials from the config.

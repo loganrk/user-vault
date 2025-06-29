@@ -62,10 +62,12 @@ type user struct {
 	LoginAttemptSessionPeriod int `mapstructure:"loginAttemptSessionPeriod"`
 	PasswordHashCost          int `mapstructure:"passwordHashCost"`
 	Verification              struct {
-		TokenExpiry int `mapstructure:"tokenExpiry"`
+		Link        string `mapstructure:"link"`
+		TokenExpiry int    `mapstructure:"tokenExpiry"`
 	} `mapstructure:"verification"`
 	PasswordReset struct {
-		TokenExpiry int `mapstructure:"tokenExpiry"`
+		Link        string `mapstructure:"link"`
+		TokenExpiry int    `mapstructure:"tokenExpiry"`
 	} `mapstructure:"passwordReset"`
 	RefreshToken struct {
 		Enabled  bool `mapstructure:"enabled"`
