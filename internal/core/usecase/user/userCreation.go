@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -184,7 +185,7 @@ func (u *userusecase) ResendVerification(ctx context.Context, req domain.UserRes
 
 	if req.Email != "" {
 		link := strings.Replace(token, constant.TOKEN_MACRO, u.conf.GetPasswordResetLink(), 1)
-
+		fmt.Println("link")
 		if err := u.messager.PublishVerificationEmail(userData.Email, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, link); err != nil {
 			u.logger.Errorw(ctx, "publish_verification_email failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
 			return domain.UserResendVerificationClientResponse{}, domain.ErrorRes{

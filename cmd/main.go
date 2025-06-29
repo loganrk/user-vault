@@ -70,7 +70,7 @@ func main() {
 		return
 	}
 
-	kafkaIns.RegisterVerification(appConfig.GetKafka().GetPasswordResetTopic())
+	kafkaIns.RegisterVerification(appConfig.GetKafka().GetVerificationTopic())
 	kafkaIns.RegisterPasswordReset(appConfig.GetKafka().GetPasswordResetTopic())
 
 	// Initialize user service with necessary dependencies
