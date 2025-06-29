@@ -18,7 +18,7 @@ import (
 
 	cipher "github.com/loganrk/utils-go/adapters/cipher/aes"
 	logger "github.com/loganrk/utils-go/adapters/logger/zapLogger"
-	message "github.com/loganrk/utils-go/adapters/message/kafka"
+	message "github.com/loganrk/utils-go/adapters/message/kafka/producer"
 	token "github.com/loganrk/utils-go/adapters/token/jwt"
 )
 
