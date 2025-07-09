@@ -14,7 +14,7 @@ func (k kafka) GetVerificationTopic() string {
 }
 
 func (k kafka) GetPasswordResetTopic() string {
-	return k.Topics.UserVerify
+	return k.Topics.UserPasswordReset
 }
 
 func (k kafka) GetClientID() string {

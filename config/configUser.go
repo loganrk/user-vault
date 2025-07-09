@@ -5,7 +5,10 @@ type User interface {
 	GetLoginAttemptSessionPeriod() int
 	GetPasswordHashCost() int
 
+	GetVerificationLink() string
 	GetVerificationTokenExpiry() int
+
+	GetPasswordResetLink() string
 	GetPasswordResetTokenExpiry() int
 
 	GetRefreshTokenEnabled() bool
@@ -29,8 +32,16 @@ func (u user) GetPasswordHashCost() int {
 	return u.PasswordHashCost
 }
 
+func (u user) GetVerificationLink() string {
+	return u.Verification.Link
+}
+
 func (u user) GetVerificationTokenExpiry() int {
 	return u.Verification.TokenExpiry
+}
+
+func (u user) GetPasswordResetLink() string {
+	return u.PasswordReset.Link
 }
 
 func (u user) GetPasswordResetTokenExpiry() int {

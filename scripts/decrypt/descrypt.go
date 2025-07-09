@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	cipherAes "github.com/loganrk/user-vault/internal/adapters/cipher/aes"
+	cipherAes "github.com/loganrk/utils-go/adapters/cipher/aes"
 )
 
 func main() {

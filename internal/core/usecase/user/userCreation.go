@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
@@ -50,7 +51,8 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 	}
 
 	if tokenType == constant.TOKEN_TYPE_ACTIVATION_EMAIL {
-		if err := u.messager.PublishVerificationEmail(userData.Email, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, token); err != nil {
+		link := strings.Replace(u.conf.GetVerificationLink(), constant.TOKEN_MACRO, token, 1)
+		if err := u.messager.PublishVerificationEmail(userData.Email, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, link); err != nil {
 			u.logger.Errorw(ctx, "publish_verification_email failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
 			return domain.UserRegisterClientResponse{}, domain.ErrorRes{
 				Code:      http.StatusInternalServerError,
@@ -181,7 +183,9 @@ func (u *userusecase) ResendVerification(ctx context.Context, req domain.UserRes
 	}
 
 	if req.Email != "" {
-		if err := u.messager.PublishVerificationEmail(userData.Email, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, token); err != nil {
+
+		link := strings.Replace(u.conf.GetVerificationLink(), constant.TOKEN_MACRO, token, 1)
+		if err := u.messager.PublishVerificationEmail(userData.Email, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, link); err != nil {
 			u.logger.Errorw(ctx, "publish_verification_email failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
 			return domain.UserResendVerificationClientResponse{}, domain.ErrorRes{
 				Code:      http.StatusInternalServerError,
@@ -202,7 +206,7 @@ func (u *userusecase) ResendVerification(ctx context.Context, req domain.UserRes
 		}
 	}
 
-	return domain.UserResendVerificationClientResponse{Message: "Please activate your account"}, domain.ErrorRes{}
+	return domain.UserResendVerificationClientResponse{Message: "Activation Send Succefully.Please activate your account"}, domain.ErrorRes{}
 }
 
 // checkUserDoesNotExist checks if a user already exists with the provided email or phone.

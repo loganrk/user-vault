@@ -89,9 +89,12 @@ type Logger interface {
 }
 
 type Messager interface {
-	PublishVerificationEmail(toAddress, subject, name, token string) error
+	RegisterVerification(topic string)
+	PublishVerificationEmail(toAddress, subject, name, link string) error
 	PublishVerificationPhone(phone, name, token string) error
-	PublishPasswordResetEmail(toAddress, subject, name, token string) error
+
+	RegisterPasswordReset(topic string)
+	PublishPasswordResetEmail(toAddress, subject, name, link string) error
 	PublishPasswordResetPhone(phone, name, token string) error
 }
 type OAuthProvider interface {

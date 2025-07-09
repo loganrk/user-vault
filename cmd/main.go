@@ -18,7 +18,7 @@ import (
 
 	cipher "github.com/loganrk/utils-go/adapters/cipher/aes"
 	logger "github.com/loganrk/utils-go/adapters/logger/zapLogger"
-	message "github.com/loganrk/utils-go/adapters/message/kafka"
+	message "github.com/loganrk/utils-go/adapters/message/kafka/producer"
 	token "github.com/loganrk/utils-go/adapters/token/jwt"
 )
 
@@ -63,13 +63,15 @@ func main() {
 		return
 	}
 
-	// Initialize Kafka message producer for event-driven messaging
-	// kafkaIns, err := initMessager(appConfig.GetAppName(), appConfig.GetKafka())
-	// if err != nil {
-	// 	log.Println("failed to setup kafka:", err)
-	// 	return
-	// }
-	var kafkaIns port.Messager
+	//Initialize Kafka message producer for event-driven messaging
+	kafkaIns, err := initMessager(appConfig.GetAppName(), appConfig.GetKafka())
+	if err != nil {
+		log.Println("failed to setup kafka:", err)
+		return
+	}
+
+	kafkaIns.RegisterVerification(appConfig.GetKafka().GetVerificationTopic())
+	kafkaIns.RegisterPasswordReset(appConfig.GetKafka().GetPasswordResetTopic())
 
 	// Initialize user service with necessary dependencies
 	userService := userUsecase.New(loggerIns, tokenIns, kafkaIns, dbIns, appConfig.GetAppName(), appConfig.GetUser())
@@ -129,14 +131,13 @@ func initMessager(appName string, conf config.Kafka) (port.Messager, error) {
 	}
 
 	// Pass the individual Kafka configuration parameters to the message.New function
-	return message.NewUserProducer(appName,
+	return message.New(appName,
 		brokers,
-		conf.GetVerificationTopic(),
-		conf.GetPasswordResetTopic(),
 		conf.GetClientID(),
 		conf.GetVersion(),
 		conf.GetRetryMax(),
 	)
+
 }
 
 // initDatabase connects to the MySQL database using decrypted credentials from the config.
