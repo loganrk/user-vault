@@ -40,16 +40,8 @@ mockgen -package=mocks -destination=test/mocks/usecase_user_port.go github.com/l
 - Always run from the root of the module to keep import paths correct.
 - Consider using `go:generate` directives in your source files for automation:
 
-```bash
-mockgen -package=mocks -destination=test/mocks/adapter_handler.go github.com/loganrk/user-vault/internal/core/port Handler
-mockgen -package=mocks -destination=test/mocks/adapter_repository_mysql_port.go github.com/loganrk/user-vault/internal/core/port RepositoryMySQL
-mockgen -package=mocks -destination=test/mocks/adapter_cipher_port.go github.com/loganrk/user-vault/internal/core/port Cipher
-mockgen -package=mocks -destination=test/mocks/adapter_token_port.go github.com/loganrk/user-vault/internal/core/port Token
-mockgen -package=mocks -destination=test/mocks/adapter_middleware_gin_port.go github.com/loganrk/user-vault/internal/core/port GinMiddleware
-mockgen -package=mocks -destination=test/mocks/adapter_logger_port.go github.com/loganrk/user-vault/internal/core/port Logger
-mockgen -package=mocks -destination=test/mocks/adapter_messager_port.go github.com/loganrk/user-vault/internal/adapter/port Messager
-mockgen -package=mocks -destination=test/mocks/usecase_user_port.go github.com/loganrk/user-vault/internal/core/port UserSvr
-
+```go
+//go:generate mockgen -package=mocks -destination=../../../test/mocks/usecase_user_port.go github.com/loganrk/user-vault/internal/core/port UserSvr
 ```
 
 Then regenerate all mocks with:
