@@ -6,11 +6,12 @@ require (
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/validator/v10 v10.20.0
-	github.com/golang/mock v1.1.1
+	github.com/golang/mock v1.6.0
 	github.com/gorilla/schema v1.4.1
 	github.com/joho/godotenv v1.5.1
 	github.com/loganrk/utils-go v1.0.10
 	github.com/spf13/viper v1.19.0
+	github.com/stretchr/testify v1.9.0
 	golang.org/x/crypto v0.33.0
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	google.golang.org/api v0.171.0
@@ -63,6 +64,7 @@ require (
 	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
