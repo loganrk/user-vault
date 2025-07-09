@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -12,21 +13,21 @@ import (
 	"github.com/loganrk/user-vault/test/mocks"
 )
 
-func TestRegister(t *testing.T) {
+type mocksSetup func(
+	ctx context.Context,
+	mockRepo *mocks.MockRepositoryMySQL,
+	mockMsg *mocks.MockMessager,
+	mockLogger *mocks.MockLogger,
+	mockConfigUser *mocks.MockUser,
+)
+
+func TestRegister_success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	type args struct {
 		req domain.UserRegisterClientRequest
 	}
-
-	type mocksSetup func(
-		ctx context.Context,
-		mockRepo *mocks.MockRepositoryMySQL,
-		mockMsg *mocks.MockMessager,
-		mockLogger *mocks.MockLogger,
-		mockConfigUser *mocks.MockUser,
-	)
 
 	tests := []struct {
 		name       string
@@ -113,4 +114,91 @@ func TestRegister(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestVerifyUser_Success_EmailVerification(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	type args struct {
+		req domain.UserVerifyClientRequest
+	}
+
+	tests := []struct {
+		name       string
+		args       args
+		setupMocks mocksSetup
+		wantErr    bool
+		wantMsg    string
+	}{
+		{
+			name: "success email registration",
+			args: args{
+				req: domain.UserVerifyClientRequest{
+					Email: "alice@example.com",
+					Token: "valid-token",
+				},
+			},
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, _ *mocks.MockLogger, mockConfigUser *mocks.MockUser) {
+
+				mockRepo.EXPECT().
+					GetUserByEmail(ctx, "alice@example.com").
+					Return(domain.User{
+						Id:            1,
+						Email:         "alice@example.com",
+						EmailVerified: false,
+					}, nil)
+
+				// Expect UpdateEmailVerfied
+				mockRepo.EXPECT().
+					UpdateEmailVerfied(ctx, 1).
+					Return(nil)
+
+				mockRepo.EXPECT().
+					GetUserLastTokenByUserId(ctx, constant.TOKEN_TYPE_ACTIVATION_EMAIL, 1).
+					Return(domain.UserTokens{
+						Id:        1,
+						Token:     "valid-token",
+						Revoked:   false,
+						ExpiresAt: time.Now().Add(10 * time.Second),
+					}, nil)
+
+				// Expect RevokeToken
+				mockRepo.EXPECT().
+					RevokeToken(ctx, 1).
+					Return(nil)
+
+			},
+			wantErr: false,
+			wantMsg: "User account activated successfully.",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.TODO()
+
+			mockRepo := mocks.NewMockRepositoryMySQL(ctrl)
+			mockToken := mocks.NewMockToken(ctrl)
+			mockMsg := mocks.NewMockMessager(ctrl)
+			mockLogger := mocks.NewMockLogger(ctrl)
+			mockConfigUser := mocks.NewMockUser(ctrl)
+
+			uc := New(mockLogger, mockToken, mockMsg, mockRepo, "myapp", mockConfigUser)
+
+			// Setup mocks for this test case
+			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockConfigUser)
+
+			resp, errRes := uc.VerifyUser(ctx, tt.args.req)
+
+			if tt.wantErr {
+				assert.NotEmpty(t, errRes.Err)
+				assert.Equal(t, tt.wantMsg, errRes.Message)
+			} else {
+				assert.Empty(t, errRes.Err)
+				assert.Equal(t, tt.wantMsg, resp.Message)
+			}
+		})
+	}
+
 }
