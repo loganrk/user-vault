@@ -166,10 +166,9 @@ func TestRegister(t *testing.T) {
 			mockMsg := mocks.NewMockMessager(ctrl)
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
+			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockConfigUser)
 
 			uc := New(mockLogger, mockToken, mockMsg, mockRepo, "myapp", mockConfigUser)
-
-			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockConfigUser)
 
 			resp, errRes := uc.Register(ctx, tt.args.req)
 
@@ -282,10 +281,9 @@ func TestVerifyUser(t *testing.T) {
 			mockMsg := mocks.NewMockMessager(ctrl)
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
+			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockConfigUser)
 
 			uc := New(mockLogger, mockToken, mockMsg, mockRepo, "myapp", mockConfigUser)
-
-			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockConfigUser)
 
 			resp, errRes := uc.VerifyUser(ctx, tt.args.req)
 
@@ -364,10 +362,9 @@ func TestResendVerification(t *testing.T) {
 			mockMsg := mocks.NewMockMessager(ctrl)
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfig := mocks.NewMockUser(ctrl)
+			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockConfig)
 
 			uc := New(mockLogger, mockToken, mockMsg, mockRepo, "myapp", mockConfig)
-
-			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockConfig)
 
 			resp, errRes := uc.ResendVerification(ctx, tt.args.req)
 
