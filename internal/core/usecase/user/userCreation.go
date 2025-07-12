@@ -30,7 +30,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 	userData, errRes := u.fetchUserByID(ctx, userId)
 	if errRes.Code != 0 {
 		if errRes.Err != "" {
-			u.logger.Errorw(ctx, "fetch_user_by_id failed", "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+			u.logger.Errorw(ctx, "fetch_user_by_id failed", "userId", userId, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
 		}
 		return domain.UserRegisterClientResponse{}, errRes
 	}
