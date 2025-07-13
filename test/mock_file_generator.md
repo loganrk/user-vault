@@ -41,7 +41,10 @@ mockgen -package=mocks -destination=test/mocks/adapter_logger_port.go github.com
 
 mockgen -package=mocks -destination=test/mocks/adapter_messager_port.go github.com/loganrk/user-vault/internal/core/port Messager
 
+mockgen -package=mocks -destination=test/mocks/utils_port.go github.com/loganrk/user-vault/internal/core/port Utils
+
 mockgen -package=mocks -destination=test/mocks/usecase_user_port.go github.com/loganrk/user-vault/internal/core/port UserSvr
+
 ```
 
 ---

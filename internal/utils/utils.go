@@ -15,11 +15,34 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+type utils struct{}
 
-// GenerateRandomString returns a random string of the given length
+func New() *utils {
+	return &utils{}
+}
+
+const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+const charsetForOtp = "0123456789"
+
+// GenerateString returns a random string of the given length
 // using characters from the predefined charset.
-func GenerateRandomString(length int) string {
+func (u *utils) GenerateString(length int) string {
+	result := make([]byte, length)
+	for i := range result {
+		result[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(result)
+}
+
+func (u *utils) GenerateOTPString(length int) string {
+	result := make([]byte, length)
+	for i := range result {
+		result[i] = charsetForOtp[rand.Intn(len(charsetForOtp))]
+	}
+	return string(result)
+}
+
+func GenerateString(length int) string {
 	result := make([]byte, length)
 	for i := range result {
 		result[i] = charset[rand.Intn(len(charset))]
@@ -147,7 +170,7 @@ func ExtractBearerToken(token string) string {
 // NewSaltHash generates a new salt for password hashing.
 func NewSaltHash() (string, error) {
 	// Generate a random salt string
-	saltRaw := GenerateRandomString(10)
+	saltRaw := GenerateString(10)
 
 	// Hash the salt using bcrypt
 	salt, err := bcrypt.GenerateFromPassword([]byte(saltRaw), bcrypt.DefaultCost)

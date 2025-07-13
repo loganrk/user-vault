@@ -323,7 +323,7 @@ func (u *userusecase) generateVerificationToken(ctx context.Context, tokenType i
 	}
 
 	// Generate a random verification token
-	verificationToken := utils.GenerateRandomString(25)
+	verificationToken := u.utils.GenerateString(25)
 
 	// Prepare token data
 	tokenData := domain.UserTokens{

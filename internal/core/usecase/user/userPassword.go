@@ -7,7 +7,6 @@ import (
 
 	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
-	"github.com/loganrk/user-vault/internal/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -30,14 +29,12 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 
 	errRes = u.isEmailOrPhoneVerified(userData, req.Email, req.Phone)
 	if errRes.Code != 0 {
-		u.logger.Warnw(ctx, errRes.Message, "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
 		return domain.UserForgotPasswordClientResponse{}, errRes
 	}
 
 	// Check if the account is active
 	errRes = u.checkAccountIsActive(ctx, userData)
 	if errRes.Code != 0 {
-		u.logger.Warnw(ctx, errRes.Message, "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
 		return domain.UserForgotPasswordClientResponse{}, errRes
 	}
 
@@ -46,7 +43,9 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 		// Generate a new verification token for email-based password reset
 		_, token, errRes := u.generatePasswordResetToken(ctx, constant.TOKEN_TYPE_PASSWORD_RESET_EMAIL, userData.Id)
 		if errRes.Code != 0 {
-			u.logger.Errorw(ctx, errRes.Message, "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+			if errRes.Err != "" {
+				u.logger.Errorw(ctx, "generate_password_reset_token failed", "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+			}
 			return domain.UserForgotPasswordClientResponse{}, errRes
 		}
 
@@ -54,6 +53,7 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 		link := strings.Replace(u.conf.GetPasswordResetLink(), constant.TOKEN_MACRO, token, 1)
 		if err := u.messager.PublishPasswordResetEmail(userData.Email, constant.USER_PASSWORD_RESET_EMAIL_SUBJECT, userData.Name, link); err != nil {
 			u.logger.Errorw(ctx, "failed to send verification email", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
+
 			return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
 				Code:      http.StatusInternalServerError,
 				Message:   constant.MessageInternalServerError,
@@ -65,7 +65,9 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 		// Generate a new verification token for phone-based password reset
 		_, token, errRes := u.generatePasswordResetToken(ctx, constant.TOKEN_TYPE_PASSWORD_RESET_PHONE, userData.Id)
 		if errRes.Code != 0 {
-			u.logger.Errorw(ctx, errRes.Message, "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+			if errRes.Err != "" {
+				u.logger.Errorw(ctx, "generate_password_reset_token failed", "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+			}
 			return domain.UserForgotPasswordClientResponse{}, errRes
 		}
 
@@ -199,9 +201,14 @@ func (u *userusecase) generatePasswordResetToken(ctx context.Context, tokenType 
 			Exception: constant.DBException,
 		}
 	}
+	var verificationToken string
 
-	// Generate a new token for password reset
-	verificationToken := utils.GenerateRandomString(25)
+	if tokenType == constant.TOKEN_TYPE_PASSWORD_RESET_EMAIL {
+		// Generate a new token for password reset
+		verificationToken = u.utils.GenerateString(25)
+	} else {
+		verificationToken = u.utils.GenerateOTPString(6)
+	}
 
 	// Store the new token in the database
 	tokenData := domain.UserTokens{

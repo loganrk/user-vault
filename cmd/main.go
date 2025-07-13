@@ -9,6 +9,7 @@ import (
 
 	"github.com/loganrk/user-vault/config"
 	"github.com/loganrk/user-vault/internal/core/port"
+	"github.com/loganrk/user-vault/internal/utils"
 
 	handler "github.com/loganrk/user-vault/internal/adapters/handler/http"
 	ginmiddleware "github.com/loganrk/user-vault/internal/adapters/middleware/gin"
@@ -40,6 +41,8 @@ func main() {
 		log.Println("failed to load config:", err)
 		return
 	}
+
+	utilsIns := utils.New()
 
 	// Initialize logger with the configuration settings
 	loggerIns, err := initLogger(appConfig.GetLogger())
@@ -74,7 +77,7 @@ func main() {
 	kafkaIns.RegisterPasswordReset(appConfig.GetKafka().GetPasswordResetTopic())
 
 	// Initialize user service with necessary dependencies
-	userService := userUsecase.New(loggerIns, tokenIns, kafkaIns, dbIns, appConfig.GetAppName(), appConfig.GetUser())
+	userService := userUsecase.New(loggerIns, tokenIns, kafkaIns, dbIns, utilsIns, appConfig.GetAppName(), appConfig.GetUser())
 	services := port.SvrList{User: userService}
 
 	// Initialize ginmiddlewareIns for API authentication and authorization
