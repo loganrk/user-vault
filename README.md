@@ -29,27 +29,45 @@ Detailed documentation is available in the [Wiki](https://github.com/loganrk/use
 - 🧱 Modular Adapters for DB, Messaging, Email, Tokens, Logging  
 - 🔄 Graceful Error Handling with Logger Middleware  
 
-## Installation
 
-1. Clone the repository:
+## 🚀 Installation
 
-    ```sh
-    git clone https://github.com/loganrk/user-vault
-    cd user-vault
-    ```
+### 1. Clone the repository
+```sh
+git clone https://github.com/loganrk/user-vault
+cd user-vault
+```
 
-2. Initialize dependencies:
+### 2. Create your configuration file
+Copy the example:
+```sh
+cp conf.yaml.example /absolute/path/to/config.yaml
+```
 
-    ```sh
-    go mod tidy
-    ```
+Fill in required values such as DB credentials, JWT secrets, and server settings.
 
-3. Create a `cmd/.env` or config file with required credentials (DB, JWT secrets, etc.).
+### 3. Set up environment variables
+Create your environment file:
+```sh
+cp cmd/.env.example /absolute/path/to/release.env
+```
 
-## Usage
+Update the `release.env` file and set the path to your configuration file:
+```
+CONFIG_FILE_PATH=/absolute/path/to/config.yaml
+```
+Set the DEPLOYMENT_ENV_PATH
+```
+export DEPLOYMENT_ENV_PATH=/absolute/path/to/release.env
+```
 
-Start the service:
+### 4. Install Go dependencies
+```sh
+go mod tidy
+```
 
+##  Usage
+Run the service:
 ```sh
 go run main.go
 ```
