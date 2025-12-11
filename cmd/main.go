@@ -4,6 +4,8 @@ import (
 	"context"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/joho/godotenv"
 
@@ -24,19 +26,37 @@ import (
 )
 
 func main() {
-	// Load environment variables from .env file for application configuration
-	godotenv.Load()
+	envFile := os.Getenv("DEPLOYMENT_ENV_PATH")
+	if envFile != "" {
+		// If a custom environment file path is provided, load variables from that file
+		err := godotenv.Load(envFile)
+		if err != nil {
+			log.Fatalf("Error loading %s file", envFile)
+		}
+	} else {
+		// Load environment variables from .env file for application configuration
+		godotenv.Load()
+	}
 
-	// Fetch config file path, name, and type from environment variables
-	configPath := os.Getenv("CONFIG_FILE_PATH")
-	configName := os.Getenv("CONFIG_FILE_NAME")
-	configType := os.Getenv("CONFIG_FILE_TYPE")
+	// Fetch config file path from environment variables
+	configFilePath := os.Getenv("CONFIG_FILE_PATH")
 
-	// Initialize application configuration using the provided details
-	appConfig, err := config.StartConfig(configPath, config.File{
-		Name: configName,
-		Ext:  configType,
+	// Extract the file name (e.g., "config.yaml")
+	configFileName := filepath.Base(configFilePath)
+
+	// Extract file base name and extension
+	configBaseName := strings.TrimSuffix(configFileName, filepath.Ext(configFileName))
+	configFileExt := strings.TrimPrefix(filepath.Ext(configFileName), ".")
+
+	// Extract directory path containing the config file
+	configDirPath := filepath.Dir(configFilePath)
+
+	// Initialize application configuration using extracted components
+	appConfig, err := config.StartConfig(configDirPath, config.File{
+		Name: configBaseName,
+		Ext:  configFileExt,
 	})
+
 	if err != nil {
 		log.Println("failed to load config:", err)
 		return

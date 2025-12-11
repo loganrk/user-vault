@@ -35,7 +35,7 @@ api:
     method: "POST"
   userOAuthLogin:
     enabled: true
-    route: "/api/v2/oAuthlogin"
+    route: "/api/v1/oAuthlogin"
     method: "POST"
   userRegister:
     enabled: true
@@ -80,10 +80,10 @@ user:
   loginAttemptSessionPeriod: 60  # Time period (in seconds) to count failed attempts
   passwordHashCost: 12  # bcrypt cost factor for password hashing
   verification:
-    link: "http://localhost/verify/{{token}}" #macros {{token}}
+    link: "http://sample.com/verify/{{token}}" #macros {{token}}
     tokenExpiry: 1800  # Expiry time for verification token in seconds (30 min)
   passwordReset:
-    link: "http://localhost/password-reset/{{token}}" #macros {{token}}
+    link: "http://sample.com/password-reset/{{token}}" #macros {{token}}
     tokenExpiry: 1800  # Expiry time for reset token in seconds (30 min)
   refreshToken:
     enabled: true  # Whether refresh token system is enabled

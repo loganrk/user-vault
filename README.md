@@ -44,7 +44,7 @@ Detailed documentation is available in the [Wiki](https://github.com/loganrk/use
     go mod tidy
     ```
 
-3. Create a `.env` or config file with required credentials (DB, JWT secrets, etc.).
+3. Create a `cmd/.env` or config file with required credentials (DB, JWT secrets, etc.).
 
 ## Usage
 
