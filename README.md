@@ -35,7 +35,7 @@ This setup runs **User-Vault**, **MySQL**, and **Kafka** fully via Docker. All c
 
 ---
 
-## 1️⃣ Prerequisites
+###  Prerequisites
 
 - Docker
 - Docker Compose v2+
@@ -47,7 +47,7 @@ docker compose version
 
 ---
 
-## 2️⃣ Clone the repository
+### Clone the repository
 
 ```sh
 git clone https://github.com/loganrk/user-vault
@@ -56,7 +56,7 @@ cd user-vault
 
 ---
 
-## 3️⃣ Prepare configuration files (local only)
+### Prepare configuration files (local only)
 
 Your `docker-compose` already mounts these paths:
 
@@ -78,7 +78,7 @@ cp etc/env/docker.env.sample etc/env/local.env
 
 ---
 
-## 4️⃣ Create shared Docker network (one-time)
+### Create shared Docker network (one-time)
 
 ```sh
 docker network create app-network
@@ -86,7 +86,7 @@ docker network create app-network
 
 ---
 
-## 5️⃣ Start MySQL
+### Start MySQL
 
 ```sh
 docker compose -f docker-compose-mysql.yml up -d
@@ -97,7 +97,7 @@ docker compose -f docker-compose-mysql.yml up -d
 
 ---
 
-## 6️⃣ Start Kafka (topics auto-created)
+### Start Kafka (topics auto-created)
 
 ```sh
 docker compose -f docker-compose-kafka.yml up -d
@@ -108,7 +108,7 @@ docker compose -f docker-compose-kafka.yml up -d
 
 ---
 
-## 7️⃣ Start User-Vault
+### Start User-Vault
 
 ```sh
 docker compose -f docker-compose-app.yml up -d --build
@@ -120,7 +120,7 @@ The service automatically reads:
 
 ---
 
-## 8️⃣ Verify Services
+### Verify Services
 
 ```sh
 docker ps
@@ -140,19 +140,13 @@ docker exec -it mysql mysql -uadmin -padmin123 userVault
 
 ---
 
-## 9️⃣ Access the API
+### Access the API
 
 ```
 http://localhost:8080
 ```
 
 ---
-
-## 🧹 Stop Services
-
-```sh
-docker compose down
-```
 
 
 ## API Endpoints
