@@ -9,7 +9,6 @@ The project is structured using a clean **Hexagonal Architecture** to ensure mai
 Detailed documentation is available in the [Wiki](https://github.com/loganrk/user-vault/wiki), including setup guides, API reference, and architectural overviews.
 
 ## Table of Contents
-- [Wiki](https://github.com/loganrk/user-vault/wiki)
 - [Features](#features)
 - [Installation Using Docker](#installation-using-docker)
 - [Usage](#usage)
@@ -151,7 +150,9 @@ http://localhost:8080
 
 ## API Endpoints
 
-### 📥 Authentication APIs
+For detailed API information, visit the [Wiki](https://github.com/loganrk/user-vault/wiki).
+
+    ### 📥 Authentication APIs
 
 | Method   | Endpoint                    | Description                         |
 |----------|-----------------------------|-------------------------------------|
