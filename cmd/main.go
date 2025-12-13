@@ -9,15 +9,15 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/loganrk/user-vault/config"
 	"github.com/loganrk/user-vault/internal/core/port"
-	"github.com/loganrk/user-vault/internal/utils"
+	"github.com/loganrk/user-vault/internal/infrastructure/config"
+	"github.com/loganrk/user-vault/internal/shared/utils"
 
-	handler "github.com/loganrk/user-vault/internal/adapters/handler/http"
-	ginmiddleware "github.com/loganrk/user-vault/internal/adapters/middleware/gin"
-	repo "github.com/loganrk/user-vault/internal/adapters/repository/mysql"
 	userUsecase "github.com/loganrk/user-vault/internal/core/usecase/user"
-	router "github.com/loganrk/user-vault/internal/router/gin"
+	handler "github.com/loganrk/user-vault/internal/infrastructure/adapter/handler/http"
+	ginmiddleware "github.com/loganrk/user-vault/internal/infrastructure/adapter/middleware/gin"
+	repo "github.com/loganrk/user-vault/internal/infrastructure/adapter/repository/mysql"
+	router "github.com/loganrk/user-vault/internal/infrastructure/adapter/router/gin"
 
 	cipher "github.com/loganrk/utils-go/adapters/cipher/aes"
 	logger "github.com/loganrk/utils-go/adapters/logger/zapLogger"
@@ -34,8 +34,8 @@ func main() {
 			log.Fatalf("Error loading %s file", envFile)
 		}
 	} else {
-		// Load environment variables from .env file for application configuration
-		godotenv.Load()
+		log.Println("DEPLOYMENT_ENV_PATH is empty")
+		return
 	}
 
 	// Fetch config file path from environment variables
