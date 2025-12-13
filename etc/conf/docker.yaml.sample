@@ -78,6 +78,9 @@ user:
   max-login-attempt: 5
   login-attempt-session-period: 60
   password-hash-cost: 12
+  apple-client-id: ""
+  google-client-id: ""
+  microsoft-client-id: ""
 
   verification:
     link: "http://sample.com/verify/{{token}}"

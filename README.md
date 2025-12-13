@@ -52,23 +52,13 @@ cd user-vault
 
 ### Prepare configuration files (local only)
 
-Your `docker-compose` already mounts these paths:
-
-```yaml
-volumes:
-  - ./etc/conf/:/app/config/:ro
-  - ./etc/env/:/app/config/env/:ro
-  - ./etc/secrets/:/app/config/secrets/:ro
-```
-
-### Create files locally:
 
 ```sh
 cp etc/conf/docker.yaml.sample etc/conf/local.yaml
 cp etc/env/docker.env.sample etc/env/local.env
 ```
 
-> **Important:** Do not use absolute paths. Docker will mount these files automatically.
+> **Note:** These commands create local configuration and environment files from the provided sample files.
 
 ---
 
@@ -109,7 +99,7 @@ docker compose -f docker-compose-app.yml up -d --build
 ```
 
 The service automatically reads:
-- `/app/config/conf.yaml`
+- `/app/config/local.yaml`
 - `/app/config/env/local.env`
 
 ---

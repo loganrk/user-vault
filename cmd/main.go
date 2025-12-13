@@ -16,6 +16,7 @@ import (
 	userUsecase "github.com/loganrk/user-vault/internal/core/usecase/user"
 	handler "github.com/loganrk/user-vault/internal/infrastructure/adapter/handler/http"
 	ginmiddleware "github.com/loganrk/user-vault/internal/infrastructure/adapter/middleware/gin"
+	oAuthProvider "github.com/loganrk/user-vault/internal/infrastructure/adapter/oAuth"
 	repo "github.com/loganrk/user-vault/internal/infrastructure/adapter/repository/mysql"
 	router "github.com/loganrk/user-vault/internal/infrastructure/adapter/router/gin"
 
@@ -97,8 +98,10 @@ func main() {
 	kafkaIns.RegisterVerification(appConfig.GetKafka().GetVerificationTopic())
 	kafkaIns.RegisterPasswordReset(appConfig.GetKafka().GetPasswordResetTopic())
 
+	oAuthProviderIns := initOauthProvider(appConfig.GetUser())
+
 	// Initialize user service with necessary dependencies
-	userService := userUsecase.New(loggerIns, tokenIns, kafkaIns, dbIns, utilsIns, appConfig.GetAppName(), appConfig.GetUser())
+	userService := userUsecase.New(loggerIns, tokenIns, kafkaIns, dbIns, oAuthProviderIns, utilsIns, appConfig.GetAppName(), appConfig.GetUser())
 	services := port.SvrList{User: userService}
 
 	// Initialize ginmiddlewareIns for API authentication and authorization
@@ -218,4 +221,15 @@ func initTokenManager() (port.Token, error) {
 
 	// Pass the token configuration parameters to the token.New function
 	return token.New(method, []byte(hmacKey), privateKeyPath, publicKeyPath)
+}
+
+// initOauthProvider initializes the OAuth provider adapter with configured client IDs.
+func initOauthProvider(conf config.User) port.OAuthProvider {
+	// Retrieve OAuth client IDs from configuration
+	appleClientId := conf.GetAppleClientId()
+	googleClientId := conf.GetGoogleClientId()
+	microsoftClientId := conf.GetMicrosoftClientId()
+
+	// Create and return the OAuth provider adapter
+	return oAuthProvider.New(appleClientId, googleClientId, microsoftClientId)
 }
