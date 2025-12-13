@@ -53,8 +53,6 @@ cd user-vault
 ### Prepare configuration files (local only)
 
 
-### Create files locally:
-
 ```sh
 cp etc/conf/docker.yaml.sample etc/conf/local.yaml
 cp etc/env/docker.env.sample etc/env/local.env
@@ -101,7 +99,7 @@ docker compose -f docker-compose-app.yml up -d --build
 ```
 
 The service automatically reads:
-- `/app/config/conf.yaml`
+- `/app/config/local.yaml`
 - `/app/config/env/local.env`
 
 ---
