@@ -104,24 +104,20 @@ func (u *userusecase) OAuthLogin(ctx context.Context, req domain.UserOAuthLoginC
 		return domain.UserLoginClientResponse{}, errRes
 	}
 
-	// Check if login attempts limit is reached
-	if errRes := u.blockIfLoginAttemptLimitReached(ctx, userData.Id); errRes.Code != 0 {
-		if errRes.Err != "" {
-			u.logger.Errorw(ctx, "block_if_login_attempt_limit_reached failed", "email", email, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
-		}
-		return domain.UserLoginClientResponse{}, errRes
-	}
-	// Check if the account is active
-	errRes = u.checkAccountIsActive(ctx, userData)
-	if errRes.Code != 0 {
-		return domain.UserLoginClientResponse{}, errRes
-	}
-
 	// If user not found, create a new user
 	if userData == nil || userData.Id == 0 {
 		userData.Id, errRes = u.createUserForOAuth(ctx, email, name)
 		if errRes.Code != 0 {
 			u.logger.Errorw(ctx, "create_user_for_o_auth failed", "email", email, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+			return domain.UserLoginClientResponse{}, errRes
+		}
+	} else {
+
+		// Check if login attempts limit is reached
+		if errRes := u.blockIfLoginAttemptLimitReached(ctx, userData.Id); errRes.Code != 0 {
+			if errRes.Err != "" {
+				u.logger.Errorw(ctx, "block_if_login_attempt_limit_reached failed", "email", email, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+			}
 			return domain.UserLoginClientResponse{}, errRes
 		}
 	}
