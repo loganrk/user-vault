@@ -9,12 +9,10 @@ The project is structured using a clean **Hexagonal Architecture** to ensure mai
 Detailed documentation is available in the [Wiki](https://github.com/loganrk/user-vault/wiki), including setup guides, API reference, and architectural overviews.
 
 ## Table of Contents
-- [Wiki](https://github.com/loganrk/user-vault/wiki)
 - [Features](#features)
-- [Installation](#installation)
+- [Installation Using Docker](#installation-using-docker)
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
-- [Project Structure](#project-structure)
 - [Contributing](#contributing)
 
 ## Features
@@ -29,32 +27,130 @@ Detailed documentation is available in the [Wiki](https://github.com/loganrk/use
 - 🧱 Modular Adapters for DB, Messaging, Email, Tokens, Logging  
 - 🔄 Graceful Error Handling with Logger Middleware  
 
-## Installation
 
-1. Clone the repository:
+## Installation Using Docker 
 
-    ```sh
-    git clone https://github.com/loganrk/user-vault
-    cd user-vault
-    ```
+This setup runs **User-Vault**, **MySQL**, and **Kafka** fully via Docker. All configuration files are **mounted by `docker-compose`**.
 
-2. Initialize dependencies:
+---
 
-    ```sh
-    go mod tidy
-    ```
+###  Prerequisites
 
-3. Create a `.env` or config file with required credentials (DB, JWT secrets, etc.).
-
-## Usage
-
-Start the service:
+- Docker
+- Docker Compose v2+
 
 ```sh
-go run main.go
+docker --version
+docker compose version
 ```
 
+---
+
+### Clone the repository
+
+```sh
+git clone https://github.com/loganrk/user-vault
+cd user-vault
+```
+
+---
+
+### Prepare configuration files (local only)
+
+Your `docker-compose` already mounts these paths:
+
+```yaml
+volumes:
+  - ./etc/conf/:/app/config/:ro
+  - ./etc/env/:/app/config/env/:ro
+  - ./etc/secrets/:/app/config/secrets/:ro
+```
+
+### Create files locally:
+
+```sh
+rm etc/conf/docker.yaml.sample etc/conf/local.yaml
+cp etc/env/docker.env.sample etc/env/local.env
+```
+
+> **Important:** Do not use absolute paths. Docker will mount these files automatically.
+
+---
+
+### Create shared Docker network (one-time)
+
+```sh
+docker network create app-network
+```
+
+---
+
+### Start MySQL
+
+```sh
+docker compose -f docker-compose-mysql.yml up -d
+```
+
+✔ Persistent data
+✔ No additional config required inside the container
+
+---
+
+### Start Kafka (topics auto-created)
+
+```sh
+docker compose -f docker-compose-kafka.yml up -d
+```
+
+✔ Kafka data persisted
+✔ Topics created automatically if missing
+
+---
+
+### Start User-Vault
+
+```sh
+docker compose -f docker-compose-app.yml up -d --build
+```
+
+The service automatically reads:
+- `/app/config/conf.yaml`
+- `/app/config/env/local.env`
+
+---
+
+### Verify Services
+
+```sh
+docker ps
+```
+
+Check Kafka topics:
+
+```sh
+docker exec -it kafka kafka-topics.sh --list --bootstrap-server kafka:9092
+```
+
+Verify MySQL:
+
+```sh
+docker exec -it mysql mysql -uadmin -padmin123 userVault
+```
+
+---
+
+### Access the API
+
+```
+http://localhost:8080
+```
+
+---
+
+
 ## API Endpoints
+>  For detailed API information, visit the [Wiki](https://github.com/loganrk/user-vault/wiki).
+---
 
 ### 📥 Authentication APIs
 
@@ -70,31 +166,6 @@ go run main.go
 | POST/GET | `/api/v1/resend-verification` | Resend verification email             |
 
 > 🔒 All routes support both `application/json` POST and query-based GET formats.
-
-## Project Structure
-
-```text
-.
-├── cmd/                           # Main application entrypoint
-│   ├── main.go                    # Application bootstrap logic
-│   └── .env                       # Environment variables for the service
-├── config/                        # YAML/ENV configuration loaders
-├── internal/
-│   ├── adapters/                  # Infrastructure layer (driven adapters)
-│   │   ├── handler/http/v1/       # HTTP API handlers (v1)
-│   │   ├── middleware/auth/       # JWT/API key middleware
-│   │   ├── repository/mysql/      # MySQL persistence adapter
-│   │   └── router/gin/            # Gin router setup
-│   ├── core/      
-│   │    ├── domain/               # Core domain models and logic
-│   │    ├── port/                 # Interface ports for adapters/usecases
-│   │    └── usecase/              # Business logic and services
-│   ├── router/gin/                # Gin router setup
-│   └── utils/                     # Utility helpers (crypto, random, etc.)
-├── conf.yml                       # YAML-based application configuration
-└── README.md                      # Project documentation
-
-```
 
 ## Contributing
 

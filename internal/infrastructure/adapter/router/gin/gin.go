@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/loganrk/user-vault/config"
 	"github.com/loganrk/user-vault/internal/core/port"
+	"github.com/loganrk/user-vault/internal/infrastructure/config"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"

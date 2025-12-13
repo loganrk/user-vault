@@ -4,17 +4,20 @@ import (
 	"context"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/joho/godotenv"
 
-	"github.com/loganrk/user-vault/config"
 	"github.com/loganrk/user-vault/internal/core/port"
+	"github.com/loganrk/user-vault/internal/infrastructure/config"
+	"github.com/loganrk/user-vault/internal/shared/utils"
 
-	handler "github.com/loganrk/user-vault/internal/adapters/handler/http"
-	ginmiddleware "github.com/loganrk/user-vault/internal/adapters/middleware/gin"
-	repo "github.com/loganrk/user-vault/internal/adapters/repository/mysql"
 	userUsecase "github.com/loganrk/user-vault/internal/core/usecase/user"
-	router "github.com/loganrk/user-vault/internal/router/gin"
+	handler "github.com/loganrk/user-vault/internal/infrastructure/adapter/handler/http"
+	ginmiddleware "github.com/loganrk/user-vault/internal/infrastructure/adapter/middleware/gin"
+	repo "github.com/loganrk/user-vault/internal/infrastructure/adapter/repository/mysql"
+	router "github.com/loganrk/user-vault/internal/infrastructure/adapter/router/gin"
 
 	cipher "github.com/loganrk/utils-go/adapters/cipher/aes"
 	logger "github.com/loganrk/utils-go/adapters/logger/zapLogger"
@@ -23,23 +26,43 @@ import (
 )
 
 func main() {
-	// Load environment variables from .env file for application configuration
-	godotenv.Load()
+	envFile := os.Getenv("DEPLOYMENT_ENV_PATH")
+	if envFile != "" {
+		// If a custom environment file path is provided, load variables from that file
+		err := godotenv.Load(envFile)
+		if err != nil {
+			log.Fatalf("Error loading %s file", envFile)
+		}
+	} else {
+		log.Println("DEPLOYMENT_ENV_PATH is empty")
+		return
+	}
 
-	// Fetch config file path, name, and type from environment variables
-	configPath := os.Getenv("CONFIG_FILE_PATH")
-	configName := os.Getenv("CONFIG_FILE_NAME")
-	configType := os.Getenv("CONFIG_FILE_TYPE")
+	// Fetch config file path from environment variables
+	configFilePath := os.Getenv("CONFIG_FILE_PATH")
 
-	// Initialize application configuration using the provided details
-	appConfig, err := config.StartConfig(configPath, config.File{
-		Name: configName,
-		Ext:  configType,
+	// Extract the file name (e.g., "config.yaml")
+	configFileName := filepath.Base(configFilePath)
+
+	// Extract file base name and extension
+	configBaseName := strings.TrimSuffix(configFileName, filepath.Ext(configFileName))
+	configFileExt := strings.TrimPrefix(filepath.Ext(configFileName), ".")
+
+	// Extract directory path containing the config file
+	configDirPath := filepath.Dir(configFilePath)
+
+	// Initialize application configuration using extracted components
+	appConfig, err := config.StartConfig(configDirPath, config.File{
+		Name: configBaseName,
+		Ext:  configFileExt,
 	})
+
 	if err != nil {
 		log.Println("failed to load config:", err)
 		return
 	}
+
+	utilsIns := utils.New()
 
 	// Initialize logger with the configuration settings
 	loggerIns, err := initLogger(appConfig.GetLogger())
@@ -54,6 +77,7 @@ func main() {
 		log.Println("failed to connect to database:", err)
 		return
 	}
+
 	dbIns.AutoMigrate() // Auto-migrate schema
 
 	// Initialize JWT token manager (HMAC/RSA) for handling authentication
@@ -74,7 +98,7 @@ func main() {
 	kafkaIns.RegisterPasswordReset(appConfig.GetKafka().GetPasswordResetTopic())
 
 	// Initialize user service with necessary dependencies
-	userService := userUsecase.New(loggerIns, tokenIns, kafkaIns, dbIns, appConfig.GetAppName(), appConfig.GetUser())
+	userService := userUsecase.New(loggerIns, tokenIns, kafkaIns, dbIns, utilsIns, appConfig.GetAppName(), appConfig.GetUser())
 	services := port.SvrList{User: userService}
 
 	// Initialize ginmiddlewareIns for API authentication and authorization
@@ -116,20 +140,25 @@ func initLogger(conf config.Logger) (port.Logger, error) {
 
 // initMessager sets up the Kafka message producer with the provided configuration.
 func initMessager(appName string, conf config.Kafka) (port.Messager, error) {
-	// Decrypt Kafka broker addresses using the provided cipher key
-	cipherKey := os.Getenv("CIPHER_CRYPTO_KEY")
-	cipher := cipher.New(cipherKey)
 	var brokers []string
 
-	// Decrypt each broker address and append to brokers slice
-	for _, brokerEnc := range conf.GetBrokers() {
-		broker, err := cipher.Decrypt(brokerEnc)
-		if err != nil {
-			return nil, err
-		}
-		brokers = append(brokers, broker)
-	}
+	chiperEncryptEnabled := os.Getenv("CIPHER_SECRET_ENCRYPTION_ENABLED")
+	if chiperEncryptEnabled == "true" {
+		// Decrypt Kafka broker addresses using the provided cipher key
+		cipherKey := os.Getenv("CIPHER_SECRET_KEY")
+		cipher := cipher.New(cipherKey)
 
+		// Decrypt each broker address and append to brokers slice
+		for _, brokerEnc := range conf.GetBrokers() {
+			broker, err := cipher.Decrypt(brokerEnc)
+			if err != nil {
+				return nil, err
+			}
+			brokers = append(brokers, broker)
+		}
+	} else {
+		brokers = conf.GetBrokers()
+	}
 	// Pass the individual Kafka configuration parameters to the message.New function
 	return message.New(appName,
 		brokers,
@@ -142,32 +171,41 @@ func initMessager(appName string, conf config.Kafka) (port.Messager, error) {
 
 // initDatabase connects to the MySQL database using decrypted credentials from the config.
 func initDatabase(conf config.App) (port.RepositoryMySQL, error) {
-	// Decrypt database credentials using the provided cipher key
-	cipherKey := os.Getenv("CIPHER_CRYPTO_KEY")
-	cipher := cipher.New(cipherKey)
 
 	// Decrypt each database configuration property
-	hostEnc, portEnc, userEnc, passEnc, dbName, prefix := conf.GetStoreDatabaseProperties()
+	host, port, user, pass, dbName, prefix := conf.GetStoreDatabaseProperties()
 
-	host, err := cipher.Decrypt(hostEnc)
-	if err != nil {
-		return nil, err
-	}
-	portVal, err := cipher.Decrypt(portEnc)
-	if err != nil {
-		return nil, err
-	}
-	user, err := cipher.Decrypt(userEnc)
-	if err != nil {
-		return nil, err
-	}
-	pass, err := cipher.Decrypt(passEnc)
-	if err != nil {
-		return nil, err
+	chiperEncryptEnabled := os.Getenv("CIPHER_SECRET_ENCRYPTION_ENABLED")
+	if chiperEncryptEnabled == "true" {
+		// Decrypt database credentials using the provided cipher key
+		cipherKey := os.Getenv("CIPHER_SECRET_KEY")
+		cipher := cipher.New(cipherKey)
+
+		var err error
+
+		host, err = cipher.Decrypt(host)
+		if err != nil {
+			return nil, err
+		}
+
+		port, err = cipher.Decrypt(port)
+		if err != nil {
+			return nil, err
+		}
+
+		user, err = cipher.Decrypt(user)
+		if err != nil {
+			return nil, err
+		}
+
+		pass, err = cipher.Decrypt(pass)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Pass the decrypted database configuration parameters to the repository.New function
-	return repo.New(host, portVal, user, pass, dbName, prefix)
+	return repo.New(host, port, user, pass, dbName, prefix)
 }
 
 // initTokenManager sets up the JWT token manager using the provided JWT method and keys (RSA or HMAC).

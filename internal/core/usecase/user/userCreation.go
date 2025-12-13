@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
-	"github.com/loganrk/user-vault/internal/utils"
+	"github.com/loganrk/user-vault/internal/shared/constant"
+	"github.com/loganrk/user-vault/internal/shared/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -323,7 +323,7 @@ func (u *userusecase) generateVerificationToken(ctx context.Context, tokenType i
 	}
 
 	// Generate a random verification token
-	verificationToken := utils.GenerateRandomString(25)
+	verificationToken := u.utils.GenerateString(25)
 
 	// Prepare token data
 	tokenData := domain.UserTokens{

@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
+	"github.com/loganrk/user-vault/internal/shared/constant"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -160,6 +160,7 @@ func (u *userusecase) Logout(ctx context.Context, req domain.UserLogoutClientReq
 	if errRes.Code != 0 {
 		if errRes.Err != "" {
 			u.logger.Errorw(ctx, "validate_refresh_token failed", "token", req.RefreshToken, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+
 		}
 		return domain.UserLogoutClientResponse{}, errRes
 	}

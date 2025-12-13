@@ -100,3 +100,8 @@ type Messager interface {
 type OAuthProvider interface {
 	VerifyToken(ctx context.Context, provider string, token string) (string, string, error)
 }
+
+type Utils interface {
+	GenerateString(length int) string
+	GenerateOTPString(length int) string
+}

@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/loganrk/user-vault/config"
-	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
 	"github.com/loganrk/user-vault/internal/core/port"
+	"github.com/loganrk/user-vault/internal/infrastructure/config"
+	"github.com/loganrk/user-vault/internal/shared/constant"
 )
 
 // userusecase struct holds the dependencies for the user service, including
@@ -20,16 +20,18 @@ type userusecase struct {
 	token         port.Token
 	messager      port.Messager
 	oAuthProvider port.OAuthProvider
+	utils         port.Utils
 }
 
 // New initializes a new user service with required dependencies and returns it.
-func New(loggerIns port.Logger, tokenIns port.Token, messageIns port.Messager, mysqlIns port.RepositoryMySQL, appName string, userConfIns config.User) port.UserSvr {
+func New(loggerIns port.Logger, tokenIns port.Token, messageIns port.Messager, mysqlIns port.RepositoryMySQL, utilsIns port.Utils, appName string, userConfIns config.User) port.UserSvr {
 	return &userusecase{
 		logger:   loggerIns,
 		mysql:    mysqlIns,
 		conf:     userConfIns,
 		token:    tokenIns,
 		messager: messageIns,
+		utils:    utilsIns,
 	}
 }
 

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/loganrk/user-vault/internal/core/domain"
-	"github.com/loganrk/user-vault/internal/utils"
+	"github.com/loganrk/user-vault/internal/shared/utils"
 
 	"net/http"
 
