@@ -14,7 +14,6 @@ Detailed documentation is available in the [Wiki](https://github.com/loganrk/use
 - [Installation](#installation)
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
-- [Project Structure](#project-structure)
 - [Contributing](#contributing)
 
 ## Features
@@ -88,31 +87,6 @@ go run main.go
 | POST/GET | `/api/v1/resend-verification` | Resend verification email             |
 
 > 🔒 All routes support both `application/json` POST and query-based GET formats.
-
-## Project Structure
-
-```text
-.
-├── cmd/                           # Main application entrypoint
-│   ├── main.go                    # Application bootstrap logic
-│   └── .env                       # Environment variables for the service
-├── config/                        # YAML/ENV configuration loaders
-├── internal/
-│   ├── adapters/                  # Infrastructure layer (driven adapters)
-│   │   ├── handler/http/v1/       # HTTP API handlers (v1)
-│   │   ├── middleware/auth/       # JWT/API key middleware
-│   │   ├── repository/mysql/      # MySQL persistence adapter
-│   │   └── router/gin/            # Gin router setup
-│   ├── core/      
-│   │    ├── domain/               # Core domain models and logic
-│   │    ├── port/                 # Interface ports for adapters/usecases
-│   │    └── usecase/              # Business logic and services
-│   ├── router/gin/                # Gin router setup
-│   └── utils/                     # Utility helpers (crypto, random, etc.)
-├── conf.yml                       # YAML-based application configuration
-└── README.md                      # Project documentation
-
-```
 
 ## Contributing
 

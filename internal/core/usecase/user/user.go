@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/loganrk/user-vault/config"
-	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
 	"github.com/loganrk/user-vault/internal/core/port"
+	"github.com/loganrk/user-vault/internal/infrastructure/config"
+	"github.com/loganrk/user-vault/internal/shared/constant"
 )
 
 // userusecase struct holds the dependencies for the user service, including

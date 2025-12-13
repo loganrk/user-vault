@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
-	"github.com/loganrk/user-vault/internal/utils"
+	"github.com/loganrk/user-vault/internal/shared/constant"
+	"github.com/loganrk/user-vault/internal/shared/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 

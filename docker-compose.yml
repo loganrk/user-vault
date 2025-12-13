@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  user-vault:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      DEPLOYMENT_ENV_PATH: /app/config/env/local.env
+    volumes:
+     - ./etc/conf/:/app/config/:ro
+    - ./etc/env/:/app/config/env/:ro
+    - ./etc/secrets/:/app/config/secrets/:ro
+
+    restart: unless-stopped

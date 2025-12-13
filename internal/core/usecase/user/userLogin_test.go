@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
+	"github.com/loganrk/user-vault/internal/shared/constant"
 	"github.com/loganrk/user-vault/test/mocks"
 )
 

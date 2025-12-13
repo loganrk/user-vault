@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
+	"github.com/loganrk/user-vault/internal/shared/constant"
 	"golang.org/x/crypto/bcrypt"
 )
 
