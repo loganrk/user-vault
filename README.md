@@ -11,7 +11,7 @@ Detailed documentation is available in the [Wiki](https://github.com/loganrk/use
 ## Table of Contents
 - [Wiki](https://github.com/loganrk/user-vault/wiki)
 - [Features](#features)
-- [Installation Using Docker](#%F0%9F%90%B3-installation-using-docker)
+- [Installation Using Docker](#installation-using-docker)
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
 - [Contributing](#contributing)
@@ -29,7 +29,7 @@ Detailed documentation is available in the [Wiki](https://github.com/loganrk/use
 - 🔄 Graceful Error Handling with Logger Middleware  
 
 
-## 🐳 Installation Using Docker 
+## Installation Using Docker 
 
 This setup runs **User-Vault**, **MySQL**, and **Kafka** fully via Docker. All configuration files are **mounted by `docker-compose`**.
 
