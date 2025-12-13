@@ -39,8 +39,8 @@ type jwk struct {
 	E   string `json:"e"`
 }
 
-// NewOAuthAdapter creates a new OAuth adapter with provider client IDs
-func NewOAuthAdapter(appleClientID, googleClientID, microsoftClientID string) *oauthAdapter {
+// creates a new OAuth adapter with provider client IDs
+func New(appleClientID, googleClientID, microsoftClientID string) *oauthAdapter {
 	return &oauthAdapter{
 		httpClient:        http.DefaultClient,
 		appleClientID:     appleClientID,

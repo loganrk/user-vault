@@ -24,14 +24,15 @@ type userusecase struct {
 }
 
 // New initializes a new user service with required dependencies and returns it.
-func New(loggerIns port.Logger, tokenIns port.Token, messageIns port.Messager, mysqlIns port.RepositoryMySQL, utilsIns port.Utils, appName string, userConfIns config.User) port.UserSvr {
+func New(loggerIns port.Logger, tokenIns port.Token, messageIns port.Messager, mysqlIns port.RepositoryMySQL, oAuthProviderIns port.OAuthProvider, utilsIns port.Utils, appName string, userConfIns config.User) port.UserSvr {
 	return &userusecase{
-		logger:   loggerIns,
-		mysql:    mysqlIns,
-		conf:     userConfIns,
-		token:    tokenIns,
-		messager: messageIns,
-		utils:    utilsIns,
+		logger:        loggerIns,
+		mysql:         mysqlIns,
+		conf:          userConfIns,
+		token:         tokenIns,
+		messager:      messageIns,
+		oAuthProvider: oAuthProviderIns,
+		utils:         utilsIns,
 	}
 }
 

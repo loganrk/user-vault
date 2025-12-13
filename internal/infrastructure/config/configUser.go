@@ -16,6 +16,10 @@ type User interface {
 	GetRefreshTokenExpiry() int
 
 	GetAccessTokenExpiry() int
+
+	GetAppleClientId() string
+	GetGoogleClientId() string
+	GetMicrosoftClientId() string
 }
 
 func (u user) GetMaxLoginAttempt() int {
@@ -62,4 +66,16 @@ func (u user) GetRefreshTokenExpiry() int {
 
 func (u user) GetAccessTokenExpiry() int {
 	return u.AccessToken.Expiry
+}
+
+func (u user) GetAppleClientId() string {
+	return u.AppleClientId
+}
+
+func (u user) GetGoogleClientId() string {
+	return u.GoogleClientId
+}
+
+func (u user) GetMicrosoftClientId() string {
+	return u.MicroSoftClientId
 }

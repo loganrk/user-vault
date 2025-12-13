@@ -65,9 +65,12 @@ type apiData struct {
 }
 
 type user struct {
-	MaxLoginAttempt           int `mapstructure:"max-login-attempt"`
-	LoginAttemptSessionPeriod int `mapstructure:"login-attempt-session-period"`
-	PasswordHashCost          int `mapstructure:"password-hash-cost"`
+	MaxLoginAttempt           int    `mapstructure:"max-login-attempt"`
+	LoginAttemptSessionPeriod int    `mapstructure:"login-attempt-session-period"`
+	PasswordHashCost          int    `mapstructure:"password-hash-cost"`
+	AppleClientId             string `mapstructure:"apple-client-id"`
+	GoogleClientId            string `mapstructure:"google-client-id"`
+	MicroSoftClientId         string `mapstructure:"microsoft-client-id"`
 
 	Verification struct {
 		Link        string `mapstructure:"link"`
