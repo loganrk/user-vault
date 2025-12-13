@@ -7,7 +7,6 @@ The project is structured using a clean **Hexagonal Architecture** to ensure mai
 ## Table of Contents
 - [Features](#features)
 - [Installation Using Docker](#installation-using-docker)
-- [Usage](#usage)
 - [API Endpoints](#api-endpoints)
 - [Contributing](#contributing)
 
