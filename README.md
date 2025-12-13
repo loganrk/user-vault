@@ -64,7 +64,7 @@ volumes:
 ### Create files locally:
 
 ```sh
-rm etc/conf/docker.yaml.sample etc/conf/local.yaml
+cp etc/conf/docker.yaml.sample etc/conf/local.yaml
 cp etc/env/docker.env.sample etc/env/local.env
 ```
 
