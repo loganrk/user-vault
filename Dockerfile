@@ -9,7 +9,6 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source code
 COPY . .
 
 # Build the application

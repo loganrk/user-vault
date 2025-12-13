@@ -19,7 +19,7 @@ middleware:
 
 kafka:
   brokers:
-    - ""
+    - "kafka:9092"
   topics:
     user-verify: "user-verification"
     user-password-reset: "user-password-reset"
@@ -67,12 +67,12 @@ api:
 
 store:
   database:
-    host: "g7kd8v84u4d..."
-    port: "j2938djw..."
-    username: "dj3k4jf..."
-    password: "fk3948dj..."
-    name: "test"
-    prefix: "pm_"
+    host: "mysql"
+    port: "3306"
+    username: "admin"
+    password: "admin123"
+    name: "userVault"
+    prefix: "uv_"
 
 user:
   max-login-attempt: 5

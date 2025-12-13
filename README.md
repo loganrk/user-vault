@@ -11,7 +11,7 @@ Detailed documentation is available in the [Wiki](https://github.com/loganrk/use
 ## Table of Contents
 - [Wiki](https://github.com/loganrk/user-vault/wiki)
 - [Features](#features)
-- [Installation](#installation)
+- [Installation Using Docker](#installation-using-docker)
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
 - [Contributing](#contributing)
@@ -29,47 +29,131 @@ Detailed documentation is available in the [Wiki](https://github.com/loganrk/use
 - 🔄 Graceful Error Handling with Logger Middleware  
 
 
-## 🚀 Installation
+## 🐳 Installation Using Docker 
 
-### 1. Clone the repository
+This setup runs **User-Vault**, **MySQL**, and **Kafka** fully via Docker. All configuration files are **mounted by `docker-compose`**.
+
+---
+
+## 1️⃣ Prerequisites
+
+- Docker
+- Docker Compose v2+
+
+```sh
+docker --version
+docker compose version
+```
+
+---
+
+## 2️⃣ Clone the repository
+
 ```sh
 git clone https://github.com/loganrk/user-vault
 cd user-vault
 ```
 
-### 2. Create your configuration file
-Copy the example:
+---
+
+## 3️⃣ Prepare configuration files (local only)
+
+Your `docker-compose` already mounts these paths:
+
+```yaml
+volumes:
+  - ./etc/conf/:/app/config/:ro
+  - ./etc/env/:/app/config/env/:ro
+  - ./etc/secrets/:/app/config/secrets/:ro
+```
+
+### Create files locally:
+
 ```sh
-cp conf.yaml.example /absolute/path/to/config.yaml
+rm etc/conf/docker.yaml.sample etc/conf/local.yaml
+cp etc/env/docker.env.sample etc/env/local.env
 ```
 
-Fill in required values such as DB credentials, JWT secrets, and server settings.
+> **Important:** Do not use absolute paths. Docker will mount these files automatically.
 
-### 3. Set up environment variables
-Create your environment file:
+---
+
+## 4️⃣ Create shared Docker network (one-time)
+
 ```sh
-cp cmd/.env.example /absolute/path/to/release.env
+docker network create app-network
 ```
 
-Update the `release.env` file and set the path to your configuration file:
-```
-CONFIG_FILE_PATH=/absolute/path/to/config.yaml
-```
-Set the DEPLOYMENT_ENV_PATH
-```
-export DEPLOYMENT_ENV_PATH=/absolute/path/to/release.env
-```
+---
 
-### 4. Install Go dependencies
+## 5️⃣ Start MySQL
+
 ```sh
-go mod tidy
+docker compose -f docker-compose-mysql.yml up -d
 ```
 
-##  Usage
-Run the service:
+✔ Persistent data
+✔ No additional config required inside the container
+
+---
+
+## 6️⃣ Start Kafka (topics auto-created)
+
 ```sh
-go run main.go
+docker compose -f docker-compose-kafka.yml up -d
 ```
+
+✔ Kafka data persisted
+✔ Topics created automatically if missing
+
+---
+
+## 7️⃣ Start User-Vault
+
+```sh
+docker compose -f docker-compose-app.yml up -d --build
+```
+
+The service automatically reads:
+- `/app/config/conf.yaml`
+- `/app/config/env/local.env`
+
+---
+
+## 8️⃣ Verify Services
+
+```sh
+docker ps
+```
+
+Check Kafka topics:
+
+```sh
+docker exec -it kafka kafka-topics.sh --list --bootstrap-server kafka:9092
+```
+
+Verify MySQL:
+
+```sh
+docker exec -it mysql mysql -uadmin -padmin123 userVault
+```
+
+---
+
+## 9️⃣ Access the API
+
+```
+http://localhost:8080
+```
+
+---
+
+## 🧹 Stop Services
+
+```sh
+docker compose down
+```
+
 
 ## API Endpoints
 

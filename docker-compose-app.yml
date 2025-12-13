@@ -10,8 +10,13 @@ services:
     environment:
       DEPLOYMENT_ENV_PATH: /app/config/env/local.env
     volumes:
-     - ./etc/conf/:/app/config/:ro
-    - ./etc/env/:/app/config/env/:ro
-    - ./etc/secrets/:/app/config/secrets/:ro
-
+      - ./etc/conf/:/app/config/conf/:ro
+      - ./etc/env/:/app/config/env/:ro
+      - ./etc/secrets/:/app/config/secrets/:ro
     restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    external: true

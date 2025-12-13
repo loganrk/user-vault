@@ -77,6 +77,7 @@ func main() {
 		log.Println("failed to connect to database:", err)
 		return
 	}
+
 	dbIns.AutoMigrate() // Auto-migrate schema
 
 	// Initialize JWT token manager (HMAC/RSA) for handling authentication
@@ -139,20 +140,25 @@ func initLogger(conf config.Logger) (port.Logger, error) {
 
 // initMessager sets up the Kafka message producer with the provided configuration.
 func initMessager(appName string, conf config.Kafka) (port.Messager, error) {
-	// Decrypt Kafka broker addresses using the provided cipher key
-	cipherKey := os.Getenv("CIPHER_CRYPTO_KEY")
-	cipher := cipher.New(cipherKey)
 	var brokers []string
 
-	// Decrypt each broker address and append to brokers slice
-	for _, brokerEnc := range conf.GetBrokers() {
-		broker, err := cipher.Decrypt(brokerEnc)
-		if err != nil {
-			return nil, err
-		}
-		brokers = append(brokers, broker)
-	}
+	chiperEncryptEnabled := os.Getenv("CIPHER_SECRET_ENCRYPTION_ENABLED")
+	if chiperEncryptEnabled == "true" {
+		// Decrypt Kafka broker addresses using the provided cipher key
+		cipherKey := os.Getenv("CIPHER_SECRET_KEY")
+		cipher := cipher.New(cipherKey)
 
+		// Decrypt each broker address and append to brokers slice
+		for _, brokerEnc := range conf.GetBrokers() {
+			broker, err := cipher.Decrypt(brokerEnc)
+			if err != nil {
+				return nil, err
+			}
+			brokers = append(brokers, broker)
+		}
+	} else {
+		brokers = conf.GetBrokers()
+	}
 	// Pass the individual Kafka configuration parameters to the message.New function
 	return message.New(appName,
 		brokers,
@@ -165,32 +171,41 @@ func initMessager(appName string, conf config.Kafka) (port.Messager, error) {
 
 // initDatabase connects to the MySQL database using decrypted credentials from the config.
 func initDatabase(conf config.App) (port.RepositoryMySQL, error) {
-	// Decrypt database credentials using the provided cipher key
-	cipherKey := os.Getenv("CIPHER_CRYPTO_KEY")
-	cipher := cipher.New(cipherKey)
 
 	// Decrypt each database configuration property
-	hostEnc, portEnc, userEnc, passEnc, dbName, prefix := conf.GetStoreDatabaseProperties()
+	host, port, user, pass, dbName, prefix := conf.GetStoreDatabaseProperties()
 
-	host, err := cipher.Decrypt(hostEnc)
-	if err != nil {
-		return nil, err
-	}
-	portVal, err := cipher.Decrypt(portEnc)
-	if err != nil {
-		return nil, err
-	}
-	user, err := cipher.Decrypt(userEnc)
-	if err != nil {
-		return nil, err
-	}
-	pass, err := cipher.Decrypt(passEnc)
-	if err != nil {
-		return nil, err
+	chiperEncryptEnabled := os.Getenv("CIPHER_SECRET_ENCRYPTION_ENABLED")
+	if chiperEncryptEnabled == "true" {
+		// Decrypt database credentials using the provided cipher key
+		cipherKey := os.Getenv("CIPHER_SECRET_KEY")
+		cipher := cipher.New(cipherKey)
+
+		var err error
+
+		host, err = cipher.Decrypt(host)
+		if err != nil {
+			return nil, err
+		}
+
+		port, err = cipher.Decrypt(port)
+		if err != nil {
+			return nil, err
+		}
+
+		user, err = cipher.Decrypt(user)
+		if err != nil {
+			return nil, err
+		}
+
+		pass, err = cipher.Decrypt(pass)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Pass the decrypted database configuration parameters to the repository.New function
-	return repo.New(host, portVal, user, pass, dbName, prefix)
+	return repo.New(host, port, user, pass, dbName, prefix)
 }
 
 // initTokenManager sets up the JWT token manager using the provided JWT method and keys (RSA or HMAC).
