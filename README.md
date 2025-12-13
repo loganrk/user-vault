@@ -4,10 +4,6 @@ User Vault is a Go-based microservice for secure and scalable user authenticatio
 
 The project is structured using a clean **Hexagonal Architecture** to ensure maintainability and testability.
 
-## 📘 [Project Wiki](https://github.com/loganrk/user-vault/wiki)
-
-Detailed documentation is available in the [Wiki](https://github.com/loganrk/user-vault/wiki), including setup guides, API reference, and architectural overviews.
-
 ## Table of Contents
 - [Features](#features)
 - [Installation Using Docker](#installation-using-docker)
