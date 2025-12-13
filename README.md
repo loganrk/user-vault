@@ -149,10 +149,9 @@ http://localhost:8080
 
 
 ## API Endpoints
-
 For detailed API information, visit the [Wiki](https://github.com/loganrk/user-vault/wiki).
 
-    ### 📥 Authentication APIs
+### 📥 Authentication APIs
 
 | Method   | Endpoint                    | Description                         |
 |----------|-----------------------------|-------------------------------------|
