@@ -13,7 +13,7 @@ The project is structured using a clean **Hexagonal Architecture** to ensure mai
 ## Features
 
 - ✅ User Registration with Verification Email  
-- 🔐 Secure Password Hashing using bcrypt + salt  
+- 🔐 Secure Password Hashing using bcrypt   
 - 🔑 JWT Access and Refresh Token Authentication (HS256/RS256)  
 - 🔁 Refresh Token Rotation and Validation  
 - 📧 Kafka-based Email Delivery for Account Verification and Password Reset  

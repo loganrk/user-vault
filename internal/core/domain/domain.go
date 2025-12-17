@@ -10,7 +10,6 @@ type User struct {
 	PhoneVerified bool      `gorm:"column:phone_verified;default:false"`
 	Password      string    `gorm:"column:password;size:255"`
 	Name          string    `gorm:"column:name;size:255"`
-	Salt          string    `gorm:"column:salt;size:255"`
 	State         int       `gorm:"column:state;size:11;default:1"`
 	Status        int       `gorm:"column:status;size:11;default:3"`
 	CreatedAt     time.Time `gorm:"autoCreateTime,column:created_at"`

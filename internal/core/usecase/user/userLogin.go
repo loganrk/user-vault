@@ -59,7 +59,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 	}
 
 	// Validate password and log attempt
-	if errRes := u.validatePasswordAndLogAttempt(ctx, req.Password, userPassword.Password, userPassword.Salt, userData.Id); errRes.Code != 0 {
+	if errRes := u.validatePasswordAndLogAttempt(ctx, req.Password, userPassword.Password, userData.Id); errRes.Code != 0 {
 		if errRes.Err != "" {
 			u.logger.Errorw(ctx, "validate_password_and_log_attempt failed", "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
 		}
@@ -361,9 +361,9 @@ func (u *userusecase) generateAndStoreRefreshToken(ctx context.Context, userID i
 	return refreshToken, domain.ErrorRes{}
 }
 
-func (u *userusecase) validatePasswordAndLogAttempt(ctx context.Context, password, storedHash, saltHash string, userId int) domain.ErrorRes {
+func (u *userusecase) validatePasswordAndLogAttempt(ctx context.Context, password, storedHash string, userId int) domain.ErrorRes {
 	var passwordMatch bool
-	err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password+saltHash))
+	err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password))
 	if err == nil {
 		passwordMatch = true
 	}

@@ -117,7 +117,7 @@ func (m *mySql) GetUserByEmailOrPhone(ctx context.Context, email, phone string) 
 func (m *mySql) GetUserPasswordByUserID(ctx context.Context, userID int) (domain.User, error) {
 	var userData domain.User
 	// Select specific fields for user data fetching
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "password", "salt").Where("id =? ", userID).First(&userData)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "password").Where("id =? ", userID).First(&userData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no user found
 	}

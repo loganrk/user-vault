@@ -7,7 +7,6 @@ import (
 
 	"github.com/loganrk/user-vault/internal/core/domain"
 	"github.com/loganrk/user-vault/internal/shared/constant"
-	"github.com/loganrk/user-vault/internal/shared/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -232,17 +231,8 @@ func (u *userusecase) checkUserDoesNotExist(ctx context.Context, email, phone st
 
 // createUser creates a new user.
 func (u *userusecase) createUser(ctx context.Context, req domain.UserRegisterClientRequest) (int, domain.ErrorRes) {
-	saltHash, err := utils.NewSaltHash()
-	if err != nil {
-		return 0, domain.ErrorRes{
-			Code:      http.StatusInternalServerError,
-			Message:   constant.MessageInternalServerError,
-			Err:       "failed to generate salt hash. error = " + err.Error(),
-			Exception: constant.GenericException,
-		}
-	}
 
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password+saltHash), u.conf.GetPasswordHashCost())
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), u.conf.GetPasswordHashCost())
 	if err != nil {
 		return 0, domain.ErrorRes{
 			Code:      http.StatusInternalServerError,
@@ -256,7 +246,6 @@ func (u *userusecase) createUser(ctx context.Context, req domain.UserRegisterCli
 		Email:    req.Email,
 		Phone:    req.Phone,
 		Password: string(hashPassword),
-		Salt:     saltHash,
 		Name:     req.Name,
 		State:    constant.USER_STATE_INITIAL,
 		Status:   constant.USER_STATUS_ACTIVE,
@@ -277,20 +266,10 @@ func (u *userusecase) createUser(ctx context.Context, req domain.UserRegisterCli
 
 // createUserForOAuth creates a new user for OAuth.
 func (u *userusecase) createUserForOAuth(ctx context.Context, email, name string) (int, domain.ErrorRes) {
-	saltHash, err := utils.NewSaltHash()
-	if err != nil {
-		return 0, domain.ErrorRes{
-			Code:      http.StatusInternalServerError,
-			Message:   constant.MessageInternalServerError,
-			Err:       "failed to generate salt hash. error = " + err.Error(),
-			Exception: constant.GenericException,
-		}
-	}
 
 	userData := domain.User{
 		Email:         email,
 		EmailVerified: true,
-		Salt:          saltHash,
 		Name:          name,
 		State:         constant.USER_STATE_INITIAL,
 		Status:        constant.USER_STATUS_ACTIVE,
