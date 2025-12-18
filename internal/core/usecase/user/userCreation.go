@@ -243,12 +243,13 @@ func (u *userusecase) createUser(ctx context.Context, req domain.UserRegisterCli
 	}
 
 	userData := domain.User{
-		Email:    req.Email,
-		Phone:    req.Phone,
-		Password: string(hashPassword),
-		Name:     req.Name,
-		State:    constant.USER_STATE_INITIAL,
-		Status:   constant.USER_STATUS_ACTIVE,
+		Email:              req.Email,
+		UserSubscriptionId: u.utils.GenerateUUID(),
+		Phone:              req.Phone,
+		Password:           string(hashPassword),
+		Name:               req.Name,
+		State:              constant.USER_STATE_INITIAL,
+		Status:             constant.USER_STATUS_ACTIVE,
 	}
 
 	userID, err := u.mysql.CreateUser(ctx, userData)

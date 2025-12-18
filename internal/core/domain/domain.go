@@ -3,17 +3,18 @@ package domain
 import "time"
 
 type User struct {
-	Id            int       `gorm:"primarykey"`
-	Email         string    `gorm:"column:email;size:255"`
-	EmailVerified bool      `gorm:"column:email_verified;default:false"`
-	Phone         string    `gorm:"column:phone;size:255"`
-	PhoneVerified bool      `gorm:"column:phone_verified;default:false"`
-	Password      string    `gorm:"column:password;size:255"`
-	Name          string    `gorm:"column:name;size:255"`
-	State         int       `gorm:"column:state;not null;default:1"`
-	Status        int       `gorm:"column:status;not null;default:3"`
-	CreatedAt     time.Time `gorm:"autoCreateTime,column:created_at"`
-	UpdatedAt     time.Time `gorm:"autoUpdateTime,column:updated_at"`
+	Id                 int       `gorm:"primarykey"`
+	UserSubscriptionId string    `gorm:"column:user_subscription_id;size:255"`
+	Email              string    `gorm:"column:email;size:255"`
+	EmailVerified      bool      `gorm:"column:email_verified;default:false"`
+	Phone              string    `gorm:"column:phone;size:255"`
+	PhoneVerified      bool      `gorm:"column:phone_verified;default:false"`
+	Password           string    `gorm:"column:password;size:255"`
+	Name               string    `gorm:"column:name;size:255"`
+	State              int       `gorm:"column:state;not null;default:1"`
+	Status             int       `gorm:"column:status;not null;default:3"`
+	CreatedAt          time.Time `gorm:"autoCreateTime,column:created_at"`
+	UpdatedAt          time.Time `gorm:"autoUpdateTime,column:updated_at"`
 }
 
 type OAuthAccount struct {

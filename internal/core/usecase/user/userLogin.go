@@ -68,7 +68,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 	}
 
 	// Generate and store refresh token
-	refreshToken, errRes := u.generateAndStoreRefreshToken(ctx, userData.Id)
+	refreshToken, errRes := u.generateAndStoreRefreshToken(ctx, userData.Id, userData.UserSubscriptionId)
 	if errRes.Code != 0 {
 		if errRes.Err != "" {
 			u.logger.Errorw(ctx, "generate_and_store_refresh_token failed", "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
@@ -144,7 +144,7 @@ func (u *userusecase) OAuthLogin(ctx context.Context, req domain.UserOAuthLoginC
 	}
 
 	// Generate and store a refresh token
-	refreshToken, errRes := u.generateAndStoreRefreshToken(ctx, userData.Id)
+	refreshToken, errRes := u.generateAndStoreRefreshToken(ctx, userData.Id, userData.UserSubscriptionId)
 	if errRes.Code != 0 {
 		if errRes.Err != "" {
 			u.logger.Errorw(ctx, "generate_and_store_refresh_token failed", "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
@@ -214,7 +214,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 	}
 
 	// Rotate the refresh token
-	refreshTokenType, refreshToken, errRes := u.handleRefreshTokenRotation(ctx, userData.Id, req.RefreshToken, refreshData.Id)
+	refreshTokenType, refreshToken, errRes := u.handleRefreshTokenRotation(ctx, userData.Id, userData.UserSubscriptionId, req.RefreshToken, refreshData.Id)
 	if errRes.Code != 0 {
 		u.logger.Errorw(ctx, "handle_refresh_token_rotation failed", "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
 		return domain.UserRefreshTokenClientResponse{}, errRes
@@ -232,11 +232,12 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 func (u *userusecase) createUserForOAuth(ctx context.Context, email, name string, provider domain.OAuthID, providerId string) (int, domain.ErrorRes) {
 
 	userData := domain.User{
-		Email:         email,
-		EmailVerified: true,
-		Name:          name,
-		State:         constant.USER_STATE_INITIAL,
-		Status:        constant.USER_STATUS_ACTIVE,
+		Email:              email,
+		UserSubscriptionId: u.utils.GenerateUUID(),
+		EmailVerified:      true,
+		Name:               name,
+		State:              constant.USER_STATE_INITIAL,
+		Status:             constant.USER_STATUS_ACTIVE,
 	}
 
 	id, err := u.mysql.CreateUser(ctx, userData)
@@ -306,7 +307,7 @@ func (u *userusecase) OnboardOrLinkProvider(ctx context.Context, userid int, ema
 }
 
 // handleRefreshTokenRotation rotates the refresh token if enabled, otherwise returns the old token.
-func (u *userusecase) handleRefreshTokenRotation(ctx context.Context, userId int, oldToken string, oldTokenId int) (string, string, domain.ErrorRes) {
+func (u *userusecase) handleRefreshTokenRotation(ctx context.Context, userId int, userSubscriptionId string, oldToken string, oldTokenId int) (string, string, domain.ErrorRes) {
 	if !u.refreshTokenRotationEnabled() {
 		return constant.REFRESH_TOKEN_TYPE_STATIC, oldToken, domain.ErrorRes{}
 	}
@@ -320,7 +321,7 @@ func (u *userusecase) handleRefreshTokenRotation(ctx context.Context, userId int
 		}
 	}
 
-	newToken, errRes := u.generateAndStoreRefreshToken(ctx, userId)
+	newToken, errRes := u.generateAndStoreRefreshToken(ctx, userId, userSubscriptionId)
 	if errRes.Code != 0 {
 		return "", "", errRes
 	}
@@ -361,7 +362,7 @@ func (u *userusecase) validateRefreshToken(ctx context.Context, token string) (d
 
 // createAccessToken creates an access token for the user.
 func (u *userusecase) createAccessToken(ctx context.Context, user *domain.User) (string, domain.ErrorRes) {
-	accessToken, err := u.token.CreateAccessToken(user.Id, user.Email, user.Name, u.getAccessTokenExpiry())
+	accessToken, err := u.token.CreateAccessToken(user.UserSubscriptionId, user.Email, user.Name, u.getAccessTokenExpiry())
 	if err != nil {
 		u.logger.Errorw(ctx, "Failed to create access token", "event", "user_access_token_failed", "userId", user.Id, "error", err)
 		return "", domain.ErrorRes{
@@ -409,13 +410,13 @@ func (u *userusecase) blockIfLoginAttemptLimitReached(ctx context.Context, userI
 
 	return domain.ErrorRes{}
 }
-func (u *userusecase) generateAndStoreRefreshToken(ctx context.Context, userID int) (string, domain.ErrorRes) {
+func (u *userusecase) generateAndStoreRefreshToken(ctx context.Context, userId int, userSubscriptionId string) (string, domain.ErrorRes) {
 	if !u.refreshTokenEnabled() {
 		return "", domain.ErrorRes{}
 	}
 
 	expiresAt := u.getRefreshTokenExpiry()
-	refreshToken, err := u.token.CreateRefreshToken(userID, expiresAt)
+	refreshToken, err := u.token.CreateRefreshToken(userSubscriptionId, expiresAt)
 	if err != nil {
 		return "", domain.ErrorRes{
 			Code:      http.StatusInternalServerError,
@@ -426,7 +427,7 @@ func (u *userusecase) generateAndStoreRefreshToken(ctx context.Context, userID i
 	}
 
 	refreshTokenData := domain.UserTokens{
-		UserId:    userID,
+		UserId:    userId,
 		Token:     refreshToken,
 		Type:      constant.TOKEN_TYPE_REFRESH,
 		ExpiresAt: expiresAt,

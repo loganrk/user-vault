@@ -65,7 +65,7 @@ func (m *middleware) ValidateRefreshToken() http.Handler {
 		}
 
 		// Get user ID and expiration time from the token
-		userid, expiresAt, err := m.tokenIns.GetRefreshTokenData(token)
+		userSubscriptionId, expiresAt, err := m.tokenIns.GetRefreshTokenData(token)
 		if err != nil {
 			// If there’s an internal error while fetching token data, respond with internal server error.
 			http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -73,7 +73,7 @@ func (m *middleware) ValidateRefreshToken() http.Handler {
 		}
 
 		// If the token is invalid (no user ID found), respond with Bad Request error.
-		if userid == 0 {
+		if userSubscriptionId == "" {
 			http.Error(w, "incorrect token", http.StatusBadRequest)
 			return
 		}
@@ -84,10 +84,8 @@ func (m *middleware) ValidateRefreshToken() http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "userID", userid)
+		ctx := context.WithValue(r.Context(), "userSubscriptionId", userSubscriptionId)
 		r = r.WithContext(ctx)
-
-		// userID := r.Context().Value("userID")
 
 	})
 }

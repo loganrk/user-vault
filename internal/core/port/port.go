@@ -56,9 +56,9 @@ type Cipher interface {
 
 // Token defines the interface for creating and validating JWT access and refresh tokens.
 type Token interface {
-	CreateAccessToken(uid int, uname string, name string, expiry time.Time) (string, error) // Creates a new access token for a user
-	CreateRefreshToken(uid int, expiry time.Time) (string, error)                           // Creates a new refresh token for a user
-	GetRefreshTokenData(encryptedToken string) (int, time.Time, error)                      // Extracts user ID and expiry from a refresh token
+	CreateAccessToken(userSubscriptionId string, uname string, name string, expiry time.Time) (string, error) // Creates a new access token for a user
+	CreateRefreshToken(userSubscriptionId string, expiry time.Time) (string, error)                           // Creates a new refresh token for a user
+	GetRefreshTokenData(encryptedToken string) (string, time.Time, error)                                     // Extracts user ID and expiry from a refresh token
 }
 
 // GinMiddleware defines the interface for API key and access token validation middleware.
@@ -106,4 +106,5 @@ type OAuthProvider interface {
 type Utils interface {
 	GenerateString(length int) string
 	GenerateOTPString(length int) string
+	GenerateUUID() string
 }
