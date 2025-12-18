@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/loganrk/user-vault/internal/core/domain"
 	"google.golang.org/api/idtoken"
 )
 
@@ -54,7 +55,7 @@ func (a *oauthAdapter) VerifyToken(
 	ctx context.Context,
 	provider string,
 	token string,
-) (email string, name string, err error) {
+) (string, string, domain.OAuthID, string, error) {
 
 	switch strings.ToLower(provider) {
 	case "google":
@@ -67,37 +68,39 @@ func (a *oauthAdapter) VerifyToken(
 		return a.verifyApple(ctx, token)
 
 	default:
-		return "", "", fmt.Errorf("unsupported provider: %s", provider)
+		return "", "", domain.INVALID_OAUTH_ID, "", fmt.Errorf("unsupported provider: %s", provider)
 	}
 }
 
 // verifyGoogle validates Google ID token
-func (a *oauthAdapter) verifyGoogle(ctx context.Context, token string) (string, string, error) {
+func (a *oauthAdapter) verifyGoogle(ctx context.Context, token string) (string, string, domain.OAuthID, string, error) {
 	if a.googleClientID == "" {
-		return "", "", fmt.Errorf("google client id not configured")
+		return "", "", domain.INVALID_OAUTH_ID, "", fmt.Errorf("google client id not configured")
 	}
 
 	payload, err := idtoken.Validate(ctx, token, a.googleClientID)
 	if err != nil {
-		return "", "", fmt.Errorf("google token validation failed: %w", err)
+		return "", "", domain.INVALID_OAUTH_ID, "", fmt.Errorf("google token validation failed: %w", err)
 	}
 
 	email, _ := payload.Claims["email"].(string)
 	givenName, _ := payload.Claims["given_name"].(string)
 	familyName, _ := payload.Claims["family_name"].(string)
 
-	return email, strings.TrimSpace(givenName + " " + familyName), nil
+	providerId := payload.Subject // <-- Google user ID
+
+	return email, strings.TrimSpace(givenName + " " + familyName), domain.GOOGLE_OAUTH_ID, providerId, nil
 }
 
 // verifyMicrosoft validates Microsoft (Azure AD) ID token
-func (a *oauthAdapter) verifyMicrosoft(ctx context.Context, token string) (string, string, error) {
+func (a *oauthAdapter) verifyMicrosoft(ctx context.Context, token string) (string, string, domain.OAuthID, string, error) {
 	if a.microsoftClientID == "" {
-		return "", "", fmt.Errorf("microsoft client id not configured")
+		return "", "", domain.INVALID_OAUTH_ID, "", fmt.Errorf("microsoft client id not configured")
 	}
 
 	payload, err := idtoken.Validate(ctx, token, a.microsoftClientID)
 	if err != nil {
-		return "", "", fmt.Errorf("microsoft token validation failed: %w", err)
+		return "", "", domain.INVALID_OAUTH_ID, "", fmt.Errorf("microsoft token validation failed: %w", err)
 	}
 
 	email, _ := payload.Claims["preferred_username"].(string)
@@ -106,14 +109,15 @@ func (a *oauthAdapter) verifyMicrosoft(ctx context.Context, token string) (strin
 	}
 
 	name, _ := payload.Claims["name"].(string)
+	providerId := payload.Subject // <-- Microsoft user ID
 
-	return email, name, nil
+	return email, name, domain.MICROSOFT_OAUTH_ID, providerId, nil
 }
 
 // verifyApple validates Apple ID token using Apple's public keys
-func (a *oauthAdapter) verifyApple(ctx context.Context, token string) (string, string, error) {
+func (a *oauthAdapter) verifyApple(ctx context.Context, token string) (string, string, domain.OAuthID, string, error) {
 	if a.appleClientID == "" {
-		return "", "", fmt.Errorf("apple client id not configured")
+		return "", "", domain.INVALID_OAUTH_ID, "", fmt.Errorf("apple client id not configured")
 	}
 
 	keyFunc := func(t *jwt.Token) (interface{}, error) {
@@ -146,22 +150,23 @@ func (a *oauthAdapter) verifyApple(ctx context.Context, token string) (string, s
 	claims := jwt.MapClaims{}
 	parsed, err := jwt.ParseWithClaims(token, claims, keyFunc)
 	if err != nil || !parsed.Valid {
-		return "", "", fmt.Errorf("invalid apple token")
+		return "", "", domain.INVALID_OAUTH_ID, "", fmt.Errorf("invalid apple token")
 	}
 
 	// Validate issuer and audience
 	if claims["iss"] != "https://appleid.apple.com" {
-		return "", "", fmt.Errorf("invalid issuer")
+		return "", "", domain.INVALID_OAUTH_ID, "", fmt.Errorf("invalid issuer")
 	}
 
 	if claims["aud"] != a.appleClientID {
-		return "", "", fmt.Errorf("invalid audience")
+		return "", "", domain.INVALID_OAUTH_ID, "", fmt.Errorf("invalid audience")
 	}
 
 	email, _ := claims["email"].(string)
-	name, _ := claims["name"].(string) // Only present on first login
+	name, _ := claims["name"].(string)      // Only present on first login
+	providerId, _ := claims["sub"].(string) // <-- Apple user ID (stable)
 
-	return email, name, nil
+	return email, name, domain.APPLE_OAUTH_ID, providerId, nil
 }
 
 // jwkToPEM converts Apple JWK to PEM-encoded RSA public key

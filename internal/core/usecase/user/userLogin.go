@@ -86,7 +86,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 func (u *userusecase) OAuthLogin(ctx context.Context, req domain.UserOAuthLoginClientRequest) (domain.UserLoginClientResponse, domain.ErrorRes) {
 
 	// Verify the OAuth token using the provided provider and token
-	email, name, err := u.oAuthProvider.VerifyToken(ctx, req.Provider, req.Token)
+	email, name, provider, providerId, err := u.oAuthProvider.VerifyToken(ctx, req.Provider, req.Token)
 	if err != nil {
 		u.logger.Error(ctx, "verify_token failed", "provider", req.Provider, "error", err.Error(), "exception", constant.AuthorizationException)
 		return domain.UserLoginClientResponse{}, domain.ErrorRes{
@@ -106,9 +106,17 @@ func (u *userusecase) OAuthLogin(ctx context.Context, req domain.UserOAuthLoginC
 
 	// If user not found, create a new user
 	if userData == nil || userData.Id == 0 {
-		userData.Id, errRes = u.createUserForOAuth(ctx, email, name)
+		userData.Id, errRes = u.createUserForOAuth(ctx, email, name, provider, providerId)
 		if errRes.Code != 0 {
 			u.logger.Errorw(ctx, "create_user_for_o_auth failed", "email", email, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+			return domain.UserLoginClientResponse{}, errRes
+		}
+		// Fetch updated user data by ID
+		userData, errRes = u.fetchUserByID(ctx, userData.Id)
+		if errRes.Code != 0 {
+			if errRes.Err != "" {
+				u.logger.Errorw(ctx, "fetch_user_by_id failed", "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+			}
 			return domain.UserLoginClientResponse{}, errRes
 		}
 	} else {
@@ -120,15 +128,14 @@ func (u *userusecase) OAuthLogin(ctx context.Context, req domain.UserOAuthLoginC
 			}
 			return domain.UserLoginClientResponse{}, errRes
 		}
-	}
 
-	// Fetch updated user data by ID
-	userData, errRes = u.fetchUserByID(ctx, userData.Id)
-	if errRes.Code != 0 {
-		if errRes.Err != "" {
-			u.logger.Errorw(ctx, "fetch_user_by_id failed", "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+		if errRes := u.OnboardOrLinkProvider(ctx, userData.Id, email, provider, providerId); errRes.Code != 0 {
+			if errRes.Err != "" {
+				u.logger.Errorw(ctx, "failed to onboard or link provider", "email", email, "user_id", userData.Id, "provider", provider, "provider_id", providerId, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
+			}
+			return domain.UserLoginClientResponse{}, errRes
 		}
-		return domain.UserLoginClientResponse{}, errRes
+
 	}
 
 	// Check if the account is active
@@ -219,6 +226,83 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 		RefreshTokenType: refreshTokenType,
 		RefreshToken:     refreshToken,
 	}, domain.ErrorRes{}
+}
+
+// createUserForOAuth creates a new user for OAuth.
+func (u *userusecase) createUserForOAuth(ctx context.Context, email, name string, provider domain.OAuthID, providerId string) (int, domain.ErrorRes) {
+
+	userData := domain.User{
+		Email:         email,
+		EmailVerified: true,
+		Name:          name,
+		State:         constant.USER_STATE_INITIAL,
+		Status:        constant.USER_STATUS_ACTIVE,
+	}
+
+	id, err := u.mysql.CreateUser(ctx, userData)
+	if err != nil {
+		return 0, domain.ErrorRes{
+			Code:      http.StatusInternalServerError,
+			Message:   constant.MessageInternalServerError,
+			Err:       "failed to create user for OAuth. error = " + err.Error(),
+			Exception: constant.DBException,
+		}
+	}
+
+	accountData := domain.OAuthAccount{
+		UserId:     id,
+		Email:      email,
+		Provider:   provider,
+		ProviderId: providerId,
+	}
+	_, err = u.mysql.CreateOauthAccount(ctx, accountData)
+
+	if err != nil {
+		return 0, domain.ErrorRes{
+			Code:      http.StatusInternalServerError,
+			Message:   constant.MessageInternalServerError,
+			Err:       "failed to create account for OAuth. error = " + err.Error(),
+			Exception: constant.DBException,
+		}
+	}
+
+	return id, domain.ErrorRes{}
+}
+
+func (u *userusecase) OnboardOrLinkProvider(ctx context.Context, userid int, email string, provider domain.OAuthID, providerId string) domain.ErrorRes {
+
+	existingAccount, err := u.mysql.GetOauthAccountForProvider(ctx, userid, email, provider, providerId)
+
+	if err != nil {
+		return domain.ErrorRes{
+			Code:      http.StatusInternalServerError,
+			Message:   constant.MessageInternalServerError,
+			Err:       "failed to check oauth account. error = " + err.Error(),
+			Exception: constant.DBException,
+		}
+	}
+
+	if existingAccount.Id == 0 {
+		accountData := domain.OAuthAccount{
+			UserId:     userid,
+			Email:      email,
+			Provider:   provider,
+			ProviderId: providerId,
+		}
+
+		_, err = u.mysql.CreateOauthAccount(ctx, accountData)
+
+		if err != nil {
+			return domain.ErrorRes{
+				Code:      http.StatusInternalServerError,
+				Message:   constant.MessageInternalServerError,
+				Err:       "failed to create account for OAuth. error = " + err.Error(),
+				Exception: constant.DBException,
+			}
+		}
+	}
+
+	return domain.ErrorRes{}
 }
 
 // handleRefreshTokenRotation rotates the refresh token if enabled, otherwise returns the old token.

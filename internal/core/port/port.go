@@ -34,6 +34,8 @@ type RepositoryMySQL interface {
 	GetUserLoginFailedAttemptCount(ctx context.Context, userId int, sessionStartTime time.Time) (int, error) // Gets the count of failed login attempts since the session start time
 	CreateUserLoginAttempt(ctx context.Context, userLoginAttempt domain.UserLoginAttempt) (int, error)       // Creates a new user login attempt record
 	CreateUser(ctx context.Context, userData domain.User) (int, error)                                       // Creates a new user
+	CreateOauthAccount(ctx context.Context, accountData domain.OAuthAccount) (int, error)
+	GetOauthAccountForProvider(ctx context.Context, userId int, email string, provider domain.OAuthID, providerId string) (domain.OAuthAccount, error)
 	UpdateEmailVerfied(ctx context.Context, userid int) error
 	UpdatePhoneVerfied(ctx context.Context, userid int) error
 	UpdatePassword(ctx context.Context, userid int, password string) error // Updates the user’s password
@@ -98,7 +100,7 @@ type Messager interface {
 	PublishPasswordResetPhone(phone, name, token string) error
 }
 type OAuthProvider interface {
-	VerifyToken(ctx context.Context, provider string, token string) (string, string, error)
+	VerifyToken(ctx context.Context, provider string, token string) (string, string, domain.OAuthID, string, error)
 }
 
 type Utils interface {

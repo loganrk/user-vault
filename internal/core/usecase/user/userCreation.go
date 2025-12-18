@@ -264,30 +264,6 @@ func (u *userusecase) createUser(ctx context.Context, req domain.UserRegisterCli
 	return userID, domain.ErrorRes{}
 }
 
-// createUserForOAuth creates a new user for OAuth.
-func (u *userusecase) createUserForOAuth(ctx context.Context, email, name string) (int, domain.ErrorRes) {
-
-	userData := domain.User{
-		Email:         email,
-		EmailVerified: true,
-		Name:          name,
-		State:         constant.USER_STATE_INITIAL,
-		Status:        constant.USER_STATUS_ACTIVE,
-	}
-
-	userID, err := u.mysql.CreateUser(ctx, userData)
-	if err != nil {
-		return 0, domain.ErrorRes{
-			Code:      http.StatusInternalServerError,
-			Message:   constant.MessageInternalServerError,
-			Err:       "failed to create user for OAuth. error = " + err.Error(),
-			Exception: constant.DBException,
-		}
-	}
-
-	return userID, domain.ErrorRes{}
-}
-
 // generateVerificationToken generates a new verification token and stores it in the DB.
 func (u *userusecase) generateVerificationToken(ctx context.Context, tokenType int8, userID int) (string, domain.ErrorRes) {
 	// Revoke all previous tokens of this type for the user

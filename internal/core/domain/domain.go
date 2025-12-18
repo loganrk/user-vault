@@ -3,17 +3,26 @@ package domain
 import "time"
 
 type User struct {
-	Id            int       `gorm:"primarykey;size:16"`
+	Id            int       `gorm:"primarykey"`
 	Email         string    `gorm:"column:email;size:255"`
 	EmailVerified bool      `gorm:"column:email_verified;default:false"`
 	Phone         string    `gorm:"column:phone;size:255"`
 	PhoneVerified bool      `gorm:"column:phone_verified;default:false"`
 	Password      string    `gorm:"column:password;size:255"`
 	Name          string    `gorm:"column:name;size:255"`
-	State         int       `gorm:"column:state;size:11;default:1"`
-	Status        int       `gorm:"column:status;size:11;default:3"`
+	State         int       `gorm:"column:state;not null;default:1"`
+	Status        int       `gorm:"column:status;not null;default:3"`
 	CreatedAt     time.Time `gorm:"autoCreateTime,column:created_at"`
 	UpdatedAt     time.Time `gorm:"autoUpdateTime,column:updated_at"`
+}
+
+type OAuthAccount struct {
+	Id         int       `gorm:"column:id;type:uuid;primaryKey"`
+	UserId     int       `gorm:"column:user_id;"`
+	Provider   OAuthID   `gorm:"column:provider;"`
+	ProviderId string    `gorm:"column:provider_id;size:255;not null"`
+	Email      string    `gorm:"column:email;size:255"`
+	CreatedAt  time.Time `gorm:"autoCreateTime,column:created_at"`
 }
 
 type UserLoginAttempt struct {
@@ -32,3 +41,10 @@ type UserTokens struct {
 	CreatedAt time.Time `gorm:"autoCreateTime;column:created_at"`
 	ExpiresAt time.Time `gorm:"column:expires_at"`
 }
+
+type OAuthID int
+
+const INVALID_OAUTH_ID OAuthID = 0
+const GOOGLE_OAUTH_ID OAuthID = 1
+const MICROSOFT_OAUTH_ID OAuthID = 2
+const APPLE_OAUTH_ID OAuthID = 3
