@@ -35,7 +35,7 @@ func (m *MockToken) EXPECT() *MockTokenMockRecorder {
 }
 
 // CreateAccessToken mocks base method.
-func (m *MockToken) CreateAccessToken(arg0 int, arg1, arg2 string, arg3 time.Time) (string, error) {
+func (m *MockToken) CreateAccessToken(arg0, arg1, arg2 string, arg3 time.Time) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateAccessToken", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(string)
@@ -50,7 +50,7 @@ func (mr *MockTokenMockRecorder) CreateAccessToken(arg0, arg1, arg2, arg3 interf
 }
 
 // CreateRefreshToken mocks base method.
-func (m *MockToken) CreateRefreshToken(arg0 int, arg1 time.Time) (string, error) {
+func (m *MockToken) CreateRefreshToken(arg0 string, arg1 time.Time) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateRefreshToken", arg0, arg1)
 	ret0, _ := ret[0].(string)
@@ -65,10 +65,10 @@ func (mr *MockTokenMockRecorder) CreateRefreshToken(arg0, arg1 interface{}) *gom
 }
 
 // GetRefreshTokenData mocks base method.
-func (m *MockToken) GetRefreshTokenData(arg0 string) (int, time.Time, error) {
+func (m *MockToken) GetRefreshTokenData(arg0 string) (string, time.Time, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRefreshTokenData", arg0)
-	ret0, _ := ret[0].(int)
+	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(time.Time)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2

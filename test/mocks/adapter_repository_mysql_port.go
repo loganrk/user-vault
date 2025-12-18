@@ -48,6 +48,21 @@ func (mr *MockRepositoryMySQLMockRecorder) AutoMigrate() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AutoMigrate", reflect.TypeOf((*MockRepositoryMySQL)(nil).AutoMigrate))
 }
 
+// CreateOauthAccount mocks base method.
+func (m *MockRepositoryMySQL) CreateOauthAccount(arg0 context.Context, arg1 domain.OAuthAccount) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateOauthAccount", arg0, arg1)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateOauthAccount indicates an expected call of CreateOauthAccount.
+func (mr *MockRepositoryMySQLMockRecorder) CreateOauthAccount(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOauthAccount", reflect.TypeOf((*MockRepositoryMySQL)(nil).CreateOauthAccount), arg0, arg1)
+}
+
 // CreateToken mocks base method.
 func (m *MockRepositoryMySQL) CreateToken(arg0 context.Context, arg1 domain.UserTokens) (int, error) {
 	m.ctrl.T.Helper()
@@ -91,6 +106,21 @@ func (m *MockRepositoryMySQL) CreateUserLoginAttempt(arg0 context.Context, arg1 
 func (mr *MockRepositoryMySQLMockRecorder) CreateUserLoginAttempt(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUserLoginAttempt", reflect.TypeOf((*MockRepositoryMySQL)(nil).CreateUserLoginAttempt), arg0, arg1)
+}
+
+// GetOauthAccountForProvider mocks base method.
+func (m *MockRepositoryMySQL) GetOauthAccountForProvider(arg0 context.Context, arg1 int, arg2 string, arg3 domain.OAuthID, arg4 string) (domain.OAuthAccount, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOauthAccountForProvider", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(domain.OAuthAccount)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOauthAccountForProvider indicates an expected call of GetOauthAccountForProvider.
+func (mr *MockRepositoryMySQLMockRecorder) GetOauthAccountForProvider(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOauthAccountForProvider", reflect.TypeOf((*MockRepositoryMySQL)(nil).GetOauthAccountForProvider), arg0, arg1, arg2, arg3, arg4)
 }
 
 // GetUserByEmail mocks base method.

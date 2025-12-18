@@ -25,6 +25,17 @@ type mocksSetupLogin func(
 	mockUtils *mocks.MockUtils,
 )
 
+type mocksSetupOAuthLogin func(
+	ctx context.Context,
+	mockRepo *mocks.MockRepositoryMySQL,
+	mockMsg *mocks.MockMessager,
+	mockLogger *mocks.MockLogger,
+	mockToken *mocks.MockToken,
+	mockConfigUser *mocks.MockUser,
+	mockUtils *mocks.MockUtils,
+	mockOAuthProvider *mocks.MockOAuthProvider,
+)
+
 func TestLogin(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -51,10 +62,11 @@ func TestLogin(t *testing.T) {
 			},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				userData := domain.User{
-					Id:            1,
-					Email:         "alice@example.com",
-					EmailVerified: true,
-					Status:        constant.USER_STATUS_ACTIVE,
+					Id:                 1,
+					Email:              "alice@example.com",
+					UserSubscriptionId: "uuid",
+					EmailVerified:      true,
+					Status:             constant.USER_STATUS_ACTIVE,
 				}
 				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(userData, nil)
 				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
@@ -68,7 +80,7 @@ func TestLogin(t *testing.T) {
 				mockRepo.EXPECT().CreateUserLoginAttempt(ctx, gomock.Any()).Return(1, nil)
 				mockConfigUser.EXPECT().GetRefreshTokenEnabled().Return(true)
 				mockConfigUser.EXPECT().GetRefreshTokenExpiry().Return(3600)
-				mockToken.EXPECT().CreateRefreshToken(1, gomock.Any()).Return("refresh-token", nil)
+				mockToken.EXPECT().CreateRefreshToken("uuid", gomock.Any()).Return("refresh-token", nil)
 				mockRepo.EXPECT().CreateToken(ctx, gomock.Any()).Return(1, nil)
 			},
 			wantErr: false,
@@ -125,10 +137,11 @@ func TestLogin(t *testing.T) {
 			},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				userData := domain.User{
-					Id:            1,
-					Email:         "alice@example.com",
-					EmailVerified: true,
-					Status:        constant.USER_STATUS_INACTIVE,
+					Id:                 1,
+					Email:              "alice@example.com",
+					UserSubscriptionId: "uuid",
+					EmailVerified:      true,
+					Status:             constant.USER_STATUS_INACTIVE,
 				}
 				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(userData, nil)
 				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
@@ -147,10 +160,11 @@ func TestLogin(t *testing.T) {
 			},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				userData := domain.User{
-					Id:            1,
-					Email:         "alice@example.com",
-					EmailVerified: false,
-					Status:        constant.USER_STATUS_ACTIVE,
+					Id:                 1,
+					Email:              "alice@example.com",
+					UserSubscriptionId: "uuid",
+					EmailVerified:      false,
+					Status:             constant.USER_STATUS_ACTIVE,
 				}
 				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(userData, nil)
 				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
@@ -170,10 +184,11 @@ func TestLogin(t *testing.T) {
 			},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				userData := domain.User{
-					Id:            1,
-					Email:         "alice@example.com",
-					EmailVerified: true,
-					Status:        constant.USER_STATUS_ACTIVE,
+					Id:                 1,
+					Email:              "alice@example.com",
+					UserSubscriptionId: "uuid",
+					EmailVerified:      true,
+					Status:             constant.USER_STATUS_ACTIVE,
 				}
 				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(userData, nil)
 				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
@@ -199,10 +214,11 @@ func TestLogin(t *testing.T) {
 			},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				userData := domain.User{
-					Id:            1,
-					Email:         "alice@example.com",
-					EmailVerified: true,
-					Status:        constant.USER_STATUS_ACTIVE,
+					Id:                 1,
+					Email:              "alice@example.com",
+					UserSubscriptionId: "uuid",
+					EmailVerified:      true,
+					Status:             constant.USER_STATUS_ACTIVE,
 				}
 				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(userData, nil)
 				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
@@ -227,10 +243,11 @@ func TestLogin(t *testing.T) {
 			},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				userData := domain.User{
-					Id:            1,
-					Email:         "alice@example.com",
-					EmailVerified: true,
-					Status:        constant.USER_STATUS_ACTIVE,
+					Id:                 1,
+					Email:              "alice@example.com",
+					UserSubscriptionId: "uuid",
+					EmailVerified:      true,
+					Status:             constant.USER_STATUS_ACTIVE,
 				}
 				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(userData, nil)
 				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
@@ -244,7 +261,7 @@ func TestLogin(t *testing.T) {
 				mockRepo.EXPECT().CreateUserLoginAttempt(ctx, gomock.Any()).Return(1, nil)
 				mockConfigUser.EXPECT().GetRefreshTokenEnabled().Return(true)
 				mockConfigUser.EXPECT().GetRefreshTokenExpiry().Return(3600)
-				mockToken.EXPECT().CreateRefreshToken(1, gomock.Any()).Return("", assert.AnError)
+				mockToken.EXPECT().CreateRefreshToken("uuid", gomock.Any()).Return("", assert.AnError)
 				mockLogger.EXPECT().Errorw(ctx, "generate_and_store_refresh_token failed",
 					"userId", 1,
 					"error", "failed to create refresh token. error = "+assert.AnError.Error(),
@@ -286,269 +303,214 @@ func TestLogin(t *testing.T) {
 	}
 }
 
-// func TestOAuthLogin(t *testing.T) {
-// 	ctrl := gomock.NewController(t)
-// 	defer ctrl.Finish()
+func TestOAuthLogin(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-// 	type args struct {
-// 		req domain.UserOAuthLoginClientRequest
-// 	}
+	type args struct {
+		req domain.UserOAuthLoginClientRequest
+	}
 
-// 	tests := []struct {
-// 		name       string
-// 		args       args
-// 		setupMocks mocksSetup
-// 		wantErr    bool
-// 		wantMsg    string
-// 		wantRes    domain.UserLoginClientResponse
-// 	}{
-// 		{
-// 			name: "success existing user",
-// 			args: args{
-// 				req: domain.UserOAuthLoginClientRequest{
-// 					Provider: "google",
-// 					Token:    "valid-token",
-// 				},
-// 			},
-// 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockToken *mocks.MockToken, mockOAuth *mocks.MockOAuthProvider) {
+	tests := []struct {
+		name       string
+		args       args
+		setupMocks mocksSetupOAuthLogin
+		wantErr    bool
+		wantMsg    string
+		wantRes    domain.UserLoginClientResponse
+	}{
+		{
+			name: "success existing user",
+			args: args{
+				req: domain.UserOAuthLoginClientRequest{
+					Provider: "google",
+					Token:    "valid-token",
+				},
+			},
+			setupMocks: func(ctx context.Context,
+				mockRepo *mocks.MockRepositoryMySQL,
+				mockMsg *mocks.MockMessager,
+				mockLogger *mocks.MockLogger,
+				mockToken *mocks.MockToken,
+				mockConfigUser *mocks.MockUser,
+				mockUtils *mocks.MockUtils,
+				mockOAuthProvider *mocks.MockOAuthProvider,
+			) {
 
-// 				mockOAuth.EXPECT().VerifyToken(ctx, "google", "valid-token").Return("alice@example.com", "Alice", nil)
-// 				userData := domain.User{
-// 					Id:            1,
-// 					Email:         "alice@example.com",
-// 					Name:          "Alice",
-// 					EmailVerified: true,
-// 					Status:        constant.USER_STATUS_ACTIVE,
-// 				}
-// 				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(userData, nil)
-// 				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
-// 				mockConfigUser.EXPECT().GetLoginAttemptSessionPeriod().Return(3600)
-// 				mockRepo.EXPECT().GetUserLoginFailedAttemptCount(ctx, 1, gomock.Any()).Return(0, nil)
-// 				mockConfigUser.EXPECT().GetRefreshTokenEnabled().Return(true)
-// 				mockConfigUser.EXPECT().GetRefreshTokenExpiry().Return(3600)
-// 				mockToken.EXPECT().CreateRefreshToken(1, gomock.Any()).Return("refresh-token", nil)
-// 				mockRepo.EXPECT().CreateToken(ctx, gomock.Any()).Return(1, nil)
-// 			},
-// 			wantErr: false,
-// 			wantMsg: "",
-// 			wantRes: domain.UserLoginClientResponse{RefreshToken: "refresh-token"},
-// 		},
-// 		{
-// 			name: "success new user created",
-// 			args: args{
-// 				req: domain.UserOAuthLoginClientRequest{
-// 					Provider: "google",
-// 					Token:    "valid-token",
-// 				},
-// 			},
-// 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockToken *mocks.MockToken, mockOAuth *mocks.MockOAuthProvider) {
+				mockOAuthProvider.EXPECT().
+					VerifyToken(ctx, "google", "valid-token").
+					Return("alice@example.com", "Alice", domain.GOOGLE_OAUTH_ID, "pid", nil)
 
-// 				mockOAuth.EXPECT().VerifyToken(ctx, "google", "valid-token").Return("bob@example.com", "Bob", nil)
-// 				mockRepo.EXPECT().GetUserByEmail(ctx, "bob@example.com").Return(domain.User{}, nil)
-// 				mockRepo.EXPECT().CreateUser(ctx, gomock.Any()).Return(2, nil)
-// 				userData := domain.User{
-// 					Id:            2,
-// 					Email:         "bob@example.com",
-// 					Name:          "Bob",
-// 					EmailVerified: true,
-// 					Status:        constant.USER_STATUS_ACTIVE,
-// 				}
-// 				mockRepo.EXPECT().GetUserByUserID(ctx, 2).Return(userData, nil)
-// 				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
-// 				mockConfigUser.EXPECT().GetLoginAttemptSessionPeriod().Return(3600)
-// 				mockRepo.EXPECT().GetUserLoginFailedAttemptCount(ctx, 2, gomock.Any()).Return(0, nil)
-// 				mockConfigUser.EXPECT().GetRefreshTokenEnabled().Return(true)
-// 				mockConfigUser.EXPECT().GetRefreshTokenExpiry().Return(3600)
-// 				mockToken.EXPECT().CreateRefreshToken(2, gomock.Any()).Return("refresh-token", nil)
-// 				mockRepo.EXPECT().CreateToken(ctx, gomock.Any()).Return(1, nil)
-// 			},
-// 			wantErr: false,
-// 			wantMsg: "",
-// 			wantRes: domain.UserLoginClientResponse{RefreshToken: "refresh-token"},
-// 		},
-// 		{
-// 			name: "invalid oauth token",
-// 			args: args{
-// 				req: domain.UserOAuthLoginClientRequest{
-// 					Provider: "google",
-// 					Token:    "invalid-token",
-// 				},
-// 			},
-// 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockToken *mocks.MockToken, mockOAuth *mocks.MockOAuthProvider) {
+				user := domain.User{
+					Id:                 1,
+					Email:              "alice@example.com",
+					Name:               "Alice",
+					UserSubscriptionId: "uuid",
+					Status:             constant.USER_STATUS_ACTIVE,
+					EmailVerified:      true,
+				}
 
-// 				mockOAuth.EXPECT().VerifyToken(ctx, "google", "invalid-token").Return("", "", assert.AnError)
-// 				mockLogger.EXPECT().Errorw(ctx, "verify_token failed",
-// 					"provider", "google",
-// 					"error", assert.AnError.Error(),
-// 					"exception", constant.AuthorizationException)
-// 			},
-// 			wantErr: true,
-// 			wantMsg: "Invalid OAuth token",
-// 		},
-// 		{
-// 			name: "user fetch error",
-// 			args: args{
-// 				req: domain.UserOAuthLoginClientRequest{
-// 					Provider: "google",
-// 					Token:    "valid-token",
-// 				},
-// 			},
-// 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockToken *mocks.MockToken, mockOAuth *mocks.MockOAuthProvider) {
+				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(user, nil)
+				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
+				mockConfigUser.EXPECT().GetLoginAttemptSessionPeriod().Return(3600)
+				mockRepo.EXPECT().GetUserLoginFailedAttemptCount(ctx, 1, gomock.Any()).Return(0, nil)
 
-// 				mockOAuth.EXPECT().VerifyToken(ctx, "google", "valid-token").Return("alice@example.com", "Alice", nil)
-// 				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(domain.User{}, assert.AnError)
-// 				mockLogger.EXPECT().Errorw(ctx, "fetch_user_by_email failed",
-// 					"email", "alice@example.com",
-// 					"error", "failed to retrieve user by user email. error = "+assert.AnError.Error(),
-// 					"code", http.StatusInternalServerError,
-// 					"exception", constant.DBException)
-// 			},
-// 			wantErr: true,
-// 			wantMsg: constant.MessageInternalServerError,
-// 		},
-// 		{
-// 			name: "login attempt limit reached",
-// 			args: args{
-// 				req: domain.UserOAuthLoginClientRequest{
-// 					Provider: "google",
-// 					Token:    "valid-token",
-// 				},
-// 			},
-// 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockToken *mocks.MockToken, mockOAuth *mocks.MockOAuthProvider) {
+				mockRepo.EXPECT().
+					GetOauthAccountForProvider(ctx, 1, "alice@example.com", domain.GOOGLE_OAUTH_ID, "pid").
+					Return(domain.OAuthAccount{}, nil)
 
-// 				mockOAuth.EXPECT().VerifyToken(ctx, "google", "valid-token").Return("alice@example.com", "Alice", nil)
-// 				userData := domain.User{
-// 					Id:            1,
-// 					Email:         "alice@example.com",
-// 					Name:          "Alice",
-// 					EmailVerified: true,
-// 					Status:        constant.USER_STATUS_ACTIVE,
-// 				}
-// 				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(userData, nil)
-// 				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
-// 				mockConfigUser.EXPECT().GetLoginAttemptSessionPeriod().Return(3600)
-// 				mockRepo.EXPECT().GetUserLoginFailedAttemptCount(ctx, 1, gomock.Any()).Return(3, nil)
-// 				mockLogger.EXPECT().Errorw(ctx, "block_if_login_attempt_limit_reached failed",
-// 					"email", "alice@example.com",
-// 					"error", "",
-// 					"code", http.StatusTooManyRequests,
-// 					"exception", constant.ValidationException)
-// 			},
-// 			wantErr: true,
-// 			wantMsg: "Maximum login attempts reached. Please try again later.",
-// 		},
-// 		{
-// 			name: "inactive account",
-// 			args: args{
-// 				req: domain.UserOAuthLoginClientRequest{
-// 					Provider: "google",
-// 					Token:    "valid-token",
-// 				},
-// 			},
-// 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockToken *mocks.MockToken, mockOAuth *mocks.MockOAuthProvider) {
+				mockRepo.EXPECT().CreateOauthAccount(ctx, gomock.Any()).Return(1, nil)
 
-// 				mockOAuth.EXPECT().VerifyToken(ctx, "google", "valid-token").Return("alice@example.com", "Alice", nil)
-// 				userData := domain.User{
-// 					Id:            1,
-// 					Email:         "alice@example.com",
-// 					Name:          "Alice",
-// 					EmailVerified: true,
-// 					Status:        constant.USER_STATUS_INACTIVE,
-// 				}
-// 				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(userData, nil)
-// 				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
-// 				mockConfigUser.EXPECT().GetLoginAttemptSessionPeriod().Return(3600)
-// 				mockRepo.EXPECT().GetUserLoginFailedAttemptCount(ctx, 1, gomock.Any()).Return(0, nil)
-// 			},
-// 			wantErr: true,
-// 			wantMsg: "account is not active",
-// 		},
-// 		{
-// 			name: "refresh token generation failure",
-// 			args: args{
-// 				req: domain.UserOAuthLoginClientRequest{
-// 					Provider: "google",
-// 					Token:    "valid-token",
-// 				},
-// 			},
-// 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockToken *mocks.MockToken, mockOAuth *mocks.MockOAuthProvider) {
+				mockConfigUser.EXPECT().GetRefreshTokenEnabled().Return(true)
+				mockConfigUser.EXPECT().GetRefreshTokenExpiry().Return(3600)
+				mockToken.EXPECT().CreateRefreshToken("uuid", gomock.Any()).Return("refresh-token", nil)
+				mockRepo.EXPECT().CreateToken(ctx, gomock.Any()).Return(1, nil)
+			},
+			wantRes: domain.UserLoginClientResponse{RefreshToken: "refresh-token"},
+		},
+		{
+			name: "success new user created",
+			args: args{
+				req: domain.UserOAuthLoginClientRequest{
+					Provider: "google",
+					Token:    "valid-token",
+				},
+			},
+			setupMocks: func(ctx context.Context,
+				mockRepo *mocks.MockRepositoryMySQL,
+				mockMsg *mocks.MockMessager,
+				mockLogger *mocks.MockLogger,
+				mockToken *mocks.MockToken,
+				mockConfigUser *mocks.MockUser,
+				mockUtils *mocks.MockUtils,
+				mockOAuthProvider *mocks.MockOAuthProvider,
+			) {
 
-// 				mockOAuth.EXPECT().VerifyToken(ctx, "google", "valid-token").Return("alice@example.com", "Alice", nil)
-// 				userData := domain.User{
-// 					Id:            1,
-// 					Email:         "alice@example.com",
-// 					Name:          "Alice",
-// 					EmailVerified: true,
-// 					Status:        constant.USER_STATUS_ACTIVE,
-// 				}
-// 				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(userData, nil)
-// 				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
-// 				mockConfigUser.EXPECT().GetLoginAttemptSessionPeriod().Return(3600)
-// 				mockRepo.EXPECT().GetUserLoginFailedAttemptCount(ctx, 1, gomock.Any()).Return(0, nil)
-// 				mockConfigUser.EXPECT().GetRefreshTokenEnabled().Return(true)
-// 				mockConfigUser.EXPECT().GetRefreshTokenExpiry().Return(3600)
-// 				mockToken.EXPECT().CreateRefreshToken(1, gomock.Any()).Return("", assert.AnError)
-// 				mockLogger.EXPECT().Errorw(ctx, "generate_and_store_refresh_token failed",
-// 					"userId", 1,
-// 					"error", "failed to create refresh token. error = "+assert.AnError.Error(),
-// 					"code", http.StatusInternalServerError,
-// 					"exception", constant.GenericException)
-// 			},
-// 			wantErr: true,
-// 			wantMsg: constant.MessageInternalServerError,
-// 		},
-// 		{
-// 			name: "user creation failure",
-// 			args: args{
-// 				req: domain.UserOAuthLoginClientRequest{
-// 					Provider: "google",
-// 					Token:    "valid-token",
-// 				},
-// 			},
-// 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockToken *mocks.MockToken, mockOAuth *mocks.MockOAuthProvider) {
+				mockUtils.EXPECT().GenerateUUID().Return("uuid")
 
-// 				mockOAuth.EXPECT().VerifyToken(ctx, "google", "valid-token").Return("bob@example.com", "Bob", nil)
-// 				mockRepo.EXPECT().GetUserByEmail(ctx, "bob@example.com").Return(domain.User{}, nil)
-// 				mockRepo.EXPECT().CreateUser(ctx, gomock.Any()).Return(0, assert.AnError)
-// 				mockLogger.EXPECT().Errorw(ctx, "create_user_for_o_auth failed",
-// 					"email", "bob@example.com",
-// 					"error", "failed to create user. error = "+assert.AnError.Error(),
-// 					"code", http.StatusInternalServerError,
-// 					"exception", constant.DBException)
-// 			},
-// 			wantErr: true,
-// 			wantMsg: constant.MessageInternalServerError,
-// 		},
-// 	}
+				mockOAuthProvider.EXPECT().
+					VerifyToken(ctx, "google", "valid-token").
+					Return("bob@example.com", "Bob", domain.GOOGLE_OAUTH_ID, "pid", nil)
 
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			ctx := context.TODO()
+				mockRepo.EXPECT().GetUserByEmail(ctx, "bob@example.com").Return(domain.User{}, nil)
+				mockRepo.EXPECT().CreateUser(ctx, gomock.Any()).Return(2, nil)
+				mockRepo.EXPECT().CreateOauthAccount(ctx, gomock.Any()).Return(1, nil)
 
-// 			mockRepo := mocks.NewMockRepositoryMySQL(ctrl)
-// 			mockToken := mocks.NewMockToken(ctrl)
-// 			mockMsg := mocks.NewMockMessager(ctrl)
-// 			mockLogger := mocks.NewMockLogger(ctrl)
-// 			mockConfigUser := mocks.NewMockUser(ctrl)
-// 			mockOAuth := mocks.NewMockOAuthProvider(ctrl)
+				user := domain.User{
+					Id:                 2,
+					Email:              "bob@example.com",
+					UserSubscriptionId: "uuid",
+					Name:               "Bob",
+					Status:             constant.USER_STATUS_ACTIVE,
+					EmailVerified:      true,
+				}
 
-// 			uc := New(mockLogger, mockToken, mockMsg, mockRepo, "myapp", mockConfigUser)
-// 			uc.(*userusecase).oAuthProvider = mockOAuth
+				mockRepo.EXPECT().GetUserByUserID(ctx, 2).Return(user, nil)
 
-// 			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockConfigUser, mockToken, mockOAuth)
+				mockConfigUser.EXPECT().GetRefreshTokenEnabled().Return(true)
+				mockConfigUser.EXPECT().GetRefreshTokenExpiry().Return(3600)
+				mockToken.EXPECT().CreateRefreshToken("uuid", gomock.Any()).Return("refresh-token", nil)
+				mockRepo.EXPECT().CreateToken(ctx, gomock.Any()).Return(1, nil)
+			},
+			wantRes: domain.UserLoginClientResponse{RefreshToken: "refresh-token"},
+		},
+		{
+			name: "invalid oauth token",
+			args: args{
+				req: domain.UserOAuthLoginClientRequest{
+					Provider: "google",
+					Token:    "invalid-token",
+				},
+			},
+			setupMocks: func(ctx context.Context,
+				mockRepo *mocks.MockRepositoryMySQL,
+				mockMsg *mocks.MockMessager,
+				mockLogger *mocks.MockLogger,
+				mockToken *mocks.MockToken,
+				mockConfigUser *mocks.MockUser,
+				mockUtils *mocks.MockUtils,
+				mockOAuthProvider *mocks.MockOAuthProvider,
+			) {
 
-// 			resp, errRes := uc.OAuthLogin(ctx, tt.args.req)
+				mockOAuthProvider.EXPECT().
+					VerifyToken(ctx, "google", "invalid-token").
+					Return("", "", domain.INVALID_OAUTH_ID, "", assert.AnError)
 
-// 			if tt.wantErr {
-// 				assert.NotZero(t, errRes.Code, "expected error code but got zero")
-// 				assert.Equal(t, tt.wantMsg, errRes.Message)
-// 			} else {
-// 				assert.Zero(t, errRes.Code, "expected no error code but got one")
-// 				assert.Equal(t, tt.wantRes.RefreshToken, resp.RefreshToken)
-// 			}
-// 		})
-// 	}
-// }
+				mockLogger.EXPECT().
+					Error(ctx, "verify_token failed",
+						"provider", "google",
+						"error", assert.AnError.Error(),
+						"exception", constant.AuthorizationException)
+			},
+			wantErr: true,
+			wantMsg: "Invalid OAuth token",
+		},
+		{
+			name: "user creation failure",
+			args: args{
+				req: domain.UserOAuthLoginClientRequest{
+					Provider: "google",
+					Token:    "valid-token",
+				},
+			},
+			setupMocks: func(ctx context.Context,
+				mockRepo *mocks.MockRepositoryMySQL,
+				mockMsg *mocks.MockMessager,
+				mockLogger *mocks.MockLogger,
+				mockToken *mocks.MockToken,
+				mockConfigUser *mocks.MockUser,
+				mockUtils *mocks.MockUtils,
+				mockOAuthProvider *mocks.MockOAuthProvider,
+			) {
+
+				mockUtils.EXPECT().GenerateUUID().Return("uuid")
+
+				mockOAuthProvider.EXPECT().
+					VerifyToken(ctx, "google", "valid-token").
+					Return("bob@example.com", "Bob", domain.GOOGLE_OAUTH_ID, "pid", nil)
+
+				mockRepo.EXPECT().GetUserByEmail(ctx, "bob@example.com").Return(domain.User{}, nil)
+				mockRepo.EXPECT().CreateUser(ctx, gomock.Any()).Return(0, assert.AnError)
+
+				mockLogger.EXPECT().
+					Errorw(ctx, "create_user_for_o_auth failed",
+						"email", "bob@example.com",
+						"error", "failed to create user for OAuth. error = "+assert.AnError.Error(),
+						"code", http.StatusInternalServerError,
+						"exception", constant.DBException)
+			},
+			wantErr: true,
+			wantMsg: constant.MessageInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.TODO()
+
+			mockRepo := mocks.NewMockRepositoryMySQL(ctrl)
+			mockToken := mocks.NewMockToken(ctrl)
+			mockMsg := mocks.NewMockMessager(ctrl)
+			mockLogger := mocks.NewMockLogger(ctrl)
+			mockConfigUser := mocks.NewMockUser(ctrl)
+			mockUtils := mocks.NewMockUtils(ctrl)
+			mockOAuthProvider := mocks.NewMockOAuthProvider(ctrl)
+
+			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockToken, mockConfigUser, mockUtils, mockOAuthProvider)
+			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockOAuthProvider, mockUtils, "myapp", mockConfigUser)
+
+			resp, errRes := uc.OAuthLogin(ctx, tt.args.req)
+
+			if tt.wantErr {
+				assert.NotZero(t, errRes.Code, "expected error code but got zero")
+				assert.Equal(t, tt.wantMsg, errRes.Message)
+			} else {
+				assert.Zero(t, errRes.Code, "expected no error code but got one")
+				assert.Equal(t, tt.wantRes.RefreshToken, resp.RefreshToken)
+			}
+		})
+	}
+}
 
 func TestLogout(t *testing.T) {
 	ctrl := gomock.NewController(t)
