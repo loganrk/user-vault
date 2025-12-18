@@ -267,10 +267,11 @@ func TestLogin(t *testing.T) {
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
 			mockUtils := mocks.NewMockUtils(ctrl)
+			mockOAuthProvider := mocks.NewMockOAuthProvider(ctrl)
 
 			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockToken, mockConfigUser, mockUtils)
 
-			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockUtils, "myapp", mockConfigUser)
+			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockOAuthProvider, mockUtils, "myapp", mockConfigUser)
 
 			resp, errRes := uc.Login(ctx, tt.args.req)
 
@@ -668,9 +669,11 @@ func TestLogout(t *testing.T) {
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
 			mockUtils := mocks.NewMockUtils(ctrl)
+			mockOAuthProvider := mocks.NewMockOAuthProvider(ctrl)
+
 			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockToken, mockConfigUser, mockUtils)
 
-			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockUtils, "myapp", mockConfigUser)
+			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockOAuthProvider, mockUtils, "myapp", mockConfigUser)
 
 			resp, errRes := uc.Logout(ctx, tt.args.req)
 

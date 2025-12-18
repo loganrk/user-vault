@@ -229,9 +229,11 @@ func TestForgotPassword(t *testing.T) {
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
 			mockUtils := mocks.NewMockUtils(ctrl)
+			mockOAuthProvider := mocks.NewMockOAuthProvider(ctrl)
+
 			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockConfigUser, mockUtils)
 
-			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockUtils, "myapp", mockConfigUser)
+			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockOAuthProvider, mockUtils, "myapp", mockConfigUser)
 
 			resp, errRes := uc.ForgotPassword(ctx, tt.args.req)
 
@@ -543,9 +545,11 @@ func TestResetPassword(t *testing.T) {
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
 			mockUtils := mocks.NewMockUtils(ctrl)
+			mockOAuthProvider := mocks.NewMockOAuthProvider(ctrl)
+
 			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockConfigUser, mockUtils)
 
-			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockUtils, "myapp", mockConfigUser)
+			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockOAuthProvider, mockUtils, "myapp", mockConfigUser)
 
 			resp, errRes := uc.ResetPassword(ctx, tt.args.req)
 
