@@ -106,13 +106,14 @@ func (u *userusecase) OAuthLogin(ctx context.Context, req domain.UserOAuthLoginC
 
 	// If user not found, create a new user
 	if userData == nil || userData.Id == 0 {
-		userData.Id, errRes = u.createUserForOAuth(ctx, email, name, provider, providerId)
+
+		id, errRes := u.createUserForOAuth(ctx, email, name, provider, providerId)
 		if errRes.Code != 0 {
 			u.logger.Errorw(ctx, "create_user_for_o_auth failed", "email", email, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
 			return domain.UserLoginClientResponse{}, errRes
 		}
 		// Fetch updated user data by ID
-		userData, errRes = u.fetchUserByID(ctx, userData.Id)
+		userData, errRes = u.fetchUserByID(ctx, id)
 		if errRes.Code != 0 {
 			if errRes.Err != "" {
 				u.logger.Errorw(ctx, "fetch_user_by_id failed", "userId", userData.Id, "error", errRes.Err, "code", errRes.Code, "exception", errRes.Exception)
@@ -256,6 +257,7 @@ func (u *userusecase) createUserForOAuth(ctx context.Context, email, name string
 		Provider:   provider,
 		ProviderId: providerId,
 	}
+
 	_, err = u.mysql.CreateOauthAccount(ctx, accountData)
 
 	if err != nil {

@@ -60,3 +60,17 @@ func (mr *MockUtilsMockRecorder) GenerateString(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateString", reflect.TypeOf((*MockUtils)(nil).GenerateString), arg0)
 }
+
+// GenerateUUID mocks base method.
+func (m *MockUtils) GenerateUUID() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateUUID")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GenerateUUID indicates an expected call of GenerateUUID.
+func (mr *MockUtilsMockRecorder) GenerateUUID() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateUUID", reflect.TypeOf((*MockUtils)(nil).GenerateUUID))
+}

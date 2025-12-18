@@ -49,6 +49,7 @@ func TestRegister(t *testing.T) {
 				},
 			},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+				mockUtils.EXPECT().GenerateUUID().Return("uuid")
 				mockRepo.EXPECT().GetUserByEmailOrPhone(ctx, "alice@example.com", "").Return(domain.User{}, nil)
 				mockConfigUser.EXPECT().GetPasswordHashCost().Return(12)
 				mockRepo.EXPECT().CreateUser(ctx, gomock.Any()).Return(1, nil)
@@ -88,6 +89,7 @@ func TestRegister(t *testing.T) {
 				},
 			},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+				mockUtils.EXPECT().GenerateUUID().Return("uuid")
 				mockRepo.EXPECT().GetUserByEmailOrPhone(ctx, "bob@example.com", "").Return(domain.User{}, nil)
 				mockConfigUser.EXPECT().GetPasswordHashCost().Return(12)
 				mockRepo.EXPECT().CreateUser(ctx, gomock.Any()).Return(0, assert.AnError)
@@ -106,6 +108,7 @@ func TestRegister(t *testing.T) {
 				},
 			},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+				mockUtils.EXPECT().GenerateUUID().Return("uuid")
 				mockRepo.EXPECT().GetUserByEmailOrPhone(ctx, "eve@example.com", "").Return(domain.User{}, nil)
 				mockConfigUser.EXPECT().GetPasswordHashCost().Return(12)
 				mockRepo.EXPECT().CreateUser(ctx, gomock.Any()).Return(2, nil)
@@ -125,10 +128,11 @@ func TestRegister(t *testing.T) {
 				},
 			},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+				mockUtils.EXPECT().GenerateUUID().Return("uuid")
 				mockRepo.EXPECT().GetUserByEmailOrPhone(ctx, "carl@example.com", "").Return(domain.User{}, nil)
 				mockConfigUser.EXPECT().GetPasswordHashCost().Return(12)
 				mockRepo.EXPECT().CreateUser(ctx, gomock.Any()).Return(3, nil)
-				mockRepo.EXPECT().GetUserByUserID(ctx, 3).Return(domain.User{Id: 3, Name: "Carl", Email: "carl@example.com"}, nil)
+				mockRepo.EXPECT().GetUserByUserID(ctx, 3).Return(domain.User{Id: 3, UserSubscriptionId: "uuid", Name: "Carl", Email: "carl@example.com"}, nil)
 				mockRepo.EXPECT().RevokeAllTokens(ctx, constant.TOKEN_TYPE_ACTIVATION_EMAIL, 3).Return(assert.AnError)
 				mockLogger.EXPECT().Errorw(ctx, "generate_verification_token failed", "userId", 3, "tokenType", constant.TOKEN_TYPE_ACTIVATION_EMAIL, "error", "failed to revoke existing tokens. error = "+assert.AnError.Error(), "code", http.StatusInternalServerError, "exception", constant.DBException)
 			},
@@ -145,10 +149,11 @@ func TestRegister(t *testing.T) {
 				},
 			},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+				mockUtils.EXPECT().GenerateUUID().Return("uuid")
 				mockRepo.EXPECT().GetUserByEmailOrPhone(ctx, "maya@example.com", "").Return(domain.User{}, nil)
 				mockConfigUser.EXPECT().GetPasswordHashCost().Return(12)
 				mockRepo.EXPECT().CreateUser(ctx, gomock.Any()).Return(4, nil)
-				mockRepo.EXPECT().GetUserByUserID(ctx, 4).Return(domain.User{Id: 4, Name: "Maya", Email: "maya@example.com"}, nil)
+				mockRepo.EXPECT().GetUserByUserID(ctx, 4).Return(domain.User{Id: 4, UserSubscriptionId: "uuid", Name: "Maya", Email: "maya@example.com"}, nil)
 				mockRepo.EXPECT().RevokeAllTokens(ctx, constant.TOKEN_TYPE_ACTIVATION_EMAIL, 4).Return(nil)
 				mockConfigUser.EXPECT().GetVerificationTokenExpiry().Return(1200)
 				mockRepo.EXPECT().CreateToken(ctx, gomock.Any()).Return(1, nil)
@@ -210,7 +215,7 @@ func TestVerifyUser(t *testing.T) {
 			name: "success email verification",
 			args: args{req: domain.UserVerifyClientRequest{Email: "alice@example.com", Token: "valid-token"}},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
-				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(domain.User{Id: 1, Email: "alice@example.com", EmailVerified: false}, nil)
+				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(domain.User{Id: 1, UserSubscriptionId: "uuid", Email: "alice@example.com", EmailVerified: false}, nil)
 				mockRepo.EXPECT().GetUserLastTokenByUserId(ctx, constant.TOKEN_TYPE_ACTIVATION_EMAIL, 1).Return(domain.UserTokens{Id: 1, Token: "valid-token", Revoked: false, ExpiresAt: time.Now().Add(1 * time.Hour)}, nil)
 				mockRepo.EXPECT().UpdateEmailVerfied(ctx, 1).Return(nil)
 				mockRepo.EXPECT().RevokeToken(ctx, 1).Return(nil)
@@ -232,7 +237,7 @@ func TestVerifyUser(t *testing.T) {
 			name: "email already verified",
 			args: args{req: domain.UserVerifyClientRequest{Email: "bob@example.com", Token: "abc"}},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
-				mockRepo.EXPECT().GetUserByEmail(ctx, "bob@example.com").Return(domain.User{Id: 2, Email: "bob@example.com", EmailVerified: true}, nil)
+				mockRepo.EXPECT().GetUserByEmail(ctx, "bob@example.com").Return(domain.User{Id: 2, UserSubscriptionId: "uuid", Email: "bob@example.com", EmailVerified: true}, nil)
 			},
 			wantErr: true,
 			wantMsg: "Your email is already verified",
@@ -242,7 +247,7 @@ func TestVerifyUser(t *testing.T) {
 			args: args{req: domain.UserVerifyClientRequest{Email: "exp@example.com", Token: "expired"}},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
-				mockRepo.EXPECT().GetUserByEmail(ctx, "exp@example.com").Return(domain.User{Id: 3, Email: "exp@example.com", EmailVerified: false}, nil)
+				mockRepo.EXPECT().GetUserByEmail(ctx, "exp@example.com").Return(domain.User{Id: 3, UserSubscriptionId: "uuid", Email: "exp@example.com", EmailVerified: false}, nil)
 
 				mockRepo.EXPECT().GetUserLastTokenByUserId(ctx, constant.TOKEN_TYPE_ACTIVATION_EMAIL, 3).Return(domain.UserTokens{Token: "expired", Revoked: false, ExpiresAt: time.Now().Add(-1 * time.Hour)}, nil)
 
@@ -257,7 +262,7 @@ func TestVerifyUser(t *testing.T) {
 			args: args{req: domain.UserVerifyClientRequest{Email: "charlie@example.com", Token: "wrong-token"}},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
-				mockRepo.EXPECT().GetUserByEmail(ctx, "charlie@example.com").Return(domain.User{Id: 4, Email: "charlie@example.com", EmailVerified: false}, nil)
+				mockRepo.EXPECT().GetUserByEmail(ctx, "charlie@example.com").Return(domain.User{Id: 4, UserSubscriptionId: "uuid", Email: "charlie@example.com", EmailVerified: false}, nil)
 
 				mockRepo.EXPECT().GetUserLastTokenByUserId(ctx, constant.TOKEN_TYPE_ACTIVATION_EMAIL, 4).Return(domain.UserTokens{Token: "correct-token", Revoked: false, ExpiresAt: time.Now().Add(1 * time.Hour)}, nil)
 
@@ -270,7 +275,7 @@ func TestVerifyUser(t *testing.T) {
 			name: "update email failed",
 			args: args{req: domain.UserVerifyClientRequest{Email: "err@example.com", Token: "valid-token"}},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
-				mockRepo.EXPECT().GetUserByEmail(ctx, "err@example.com").Return(domain.User{Id: 5, Email: "err@example.com", EmailVerified: false}, nil)
+				mockRepo.EXPECT().GetUserByEmail(ctx, "err@example.com").Return(domain.User{Id: 5, UserSubscriptionId: "uuid", Email: "err@example.com", EmailVerified: false}, nil)
 				mockRepo.EXPECT().GetUserLastTokenByUserId(ctx, constant.TOKEN_TYPE_ACTIVATION_EMAIL, 5).Return(domain.UserTokens{Id: 5, Token: "valid-token", Revoked: false, ExpiresAt: time.Now().Add(1 * time.Hour)}, nil)
 				mockRepo.EXPECT().UpdateEmailVerfied(ctx, 5).Return(assert.AnError)
 				mockLogger.EXPECT().Errorw(ctx, "update_email_verfied failed", "userId", 5, "error", assert.AnError.Error(), "code", http.StatusInternalServerError, "exception", constant.DBException)
@@ -328,7 +333,7 @@ func TestResendVerification(t *testing.T) {
 			name: "email resend success",
 			args: args{req: domain.UserResendVerificationClientRequest{Email: "john@example.com"}},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfig *mocks.MockUser, mockUtils *mocks.MockUtils) {
-				mockRepo.EXPECT().GetUserByEmail(ctx, "john@example.com").Return(domain.User{Id: 1, Email: "john@example.com", Name: "John", EmailVerified: false}, nil)
+				mockRepo.EXPECT().GetUserByEmail(ctx, "john@example.com").Return(domain.User{Id: 1, UserSubscriptionId: "uuid", Email: "john@example.com", Name: "John", EmailVerified: false}, nil)
 				mockRepo.EXPECT().RevokeAllTokens(ctx, constant.TOKEN_TYPE_ACTIVATION_EMAIL, 1).Return(nil)
 				mockConfig.EXPECT().GetVerificationTokenExpiry().Return(1200)
 				mockRepo.EXPECT().CreateToken(ctx, gomock.Any()).Return(1, nil)
@@ -343,7 +348,7 @@ func TestResendVerification(t *testing.T) {
 			name: "email already verified",
 			args: args{req: domain.UserResendVerificationClientRequest{Email: "verified@example.com"}},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfig *mocks.MockUser, mockUtils *mocks.MockUtils) {
-				mockRepo.EXPECT().GetUserByEmail(ctx, "verified@example.com").Return(domain.User{Id: 2, Email: "verified@example.com", EmailVerified: true}, nil)
+				mockRepo.EXPECT().GetUserByEmail(ctx, "verified@example.com").Return(domain.User{Id: 2, UserSubscriptionId: "uuid", Email: "verified@example.com", EmailVerified: true}, nil)
 			},
 			wantErr: true,
 			wantMsg: "Your email is already verified",
@@ -352,7 +357,7 @@ func TestResendVerification(t *testing.T) {
 			name: "publish email fails",
 			args: args{req: domain.UserResendVerificationClientRequest{Email: "fail@example.com"}},
 			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfig *mocks.MockUser, mockUtils *mocks.MockUtils) {
-				mockRepo.EXPECT().GetUserByEmail(ctx, "fail@example.com").Return(domain.User{Id: 5, Email: "fail@example.com", Name: "Fail", EmailVerified: false}, nil)
+				mockRepo.EXPECT().GetUserByEmail(ctx, "fail@example.com").Return(domain.User{Id: 5, UserSubscriptionId: "uuid", Email: "fail@example.com", Name: "Fail", EmailVerified: false}, nil)
 				mockRepo.EXPECT().RevokeAllTokens(ctx, constant.TOKEN_TYPE_ACTIVATION_EMAIL, 5).Return(nil)
 				mockConfig.EXPECT().GetVerificationTokenExpiry().Return(1200)
 				mockRepo.EXPECT().CreateToken(ctx, gomock.Any()).Return(1, nil)
