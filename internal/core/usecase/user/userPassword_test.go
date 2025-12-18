@@ -229,9 +229,11 @@ func TestForgotPassword(t *testing.T) {
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
 			mockUtils := mocks.NewMockUtils(ctrl)
+			mockOAuthProvider := mocks.NewMockOAuthProvider(ctrl)
+
 			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockConfigUser, mockUtils)
 
-			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockUtils, "myapp", mockConfigUser)
+			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockOAuthProvider, mockUtils, "myapp", mockConfigUser)
 
 			resp, errRes := uc.ForgotPassword(ctx, tt.args.req)
 
@@ -289,12 +291,6 @@ func TestResetPassword(t *testing.T) {
 					Revoked:   false,
 				}
 				mockRepo.EXPECT().GetUserLastTokenByUserId(ctx, constant.TOKEN_TYPE_PASSWORD_RESET_EMAIL, 1).Return(tokenData, nil)
-				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("oldpass"+constant.TEST_SALT), bcrypt.DefaultCost)
-				mockRepo.EXPECT().GetUserPasswordByUserID(ctx, 1).Return(domain.User{
-					Id:       1,
-					Password: string(hashedPassword),
-					Salt:     constant.TEST_SALT,
-				}, nil)
 				mockConfigUser.EXPECT().GetPasswordHashCost().Return(bcrypt.DefaultCost)
 				mockRepo.EXPECT().UpdatePassword(ctx, 1, gomock.Any()).Return(nil)
 				mockRepo.EXPECT().RevokeToken(ctx, 1).Return(nil)
@@ -330,12 +326,6 @@ func TestResetPassword(t *testing.T) {
 					Revoked:   false,
 				}
 				mockRepo.EXPECT().GetUserLastTokenByUserId(ctx, constant.TOKEN_TYPE_PASSWORD_RESET_PHONE, 1).Return(tokenData, nil)
-				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("oldpass"+constant.TEST_SALT), bcrypt.DefaultCost)
-				mockRepo.EXPECT().GetUserPasswordByUserID(ctx, 1).Return(domain.User{
-					Id:       1,
-					Password: string(hashedPassword),
-					Salt:     constant.TEST_SALT,
-				}, nil)
 				mockConfigUser.EXPECT().GetPasswordHashCost().Return(bcrypt.DefaultCost)
 				mockRepo.EXPECT().UpdatePassword(ctx, 1, gomock.Any()).Return(nil)
 
@@ -468,41 +458,6 @@ func TestResetPassword(t *testing.T) {
 			wantMsg: "token already expired",
 		},
 		{
-			name: "password fetch error",
-			args: args{
-				req: domain.UserResetPasswordClientRequest{
-					Email: "alice@example.com",
-					Token: "valid-token",
-				},
-			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
-
-				userData := domain.User{
-					Id:            1,
-					Email:         "alice@example.com",
-					EmailVerified: true,
-					Status:        constant.USER_STATUS_ACTIVE,
-				}
-				mockRepo.EXPECT().GetUserByEmail(ctx, "alice@example.com").Return(userData, nil)
-				tokenData := domain.UserTokens{
-					Id:        1,
-					UserId:    1,
-					Token:     "valid-token",
-					Type:      constant.TOKEN_TYPE_PASSWORD_RESET_EMAIL,
-					ExpiresAt: time.Now().Add(time.Hour),
-					Revoked:   false,
-				}
-				mockRepo.EXPECT().GetUserLastTokenByUserId(ctx, constant.TOKEN_TYPE_PASSWORD_RESET_EMAIL, 1).Return(tokenData, nil)
-				mockRepo.EXPECT().GetUserPasswordByUserID(ctx, 1).Return(domain.User{}, assert.AnError)
-				mockLogger.EXPECT().Errorw(ctx, "get_user_password_by_user_id failed",
-					"userId", 1,
-					"error", assert.AnError.Error(),
-					"exception", constant.DBException)
-			},
-			wantErr: true,
-			wantMsg: constant.MessageInternalServerError,
-		},
-		{
 			name: "password update error",
 			args: args{
 				req: domain.UserResetPasswordClientRequest{
@@ -529,12 +484,6 @@ func TestResetPassword(t *testing.T) {
 					Revoked:   false,
 				}
 				mockRepo.EXPECT().GetUserLastTokenByUserId(ctx, constant.TOKEN_TYPE_PASSWORD_RESET_EMAIL, 1).Return(tokenData, nil)
-				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("oldpass"+constant.TEST_SALT), bcrypt.DefaultCost)
-				mockRepo.EXPECT().GetUserPasswordByUserID(ctx, 1).Return(domain.User{
-					Id:       1,
-					Password: string(hashedPassword),
-					Salt:     constant.TEST_SALT,
-				}, nil)
 				mockConfigUser.EXPECT().GetPasswordHashCost().Return(bcrypt.DefaultCost)
 				mockRepo.EXPECT().UpdatePassword(ctx, 1, gomock.Any()).Return(assert.AnError)
 				mockLogger.EXPECT().Errorw(ctx, "update_user_password failed",
@@ -572,12 +521,6 @@ func TestResetPassword(t *testing.T) {
 					Revoked:   false,
 				}
 				mockRepo.EXPECT().GetUserLastTokenByUserId(ctx, constant.TOKEN_TYPE_PASSWORD_RESET_EMAIL, 1).Return(tokenData, nil)
-				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("oldpass"+constant.TEST_SALT), bcrypt.DefaultCost)
-				mockRepo.EXPECT().GetUserPasswordByUserID(ctx, 1).Return(domain.User{
-					Id:       1,
-					Password: string(hashedPassword),
-					Salt:     constant.TEST_SALT,
-				}, nil)
 				mockConfigUser.EXPECT().GetPasswordHashCost().Return(bcrypt.DefaultCost)
 				mockRepo.EXPECT().UpdatePassword(ctx, 1, gomock.Any()).Return(nil)
 				mockRepo.EXPECT().RevokeToken(ctx, 1).Return(assert.AnError)
@@ -602,9 +545,11 @@ func TestResetPassword(t *testing.T) {
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
 			mockUtils := mocks.NewMockUtils(ctrl)
+			mockOAuthProvider := mocks.NewMockOAuthProvider(ctrl)
+
 			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockConfigUser, mockUtils)
 
-			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockUtils, "myapp", mockConfigUser)
+			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockOAuthProvider, mockUtils, "myapp", mockConfigUser)
 
 			resp, errRes := uc.ResetPassword(ctx, tt.args.req)
 

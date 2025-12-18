@@ -15,17 +15,17 @@ go install go.uber.org/mock/mockgen@latest
 Run the following commands from the **project root** to (re)generate interface mocks:
 
 ```bash
-mockgen -source=config/config.go -destination=test/mocks/config.go -package=mocks  
+mockgen -source=internal/infrastructure/config/config.go -destination=test/mocks/config.go -package=mocks  
 
-mockgen -source=config/configApi.go -destination=test/mocks/config_api.go -package=mocks
+mockgen -source=internal/infrastructure/config/configApi.go -destination=test/mocks/config_api.go -package=mocks
 
-mockgen -source=config/configKafka.go -destination=test/mocks/config_kafka.go -package=mocks
+mockgen -source=internal/infrastructure/config/configKafka.go -destination=test/mocks/config_kafka.go -package=mocks
 
-mockgen -source=config/configLogger.go -destination=test/mocks/config_logger.go -package=mocks
+mockgen -source=internal/infrastructure/config/configLogger.go -destination=test/mocks/config_logger.go -package=mocks
 
-mockgen -source=config/configToken.go -destination=test/mocks/config_token.go -package=mocks
+mockgen -source=internal/infrastructure/config/configToken.go -destination=test/mocks/config_token.go -package=mocks
 
-mockgen -source=config/configUser.go -destination=test/mocks/config_User.go -package=mocks
+mockgen -source=internal/infrastructure/config/configUser.go -destination=test/mocks/config_User.go -package=mocks
 
 mockgen -package=mocks -destination=test/mocks/adapter_handler.go github.com/loganrk/user-vault/internal/core/port Handler
 
@@ -40,6 +40,9 @@ mockgen -package=mocks -destination=test/mocks/adapter_middleware_gin_port.go gi
 mockgen -package=mocks -destination=test/mocks/adapter_logger_port.go github.com/loganrk/user-vault/internal/core/port Logger
 
 mockgen -package=mocks -destination=test/mocks/adapter_messager_port.go github.com/loganrk/user-vault/internal/core/port Messager
+
+mockgen -package=mocks -destination=test/mocks/adapter_oauthprovider_port.go github.com/loganrk/user-vault/internal/core/port OAuthProvider
+
 
 mockgen -package=mocks -destination=test/mocks/utils_port.go github.com/loganrk/user-vault/internal/core/port Utils
 

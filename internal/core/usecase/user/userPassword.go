@@ -131,19 +131,8 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 		return domain.UserResetPasswordClientResponse{}, errRes
 	}
 
-	userPassword, err := u.mysql.GetUserPasswordByUserID(ctx, userData.Id)
-	if err != nil {
-		u.logger.Errorw(ctx, "get_user_password_by_user_id failed", "userId", userData.Id, "error", err.Error(), "exception", constant.DBException)
-		return domain.UserResetPasswordClientResponse{}, domain.ErrorRes{
-			Code:      http.StatusInternalServerError,
-			Message:   constant.MessageInternalServerError,
-			Err:       err.Error(),
-			Exception: constant.DBException,
-		}
-	}
-
 	// Update the user's password
-	errRes = u.updateUserPassword(ctx, userData, userPassword.Salt, req.Password)
+	errRes = u.updateUserPassword(ctx, userData, req.Password)
 	if errRes.Code != 0 {
 		u.logger.Errorw(ctx, "update_user_password failed", "userId", userData.Id, "error", errRes.Err, "exception", errRes.Exception)
 		return domain.UserResetPasswordClientResponse{}, errRes
@@ -164,9 +153,9 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 }
 
 // updateUserPassword hashes and updates the user's password in the database.
-func (u *userusecase) updateUserPassword(ctx context.Context, userData *domain.User, salt string, password string) domain.ErrorRes {
+func (u *userusecase) updateUserPassword(ctx context.Context, userData *domain.User, password string) domain.ErrorRes {
 	// Hash the new password using bcrypt
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password+salt), u.conf.GetPasswordHashCost())
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password), u.conf.GetPasswordHashCost())
 	if err != nil {
 		return domain.ErrorRes{
 			Code:      http.StatusInternalServerError,

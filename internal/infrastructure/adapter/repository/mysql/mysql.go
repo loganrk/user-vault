@@ -49,6 +49,12 @@ func (m *mySql) CreateUser(ctx context.Context, userData domain.User) (int, erro
 	return userData.Id, result.Error
 }
 
+func (m *mySql) CreateOauthAccount(ctx context.Context, accountData domain.OAuthAccount) (int, error) {
+	// Create a new account and return the ID after creation
+	result := m.dialer.WithContext(ctx).Model(&domain.OAuthAccount{}).Create(&accountData)
+	return accountData.Id, result.Error
+}
+
 // GetUserByUserID retrieves a user record by their user ID.
 func (m *mySql) GetUserByUserID(ctx context.Context, userID int) (domain.User, error) {
 	var userData domain.User
@@ -69,6 +75,27 @@ func (m *mySql) GetUserByEmail(ctx context.Context, email string) (domain.User, 
 		result.Error = nil // Return nil error if no user found
 	}
 	return userData, result.Error
+}
+
+// GetOauthAccountForProvider retrieves an OAuth account by provider, providerId, userId, or email.
+func (m *mySql) GetOauthAccountForProvider(ctx context.Context, userId int, email string, provider domain.OAuthID, providerId string) (domain.OAuthAccount, error) {
+
+	var account domain.OAuthAccount
+
+	// Build GORM query
+	result := m.dialer.WithContext(ctx).
+		Model(&domain.OAuthAccount{}).
+		Select("id", "user_id", "email", "provider", "provider_id").
+		Where("provider = ? and provider_id = ? and user_id = ? and email = ?)",
+			provider, providerId, userId, email).
+		First(&account)
+
+	// If not found, return nil error but empty account
+	if result.Error == gorm.ErrRecordNotFound {
+		return account, nil
+	}
+
+	return account, result.Error
 }
 
 // GetUserByPhone retrieves a user record by their phone.
@@ -117,7 +144,7 @@ func (m *mySql) GetUserByEmailOrPhone(ctx context.Context, email, phone string) 
 func (m *mySql) GetUserPasswordByUserID(ctx context.Context, userID int) (domain.User, error) {
 	var userData domain.User
 	// Select specific fields for user data fetching
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "password", "salt").Where("id =? ", userID).First(&userData)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "password").Where("id =? ", userID).First(&userData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no user found
 	}

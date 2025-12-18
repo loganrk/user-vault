@@ -60,11 +60,10 @@ func TestLogin(t *testing.T) {
 				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
 				mockConfigUser.EXPECT().GetLoginAttemptSessionPeriod().Return(3600)
 				mockRepo.EXPECT().GetUserLoginFailedAttemptCount(ctx, 1, gomock.Any()).Return(0, nil)
-				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("pass123"+constant.TEST_SALT), bcrypt.DefaultCost)
+				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("pass123"), bcrypt.DefaultCost)
 				mockRepo.EXPECT().GetUserPasswordByUserID(ctx, 1).Return(domain.User{
 					Id:       1,
 					Password: string(hashedPassword),
-					Salt:     constant.TEST_SALT,
 				}, nil)
 				mockRepo.EXPECT().CreateUserLoginAttempt(ctx, gomock.Any()).Return(1, nil)
 				mockConfigUser.EXPECT().GetRefreshTokenEnabled().Return(true)
@@ -180,11 +179,10 @@ func TestLogin(t *testing.T) {
 				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
 				mockConfigUser.EXPECT().GetLoginAttemptSessionPeriod().Return(3600)
 				mockRepo.EXPECT().GetUserLoginFailedAttemptCount(ctx, 1, gomock.Any()).Return(2, nil)
-				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("pass123"+constant.TEST_SALT), bcrypt.DefaultCost)
+				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("pass123"), bcrypt.DefaultCost)
 				mockRepo.EXPECT().GetUserPasswordByUserID(ctx, 1).Return(domain.User{
 					Id:       1,
 					Password: string(hashedPassword),
-					Salt:     constant.TEST_SALT,
 				}, nil)
 				mockRepo.EXPECT().CreateUserLoginAttempt(ctx, gomock.Any()).Return(1, nil)
 
@@ -238,11 +236,10 @@ func TestLogin(t *testing.T) {
 				mockConfigUser.EXPECT().GetMaxLoginAttempt().Return(3)
 				mockConfigUser.EXPECT().GetLoginAttemptSessionPeriod().Return(3600)
 				mockRepo.EXPECT().GetUserLoginFailedAttemptCount(ctx, 1, gomock.Any()).Return(0, nil)
-				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("pass123"+constant.TEST_SALT), bcrypt.DefaultCost)
+				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("pass123"), bcrypt.DefaultCost)
 				mockRepo.EXPECT().GetUserPasswordByUserID(ctx, 1).Return(domain.User{
 					Id:       1,
 					Password: string(hashedPassword),
-					Salt:     constant.TEST_SALT,
 				}, nil)
 				mockRepo.EXPECT().CreateUserLoginAttempt(ctx, gomock.Any()).Return(1, nil)
 				mockConfigUser.EXPECT().GetRefreshTokenEnabled().Return(true)
@@ -270,10 +267,11 @@ func TestLogin(t *testing.T) {
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
 			mockUtils := mocks.NewMockUtils(ctrl)
+			mockOAuthProvider := mocks.NewMockOAuthProvider(ctrl)
 
 			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockToken, mockConfigUser, mockUtils)
 
-			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockUtils, "myapp", mockConfigUser)
+			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockOAuthProvider, mockUtils, "myapp", mockConfigUser)
 
 			resp, errRes := uc.Login(ctx, tt.args.req)
 
@@ -671,9 +669,11 @@ func TestLogout(t *testing.T) {
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
 			mockUtils := mocks.NewMockUtils(ctrl)
+			mockOAuthProvider := mocks.NewMockOAuthProvider(ctrl)
+
 			tt.setupMocks(ctx, mockRepo, mockMsg, mockLogger, mockToken, mockConfigUser, mockUtils)
 
-			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockUtils, "myapp", mockConfigUser)
+			uc := New(mockLogger, mockToken, mockMsg, mockRepo, mockOAuthProvider, mockUtils, "myapp", mockConfigUser)
 
 			resp, errRes := uc.Logout(ctx, tt.args.req)
 

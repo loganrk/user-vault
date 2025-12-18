@@ -54,7 +54,3 @@ const (
 const (
 	TOKEN_MACRO = "{{token}}"
 )
-
-const (
-	TEST_SALT = "gOnuMw79qglpB9P"
-)
