@@ -4,8 +4,11 @@ import (
 	"context"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 
@@ -118,11 +121,28 @@ func main() {
 	loggerIns.Infow(context.Background(), "Starting server", "port", port)
 	loggerIns.Sync(context.Background())
 
-	// Start the HTTP server and handle any errors during server startup
-	if err := router.StartServer(port); err != nil {
-		loggerIns.Errorw(context.Background(), "Server stopped with error", "port", port, "error", err)
-		loggerIns.Sync(context.Background())
-		return
+	go func() {
+		// Start the HTTP server and handle any errors during server startup
+		if err := router.StartServer(port); err != nil {
+			loggerIns.Errorw(context.Background(), "Server stopped with error", "port", port, "error", err)
+			loggerIns.Sync(context.Background())
+			return
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("getting signal for showdown server...")
+
+	// Graceful shutdown with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := router.Shutdown(ctx); err != nil {
+		log.Printf("Server forced to shutdown: %v", err)
+	} else {
+		log.Printf("Server shutdown gracefully")
 	}
 
 	// Log server shutdown if it stops without errors

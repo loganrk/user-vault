@@ -1,6 +1,7 @@
 package gin
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 
 type route struct {
 	gin       *gin.Engine
+	server    *http.Server
 	accessLog port.Logger
 }
 
@@ -101,8 +103,17 @@ func (r *route) SetupRoutes(apiConfig config.Api, logger port.Logger, middleware
 
 // StartServer starts the Gin HTTP server on the specified port.
 func (r *route) StartServer(port string) error {
-	// Run the Gin server on the specified port
-	return r.gin.Run(":" + port)
+	r.server = &http.Server{
+		Addr:    ":" + port,
+		Handler: r.gin,
+	}
+
+	return r.server.ListenAndServe()
+}
+
+// StartServer starts the Gin HTTP server on the specified port.
+func (r *route) Shutdown(ctx context.Context) error {
+	return r.server.Shutdown(ctx)
 }
 
 func wrapAndRegisterRoute(group *gin.RouterGroup, method, path string, handlerFunc http.HandlerFunc) {
