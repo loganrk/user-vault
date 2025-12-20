@@ -3,8 +3,8 @@ package mysql
 import (
 	"context"
 
+	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
-	"github.com/loganrk/user-vault/internal/shared/constant"
 
 	gormMysql "gorm.io/driver/mysql"
 

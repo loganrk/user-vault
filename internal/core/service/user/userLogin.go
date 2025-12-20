@@ -5,14 +5,14 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
-	"github.com/loganrk/user-vault/internal/shared/constant"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // Login handles the user login process, performing checks like verifying username, password, login attempts, and user status.
 // It generates and returns access and refresh tokens if the login is successful.
-func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientRequest) (domain.UserLoginClientResponse, domain.ErrorRes) {
+func (u *userSrv) Login(ctx context.Context, req domain.UserLoginClientRequest) (domain.UserLoginClientResponse, domain.ErrorRes) {
 
 	var (
 		userData *domain.User
@@ -83,7 +83,7 @@ func (u *userusecase) Login(ctx context.Context, req domain.UserLoginClientReque
 
 // OAuthLogin handles the OAuth login process by verifying the OAuth token and retrieving the user data.
 // It generates and returns a refresh token if the login is successful or creates a new user if not found.
-func (u *userusecase) OAuthLogin(ctx context.Context, req domain.UserOAuthLoginClientRequest) (domain.UserLoginClientResponse, domain.ErrorRes) {
+func (u *userSrv) OAuthLogin(ctx context.Context, req domain.UserOAuthLoginClientRequest) (domain.UserLoginClientResponse, domain.ErrorRes) {
 
 	// Verify the OAuth token using the provided provider and token
 	email, name, provider, providerId, err := u.oAuthProvider.VerifyToken(ctx, req.Provider, req.Token)
@@ -158,7 +158,7 @@ func (u *userusecase) OAuthLogin(ctx context.Context, req domain.UserOAuthLoginC
 }
 
 // Logout handles user logout by validating the refresh token, revoking it, and logging the event.
-func (u *userusecase) Logout(ctx context.Context, req domain.UserLogoutClientRequest) (domain.UserLogoutClientResponse, domain.ErrorRes) {
+func (u *userSrv) Logout(ctx context.Context, req domain.UserLogoutClientRequest) (domain.UserLogoutClientResponse, domain.ErrorRes) {
 	// Validate the refresh token
 	refreshData, errRes := u.validateRefreshToken(ctx, req.RefreshToken)
 	if errRes.Code != 0 {
@@ -182,7 +182,7 @@ func (u *userusecase) Logout(ctx context.Context, req domain.UserLogoutClientReq
 }
 
 // RefreshToken handles the refresh token process by validating the token, checking the user's account status, and rotating the refresh token.
-func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTokenClientRequest) (domain.UserRefreshTokenClientResponse, domain.ErrorRes) {
+func (u *userSrv) RefreshToken(ctx context.Context, req domain.UserRefreshTokenClientRequest) (domain.UserRefreshTokenClientResponse, domain.ErrorRes) {
 	// Validate the refresh token
 	refreshData, errRes := u.validateRefreshToken(ctx, req.RefreshToken)
 	if errRes.Code != 0 {
@@ -230,7 +230,7 @@ func (u *userusecase) RefreshToken(ctx context.Context, req domain.UserRefreshTo
 }
 
 // createUserForOAuth creates a new user for OAuth.
-func (u *userusecase) createUserForOAuth(ctx context.Context, email, name string, provider domain.OAuthID, providerId string) (int, domain.ErrorRes) {
+func (u *userSrv) createUserForOAuth(ctx context.Context, email, name string, provider domain.OAuthID, providerId string) (int, domain.ErrorRes) {
 
 	userData := domain.User{
 		Email:              email,
@@ -272,7 +272,7 @@ func (u *userusecase) createUserForOAuth(ctx context.Context, email, name string
 	return id, domain.ErrorRes{}
 }
 
-func (u *userusecase) OnboardOrLinkProvider(ctx context.Context, userid int, email string, provider domain.OAuthID, providerId string) domain.ErrorRes {
+func (u *userSrv) OnboardOrLinkProvider(ctx context.Context, userid int, email string, provider domain.OAuthID, providerId string) domain.ErrorRes {
 
 	existingAccount, err := u.mysql.GetOauthAccountForProvider(ctx, userid, email, provider, providerId)
 
@@ -309,7 +309,7 @@ func (u *userusecase) OnboardOrLinkProvider(ctx context.Context, userid int, ema
 }
 
 // handleRefreshTokenRotation rotates the refresh token if enabled, otherwise returns the old token.
-func (u *userusecase) handleRefreshTokenRotation(ctx context.Context, userId int, userSubscriptionId string, oldToken string, oldTokenId int) (string, string, domain.ErrorRes) {
+func (u *userSrv) handleRefreshTokenRotation(ctx context.Context, userId int, userSubscriptionId string, oldToken string, oldTokenId int) (string, string, domain.ErrorRes) {
 	if !u.refreshTokenRotationEnabled() {
 		return constant.REFRESH_TOKEN_TYPE_STATIC, oldToken, domain.ErrorRes{}
 	}
@@ -332,7 +332,7 @@ func (u *userusecase) handleRefreshTokenRotation(ctx context.Context, userId int
 }
 
 // validateRefreshToken validates the refresh token by checking its validity, expiry, and revocation status.
-func (u *userusecase) validateRefreshToken(ctx context.Context, token string) (domain.UserTokens, domain.ErrorRes) {
+func (u *userSrv) validateRefreshToken(ctx context.Context, token string) (domain.UserTokens, domain.ErrorRes) {
 	refreshData, err := u.mysql.GetUserToken(ctx, constant.TOKEN_TYPE_REFRESH, token)
 	if err != nil {
 		return domain.UserTokens{}, domain.ErrorRes{
@@ -363,7 +363,7 @@ func (u *userusecase) validateRefreshToken(ctx context.Context, token string) (d
 }
 
 // createAccessToken creates an access token for the user.
-func (u *userusecase) createAccessToken(ctx context.Context, user *domain.User) (string, domain.ErrorRes) {
+func (u *userSrv) createAccessToken(ctx context.Context, user *domain.User) (string, domain.ErrorRes) {
 	accessToken, err := u.token.CreateAccessToken(user.UserSubscriptionId, user.Email, user.Name, u.getAccessTokenExpiry())
 	if err != nil {
 		u.logger.Errorw(ctx, "Failed to create access token", "event", "user_access_token_failed", "userId", user.Id, "error", err)
@@ -378,7 +378,7 @@ func (u *userusecase) createAccessToken(ctx context.Context, user *domain.User) 
 }
 
 // revokeRefreshToken revokes the specified refresh token.
-func (u *userusecase) revokeRefreshToken(ctx context.Context, tokenID int, userID int, token string) domain.ErrorRes {
+func (u *userSrv) revokeRefreshToken(ctx context.Context, tokenID int, userID int, token string) domain.ErrorRes {
 	if err := u.mysql.RevokeToken(ctx, tokenID); err != nil {
 		return domain.ErrorRes{
 			Code:      http.StatusInternalServerError,
@@ -391,7 +391,7 @@ func (u *userusecase) revokeRefreshToken(ctx context.Context, tokenID int, userI
 }
 
 // blockIfLoginAttemptLimitReached checks login attempts and blocks if the max is reached.
-func (u *userusecase) blockIfLoginAttemptLimitReached(ctx context.Context, userId int) domain.ErrorRes {
+func (u *userSrv) blockIfLoginAttemptLimitReached(ctx context.Context, userId int) domain.ErrorRes {
 	attemptCount, err := u.mysql.GetUserLoginFailedAttemptCount(ctx, userId, u.getLoginAttemptSessionPeriod())
 	if err != nil {
 		return domain.ErrorRes{
@@ -412,7 +412,7 @@ func (u *userusecase) blockIfLoginAttemptLimitReached(ctx context.Context, userI
 
 	return domain.ErrorRes{}
 }
-func (u *userusecase) generateAndStoreRefreshToken(ctx context.Context, userId int, userSubscriptionId string) (string, domain.ErrorRes) {
+func (u *userSrv) generateAndStoreRefreshToken(ctx context.Context, userId int, userSubscriptionId string) (string, domain.ErrorRes) {
 	if !u.refreshTokenEnabled() {
 		return "", domain.ErrorRes{}
 	}
@@ -448,7 +448,7 @@ func (u *userusecase) generateAndStoreRefreshToken(ctx context.Context, userId i
 	return refreshToken, domain.ErrorRes{}
 }
 
-func (u *userusecase) validatePasswordAndLogAttempt(ctx context.Context, password, storedHash string, userId int) domain.ErrorRes {
+func (u *userSrv) validatePasswordAndLogAttempt(ctx context.Context, password, storedHash string, userId int) domain.ErrorRes {
 	var passwordMatch bool
 	err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password))
 	if err == nil {

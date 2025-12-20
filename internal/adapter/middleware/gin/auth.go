@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/loganrk/user-vault/internal/core/port"
-	"github.com/loganrk/user-vault/internal/shared/utils"
+	"github.com/loganrk/user-vault/internal/utils"
 
 	"golang.org/x/exp/slices"
 )

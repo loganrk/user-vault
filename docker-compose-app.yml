@@ -6,11 +6,11 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DEPLOYMENT_ENV_PATH: /app/config/env/local.env
+      DEPLOYMENT_ENV_PATH: /app/env/local.env
     volumes:
-      - ./etc/conf/:/app/config/conf/:ro
-      - ./etc/env/:/app/config/env/:ro
-      - ./etc/secrets/:/app/config/secrets/:ro
+      - ./etc/conf/:/app/conf/:ro
+      - ./etc/env/:/app/env/:ro
+      - ./etc/secret/:/app/secret/:ro
     restart: unless-stopped
     networks:
       - app-network

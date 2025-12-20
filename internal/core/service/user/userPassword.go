@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
-	"github.com/loganrk/user-vault/internal/shared/constant"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // ForgotPassword handles the user request for resetting their password.
-func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotPasswordClientRequest) (domain.UserForgotPasswordClientResponse, domain.ErrorRes) {
+func (u *userSrv) ForgotPassword(ctx context.Context, req domain.UserForgotPasswordClientRequest) (domain.UserForgotPasswordClientResponse, domain.ErrorRes) {
 	var (
 		userData *domain.User
 		errRes   domain.ErrorRes
@@ -88,7 +88,7 @@ func (u *userusecase) ForgotPassword(ctx context.Context, req domain.UserForgotP
 }
 
 // ResetPassword handles the user request to reset their password after receiving a token.
-func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPasswordClientRequest) (domain.UserResetPasswordClientResponse, domain.ErrorRes) {
+func (u *userSrv) ResetPassword(ctx context.Context, req domain.UserResetPasswordClientRequest) (domain.UserResetPasswordClientResponse, domain.ErrorRes) {
 	var (
 		userData  *domain.User
 		errRes    domain.ErrorRes
@@ -153,7 +153,7 @@ func (u *userusecase) ResetPassword(ctx context.Context, req domain.UserResetPas
 }
 
 // updateUserPassword hashes and updates the user's password in the database.
-func (u *userusecase) updateUserPassword(ctx context.Context, userData *domain.User, password string) domain.ErrorRes {
+func (u *userSrv) updateUserPassword(ctx context.Context, userData *domain.User, password string) domain.ErrorRes {
 	// Hash the new password using bcrypt
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password), u.conf.GetPasswordHashCost())
 	if err != nil {
@@ -180,7 +180,7 @@ func (u *userusecase) updateUserPassword(ctx context.Context, userData *domain.U
 }
 
 // generatePasswordResetToken revokes old tokens and creates a new one for password reset.
-func (u *userusecase) generatePasswordResetToken(ctx context.Context, tokenType int8, userID int) (int, string, domain.ErrorRes) {
+func (u *userSrv) generatePasswordResetToken(ctx context.Context, tokenType int8, userID int) (int, string, domain.ErrorRes) {
 	// Revoke all previous tokens for the user
 	if err := u.mysql.RevokeAllTokens(ctx, tokenType, userID); err != nil {
 		return 0, "", domain.ErrorRes{

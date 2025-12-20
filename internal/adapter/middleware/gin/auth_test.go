@@ -87,7 +87,7 @@ func TestValidateRefreshToken(t *testing.T) {
 			name:  "invalid token data",
 			token: "bad-token",
 			mockSetup: func(m *mocks.MockToken) {
-				m.EXPECT().GetRefreshTokenData("bad-token").Return(0, time.Time{}, nil)
+				m.EXPECT().GetRefreshTokenData("bad-token").Return("", time.Time{}, nil)
 			},
 			expectedStatus: http.StatusBadRequest,
 		},
@@ -95,7 +95,7 @@ func TestValidateRefreshToken(t *testing.T) {
 			name:  "expired token",
 			token: "expired-token",
 			mockSetup: func(m *mocks.MockToken) {
-				m.EXPECT().GetRefreshTokenData("expired-token").Return(123, time.Now().Add(-time.Hour), nil)
+				m.EXPECT().GetRefreshTokenData("expired-token").Return("uuid", time.Now().Add(-time.Hour), nil)
 			},
 			expectedStatus: http.StatusBadRequest,
 		},
@@ -103,7 +103,7 @@ func TestValidateRefreshToken(t *testing.T) {
 			name:  "internal error",
 			token: "error-token",
 			mockSetup: func(m *mocks.MockToken) {
-				m.EXPECT().GetRefreshTokenData("error-token").Return(0, time.Time{}, errors.New("some error"))
+				m.EXPECT().GetRefreshTokenData("error-token").Return("", time.Time{}, errors.New("some error"))
 			},
 			expectedStatus: http.StatusInternalServerError,
 		},
@@ -111,7 +111,7 @@ func TestValidateRefreshToken(t *testing.T) {
 			name:  "valid token",
 			token: "valid-token",
 			mockSetup: func(m *mocks.MockToken) {
-				m.EXPECT().GetRefreshTokenData("valid-token").Return(123, time.Now().Add(time.Hour), nil)
+				m.EXPECT().GetRefreshTokenData("valid-token").Return("uuid", time.Now().Add(time.Hour), nil)
 			},
 			expectedStatus: http.StatusOK,
 		},

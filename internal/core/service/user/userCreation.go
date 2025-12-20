@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
-	"github.com/loganrk/user-vault/internal/shared/constant"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // Register handles the user registration process.
-func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClientRequest) (domain.UserRegisterClientResponse, domain.ErrorRes) {
+func (u *userSrv) Register(ctx context.Context, req domain.UserRegisterClientRequest) (domain.UserRegisterClientResponse, domain.ErrorRes) {
 
 	if errRes := u.checkUserDoesNotExist(ctx, req.Email, req.Phone); errRes.Code != 0 {
 		if errRes.Err != "" {
@@ -77,7 +77,7 @@ func (u *userusecase) Register(ctx context.Context, req domain.UserRegisterClien
 }
 
 // VerifyUser handles the user account verification process.
-func (u *userusecase) VerifyUser(ctx context.Context, req domain.UserVerifyClientRequest) (domain.UserVerifyClientResponse, domain.ErrorRes) {
+func (u *userSrv) VerifyUser(ctx context.Context, req domain.UserVerifyClientRequest) (domain.UserVerifyClientResponse, domain.ErrorRes) {
 	var (
 		userData  *domain.User
 		errRes    domain.ErrorRes
@@ -153,7 +153,7 @@ func (u *userusecase) VerifyUser(ctx context.Context, req domain.UserVerifyClien
 }
 
 // ResendVerification handles the process of resending an verification token to the user's email or phone.
-func (u *userusecase) ResendVerification(ctx context.Context, req domain.UserResendVerificationClientRequest) (domain.UserResendVerificationClientResponse, domain.ErrorRes) {
+func (u *userSrv) ResendVerification(ctx context.Context, req domain.UserResendVerificationClientRequest) (domain.UserResendVerificationClientResponse, domain.ErrorRes) {
 	userData, errRes := u.fetchUser(ctx, req.Email, req.Phone)
 	if errRes.Code != 0 {
 		if errRes.Err != "" {
@@ -209,7 +209,7 @@ func (u *userusecase) ResendVerification(ctx context.Context, req domain.UserRes
 }
 
 // checkUserDoesNotExist checks if a user already exists with the provided email or phone.
-func (u *userusecase) checkUserDoesNotExist(ctx context.Context, email, phone string) domain.ErrorRes {
+func (u *userSrv) checkUserDoesNotExist(ctx context.Context, email, phone string) domain.ErrorRes {
 	existingUser, err := u.mysql.GetUserByEmailOrPhone(ctx, email, phone)
 	if err != nil {
 		return domain.ErrorRes{
@@ -230,7 +230,7 @@ func (u *userusecase) checkUserDoesNotExist(ctx context.Context, email, phone st
 }
 
 // createUser creates a new user.
-func (u *userusecase) createUser(ctx context.Context, req domain.UserRegisterClientRequest) (int, domain.ErrorRes) {
+func (u *userSrv) createUser(ctx context.Context, req domain.UserRegisterClientRequest) (int, domain.ErrorRes) {
 
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), u.conf.GetPasswordHashCost())
 	if err != nil {
@@ -266,7 +266,7 @@ func (u *userusecase) createUser(ctx context.Context, req domain.UserRegisterCli
 }
 
 // generateVerificationToken generates a new verification token and stores it in the DB.
-func (u *userusecase) generateVerificationToken(ctx context.Context, tokenType int8, userID int) (string, domain.ErrorRes) {
+func (u *userSrv) generateVerificationToken(ctx context.Context, tokenType int8, userID int) (string, domain.ErrorRes) {
 	// Revoke all previous tokens of this type for the user
 	err := u.mysql.RevokeAllTokens(ctx, tokenType, userID)
 	if err != nil {

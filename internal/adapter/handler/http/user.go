@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/loganrk/user-vault/internal/core/domain"
-	"github.com/loganrk/user-vault/internal/shared/utils"
+	"github.com/loganrk/user-vault/internal/utils"
 
 	"net/http"
 
@@ -72,7 +72,7 @@ func (h *handler) bindAndValidate(w http.ResponseWriter, r *http.Request, dst an
 }
 
 // UserLogin handles user login requests by decoding the login request, validating the data, and then
-// invoking the usecase for login. If successful, it returns the response data, otherwise returns an error.
+// invoking the service for login. If successful, it returns the response data, otherwise returns an error.
 func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var res response
@@ -83,8 +83,8 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Call the login usecase
-	respData, resErr := h.usecases.User.Login(ctx, req)
+	// Call the login service
+	respData, resErr := h.services.User.Login(ctx, req)
 	if resErr.Code != 0 {
 		res.SetStatus(resErr.Code)
 		res.SetError(resErr.Message) // Set the error message if registration fails
@@ -99,7 +99,7 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserRegister handles user registration requests. It decodes the registration data, validates it,
-// and then invokes the usecase for user registration. If successful, it returns the response data, otherwise an error.
+// and then invokes the service for user registration. If successful, it returns the response data, otherwise an error.
 func (h *handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 
 	ctx := context.Background()
@@ -117,8 +117,8 @@ func (h *handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Call the registration usecase
-	respData, resErr := h.usecases.User.Register(ctx, req)
+	// Call the registration service
+	respData, resErr := h.services.User.Register(ctx, req)
 	if resErr.Code != 0 {
 		res.SetStatus(resErr.Code)
 		res.SetError(resErr.Message) // Set the error message if registration fails
@@ -132,7 +132,7 @@ func (h *handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserForgotPassword handles forgot password requests. It decodes the request, validates it,
-// and then invokes the usecase for resetting the password. Returns an appropriate response based on success or failure.
+// and then invokes the service for resetting the password. Returns an appropriate response based on success or failure.
 func (h *handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var res response
@@ -150,8 +150,8 @@ func (h *handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Call the forgot password usecase
-	respData, resErr := h.usecases.User.ForgotPassword(ctx, req)
+	// Call the forgot password service
+	respData, resErr := h.services.User.ForgotPassword(ctx, req)
 	if resErr.Code != 0 {
 		res.SetStatus(resErr.Code)
 		res.SetError(resErr.Message) // Set the error message if registration fails
@@ -165,7 +165,7 @@ func (h *handler) UserForgotPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserVerify handles user account verification requests. It validates the verification token and
-// invokes the usecase to activate the user account. Returns the response based on the outcome.
+// invokes the service to activate the user account. Returns the response based on the outcome.
 func (h *handler) UserVerify(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var res response
@@ -182,8 +182,8 @@ func (h *handler) UserVerify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Call the user verify usecase
-	respData, resErr := h.usecases.User.VerifyUser(ctx, req)
+	// Call the user verify service
+	respData, resErr := h.services.User.VerifyUser(ctx, req)
 	if resErr.Code != 0 {
 		res.SetStatus(resErr.Code)
 		res.SetError(resErr.Message) // Set the error message if registration fails
@@ -197,7 +197,7 @@ func (h *handler) UserVerify(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserLogout handles user logout requests. It decodes the logout request, validates the data,
-// and invokes the logout usecase. Returns the appropriate response based on success or failure.
+// and invokes the logout service. Returns the appropriate response based on success or failure.
 func (h *handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var res response
@@ -207,7 +207,7 @@ func (h *handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: utils.ExtractBearerToken(refreshToken),
 	}
 
-	respData, resErr := h.usecases.User.Logout(ctx, req)
+	respData, resErr := h.services.User.Logout(ctx, req)
 	if resErr.Code != 0 {
 		res.SetStatus(resErr.Code)
 		res.SetError(resErr.Message) // Set the error message if registration fails
@@ -221,7 +221,7 @@ func (h *handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserPasswordReset handles password reset requests. It validates the password reset data and invokes
-// the reset password usecase. Returns the result of the operation.
+// the reset password service. Returns the result of the operation.
 func (h *handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var res response
@@ -238,8 +238,8 @@ func (h *handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Call the reset password usecase
-	respData, resErr := h.usecases.User.ResetPassword(ctx, req)
+	// Call the reset password service
+	respData, resErr := h.services.User.ResetPassword(ctx, req)
 	if resErr.Code != 0 {
 		res.SetStatus(resErr.Code)
 		res.SetError(resErr.Message) // Set the error message if registration fails
@@ -253,7 +253,7 @@ func (h *handler) UserPasswordReset(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserRefreshToken handles requests to validate refresh tokens. It decodes the request, validates it,
-// and invokes the token validation usecase. Returns the response based on success or failure.
+// and invokes the token validation service. Returns the response based on success or failure.
 func (h *handler) UserRefreshToken(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var res response
@@ -264,8 +264,8 @@ func (h *handler) UserRefreshToken(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: utils.ExtractBearerToken(refreshToken),
 	}
 
-	// Call the refresh token validation usecase
-	respData, resErr := h.usecases.User.RefreshToken(ctx, req)
+	// Call the refresh token validation service
+	respData, resErr := h.services.User.RefreshToken(ctx, req)
 	if resErr.Code != 0 {
 		res.SetStatus(resErr.Code)
 		res.SetError(resErr.Message) // Set the error message if registration fails
@@ -279,7 +279,7 @@ func (h *handler) UserRefreshToken(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserResendVerification handles requests to resend an verification email. It decodes the request,
-// validates it, and invokes the resend verification usecase. Returns the response based on the outcome.
+// validates it, and invokes the resend verification service. Returns the response based on the outcome.
 func (h *handler) UserResendVerification(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var res response
@@ -296,8 +296,8 @@ func (h *handler) UserResendVerification(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Call the resend verification usecase
-	respData, resErr := h.usecases.User.ResendVerification(ctx, req)
+	// Call the resend verification service
+	respData, resErr := h.services.User.ResendVerification(ctx, req)
 	if resErr.Code != 0 {
 		res.SetStatus(resErr.Code)
 		res.SetError(resErr.Message) // Set the error message if registration fails
@@ -319,7 +319,7 @@ func (h *handler) UserOAuthLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respData, resErr := h.usecases.User.OAuthLogin(ctx, req)
+	respData, resErr := h.services.User.OAuthLogin(ctx, req)
 	if resErr.Code != 0 {
 		res.SetStatus(resErr.Code)
 		res.SetError(resErr.Message)
