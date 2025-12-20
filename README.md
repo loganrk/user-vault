@@ -12,7 +12,6 @@ The project is structured using a clean **Hexagonal Architecture** to ensure mai
 
 ## Features
 
-- ✅ User Registration with Verification Email  
 - 🔐 Secure Password Hashing using bcrypt   
 - 🔑 JWT Access and Refresh Token Authentication (HS256/RS256)  
 - 🔁 Refresh Token Rotation and Validation  
@@ -20,7 +19,7 @@ The project is structured using a clean **Hexagonal Architecture** to ensure mai
 - 🧪 Validator-Based Request Validation (GET or POST)  
 - 📦 Hexagonal Architecture with Domain-Driven Design  
 - 🧱 Modular Adapters for DB, Messaging, Email, Tokens, Logging  
-- 🔄 Graceful Error Handling with Logger Middleware  
+- 🔄 Graceful Showdown
 
 
 ## Installation Using Docker 
