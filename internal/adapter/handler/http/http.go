@@ -8,10 +8,10 @@ import (
 )
 
 // handler struct represents the handler for handling HTTP requests.
-// It contains usecases (services), a logger for logging messages,
+// It contains services (services), a logger for logging messages,
 // and a token engine for JWT-related functionality.
 type handler struct {
-	usecases       port.SvrList // List of usecases (services) to handle business logic
+	services       port.SvrList // List of services (services) to handle business logic
 	logger         port.Logger  // Logger instance for logging messages
 	tokenEngineIns port.Token   // Token engine for handling JWT tokens
 }
@@ -19,7 +19,7 @@ type handler struct {
 // New creates and returns a new handler instance with the provided logger, token engine, and service list.
 func New(loggerIns port.Logger, tokenEngineIns port.Token, svcList port.SvrList) *handler {
 	return &handler{
-		usecases:       svcList,        // List of services that will handle specific business logic
+		services:       svcList,        // List of services that will handle specific business logic
 		logger:         loggerIns,      // Logger for capturing logs
 		tokenEngineIns: tokenEngineIns, // Token engine for managing tokens
 	}

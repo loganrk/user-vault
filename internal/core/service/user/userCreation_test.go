@@ -9,8 +9,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/loganrk/user-vault/internal/constant"
 	"github.com/loganrk/user-vault/internal/core/domain"
-	"github.com/loganrk/user-vault/internal/shared/constant"
 	"github.com/loganrk/user-vault/test/mocks"
 )
 

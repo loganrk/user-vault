@@ -15,17 +15,17 @@ go install go.uber.org/mock/mockgen@latest
 Run the following commands from the **project root** to (re)generate interface mocks:
 
 ```bash
-mockgen -source=internal/infrastructure/config/config.go -destination=test/mocks/config.go -package=mocks  
+mockgen -source=internal/config/config.go -destination=test/mocks/config.go -package=mocks  
 
-mockgen -source=internal/infrastructure/config/configApi.go -destination=test/mocks/config_api.go -package=mocks
+mockgen -source=internal/config/configApi.go -destination=test/mocks/config_api.go -package=mocks
 
-mockgen -source=internal/infrastructure/config/configKafka.go -destination=test/mocks/config_kafka.go -package=mocks
+mockgen -source=internal/config/configKafka.go -destination=test/mocks/config_kafka.go -package=mocks
 
-mockgen -source=internal/infrastructure/config/configLogger.go -destination=test/mocks/config_logger.go -package=mocks
+mockgen -source=internal/config/configLogger.go -destination=test/mocks/config_logger.go -package=mocks
 
-mockgen -source=internal/infrastructure/config/configToken.go -destination=test/mocks/config_token.go -package=mocks
+mockgen -source=internal/config/configToken.go -destination=test/mocks/config_token.go -package=mocks
 
-mockgen -source=internal/infrastructure/config/configUser.go -destination=test/mocks/config_User.go -package=mocks
+mockgen -source=internal/config/configUser.go -destination=test/mocks/config_User.go -package=mocks
 
 mockgen -package=mocks -destination=test/mocks/adapter_handler.go github.com/loganrk/user-vault/internal/core/port Handler
 
@@ -46,7 +46,7 @@ mockgen -package=mocks -destination=test/mocks/adapter_oauthprovider_port.go git
 
 mockgen -package=mocks -destination=test/mocks/utils_port.go github.com/loganrk/user-vault/internal/core/port Utils
 
-mockgen -package=mocks -destination=test/mocks/usecase_user_port.go github.com/loganrk/user-vault/internal/core/port UserSvr
+mockgen -package=mocks -destination=test/mocks/service_user_port.go github.com/loganrk/user-vault/internal/core/port UserSvr
 
 ```
 
@@ -59,7 +59,7 @@ mockgen -package=mocks -destination=test/mocks/usecase_user_port.go github.com/l
 - Consider using `go:generate` directives in your source files for automation:
 
 ```go
-//go:generate mockgen -package=mocks -destination=../../../test/mocks/usecase_user_port.go github.com/loganrk/user-vault/internal/core/port UserSvr
+//go:generate mockgen -package=mocks -destination=../../../test/mocks/service_user_port.go github.com/loganrk/user-vault/internal/core/port UserSvr
 ```
 
 Then regenerate all mocks with:

@@ -9,16 +9,16 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"github.com/loganrk/user-vault/internal/config"
 	"github.com/loganrk/user-vault/internal/core/port"
-	"github.com/loganrk/user-vault/internal/infrastructure/config"
-	"github.com/loganrk/user-vault/internal/shared/utils"
+	"github.com/loganrk/user-vault/internal/utils"
 
-	userUsecase "github.com/loganrk/user-vault/internal/core/usecase/user"
-	handler "github.com/loganrk/user-vault/internal/infrastructure/adapter/handler/http"
-	ginmiddleware "github.com/loganrk/user-vault/internal/infrastructure/adapter/middleware/gin"
-	oAuthProvider "github.com/loganrk/user-vault/internal/infrastructure/adapter/oAuth"
-	repo "github.com/loganrk/user-vault/internal/infrastructure/adapter/repository/mysql"
-	router "github.com/loganrk/user-vault/internal/infrastructure/adapter/router/gin"
+	handler "github.com/loganrk/user-vault/internal/adapter/handler/http"
+	ginmiddleware "github.com/loganrk/user-vault/internal/adapter/middleware/gin"
+	oAuthProvider "github.com/loganrk/user-vault/internal/adapter/oAuth"
+	repo "github.com/loganrk/user-vault/internal/adapter/repository/mysql"
+	router "github.com/loganrk/user-vault/internal/adapter/router/gin"
+	userSrv "github.com/loganrk/user-vault/internal/core/service/user"
 
 	cipher "github.com/loganrk/utils-go/adapters/cipher/aes"
 	logger "github.com/loganrk/utils-go/adapters/logger/zapLogger"
@@ -101,7 +101,7 @@ func main() {
 	oAuthProviderIns := initOauthProvider(appConfig.GetUser())
 
 	// Initialize user service with necessary dependencies
-	userService := userUsecase.New(loggerIns, tokenIns, kafkaIns, dbIns, oAuthProviderIns, utilsIns, appConfig.GetAppName(), appConfig.GetUser())
+	userService := userSrv.New(loggerIns, tokenIns, kafkaIns, dbIns, oAuthProviderIns, utilsIns, appConfig.GetAppName(), appConfig.GetUser())
 	services := port.SvrList{User: userService}
 
 	// Initialize ginmiddlewareIns for API authentication and authorization
