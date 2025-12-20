@@ -12,7 +12,6 @@ The project is structured using a clean **Hexagonal Architecture** to ensure mai
 
 ## Features
 
-- ✅ User Registration with Verification Email  
 - 🔐 Secure Password Hashing using bcrypt   
 - 🔑 JWT Access and Refresh Token Authentication (HS256/RS256)  
 - 🔁 Refresh Token Rotation and Validation  
@@ -20,7 +19,7 @@ The project is structured using a clean **Hexagonal Architecture** to ensure mai
 - 🧪 Validator-Based Request Validation (GET or POST)  
 - 📦 Hexagonal Architecture with Domain-Driven Design  
 - 🧱 Modular Adapters for DB, Messaging, Email, Tokens, Logging  
-- 🔄 Graceful Error Handling with Logger Middleware  
+- 🔄 Graceful Showdown
 
 
 ## Installation Using Docker 
@@ -81,46 +80,45 @@ docker compose -f docker-compose-mysql.yml up -d
 
 ---
 
-### Start Kafka (topics auto-created)
+### Start Kafka
 
 ```sh
 docker compose -f docker-compose-kafka.yml up -d
 ```
 
 ✔ Kafka data persisted
-✔ Topics created automatically if missing
 
 ---
 
-### Start User-Vault
+
+### Create Kafka Topics
+
+> Use the following commands to create Kafka topics inside the Kafka container.
+
+```sh
+docker exec -it kafka kafka-topics --create --topic user-verification  --bootstrap-server kafka:9092  --partitions 3 --replication-factor 1
+```
+
+```sh
+docker exec -it kafka kafka-topics --create --topic user-password-reset  --bootstrap-server kafka:9092  --partitions 3 --replication-factor 1
+```
+### Check Kafka Topics
+ 
+```sh
+docker exec -it kafka kafka-topics --list --bootstrap-server kafka:9092
+```
+
+
+
+## Start User-Vault
 
 ```sh
 docker compose -f docker-compose-app.yml up -d --build
 ```
 
 The service automatically reads:
-- `/app/config/local.yaml`
-- `/app/config/env/local.env`
-
----
-
-### Verify Services
-
-```sh
-docker ps
-```
-
-Check Kafka topics:
-
-```sh
-docker exec -it kafka kafka-topics.sh --list --bootstrap-server kafka:9092
-```
-
-Verify MySQL:
-
-```sh
-docker exec -it mysql mysql -uadmin -padmin123 userVault
-```
+- `/etc/conf/local.yaml`
+- `/etc/env/local.env`
 
 ---
 
@@ -139,16 +137,17 @@ http://localhost:8080
 
 ### 📥 Authentication APIs
 
-| Method   | Endpoint                    | Description                         |
-|----------|-----------------------------|-------------------------------------|
-| POST/GET | `/api/v1/login`             | User login                          |
-| POST/GET | `/api/v1/register`          | Register user                       |
-| POST/GET | `/api/v1/activate`          | Activate account with token         |
-| POST/GET | `/api/v1/logout`            | Logout (invalidate refresh token)   |
-| POST/GET | `/api/v1/forgot-password`   | Send password reset link            |
-| POST/GET | `/api/v1/reset-password`    | Reset password using token          |
-| POST/GET | `/api/v1/refresh-token`     | Validate and rotate refresh token   |
-| POST/GET | `/api/v1/resend-verification` | Resend verification email             |
+| Method   | Endpoint                      | Description                         |
+|----------|-------------------------------|-------------------------------------|
+| POST/GET | `/api/v1/login`               | User login                          |
+| POST/GET | `/api/v1/oAuthlogin`          | User oAuth login                    |
+| POST/GET | `/api/v1/register`            | Register user                       |
+| POST/GET | `/api/v1/activate`            | Activate account with token         |
+| POST/GET | `/api/v1/logout`              | Logout (invalidate refresh token)   |
+| POST/GET | `/api/v1/forgot-password`     | Send password reset link            |
+| POST/GET | `/api/v1/reset-password`      | Reset password using token          |
+| POST/GET | `/api/v1/refresh-token`       | Validate and rotate refresh token   |
+| POST/GET | `/api/v1/resend-verification` | Resend verification email           |
 
 > 🔒 All routes support both `application/json` POST and query-based GET formats.
 

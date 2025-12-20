@@ -4,8 +4,11 @@ import (
 	"context"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 
@@ -14,7 +17,7 @@ import (
 	"github.com/loganrk/user-vault/internal/utils"
 
 	handler "github.com/loganrk/user-vault/internal/adapter/handler/http"
-	ginmiddleware "github.com/loganrk/user-vault/internal/adapter/middleware/gin"
+	middleware "github.com/loganrk/user-vault/internal/adapter/middleware"
 	oAuthProvider "github.com/loganrk/user-vault/internal/adapter/oAuth"
 	repo "github.com/loganrk/user-vault/internal/adapter/repository/mysql"
 	router "github.com/loganrk/user-vault/internal/adapter/router/gin"
@@ -104,25 +107,42 @@ func main() {
 	userService := userSrv.New(loggerIns, tokenIns, kafkaIns, dbIns, oAuthProviderIns, utilsIns, appConfig.GetAppName(), appConfig.GetUser())
 	services := port.SvrList{User: userService}
 
-	// Initialize ginmiddlewareIns for API authentication and authorization
-	ginmiddlewareIns := ginmiddleware.New(appConfig.GetMiddlewareApiKeys(), tokenIns)
+	// Initialize middleware for API authentication and authorization
+	middlewareIns := middleware.New(appConfig.GetMiddlewareApiKeys(), tokenIns)
 
 	// Initialize HTTP handler to route requests to the appropriate services
 	handlerIns := handler.New(loggerIns, tokenIns, services)
 
 	// Set up and start the router with routes and handlers
 	router := router.New(loggerIns)
-	router.SetupRoutes(appConfig.GetApi(), loggerIns, ginmiddlewareIns, handlerIns)
+	router.SetupRoutes(appConfig.GetApi(), loggerIns, middlewareIns, handlerIns)
 
 	port := appConfig.GetAppPort()
 	loggerIns.Infow(context.Background(), "Starting server", "port", port)
 	loggerIns.Sync(context.Background())
 
-	// Start the HTTP server and handle any errors during server startup
-	if err := router.StartServer(port); err != nil {
-		loggerIns.Errorw(context.Background(), "Server stopped with error", "port", port, "error", err)
-		loggerIns.Sync(context.Background())
-		return
+	go func() {
+		// Start the HTTP server and handle any errors during server startup
+		if err := router.StartServer(port); err != nil {
+			loggerIns.Errorw(context.Background(), "Server stopped with error", "port", port, "error", err)
+			loggerIns.Sync(context.Background())
+			return
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("getting signal for showdown server...")
+
+	// Graceful shutdown with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := router.Shutdown(ctx); err != nil {
+		log.Printf("Server forced to shutdown: %v", err)
+	} else {
+		log.Printf("Server shutdown gracefully")
 	}
 
 	// Log server shutdown if it stops without errors

@@ -35,7 +35,7 @@ mockgen -package=mocks -destination=test/mocks/adapter_cipher_port.go github.com
 
 mockgen -package=mocks -destination=test/mocks/adapter_token_port.go github.com/loganrk/user-vault/internal/core/port Token
 
-mockgen -package=mocks -destination=test/mocks/adapter_middleware_gin_port.go github.com/loganrk/user-vault/internal/core/port GinMiddleware
+mockgen -package=mocks -destination=test/mocks/adapter_middleware_gin_port.go github.com/loganrk/user-vault/internal/core/port Middleware
 
 mockgen -package=mocks -destination=test/mocks/adapter_logger_port.go github.com/loganrk/user-vault/internal/core/port Logger
 
