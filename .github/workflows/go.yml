@@ -27,11 +27,11 @@ jobs:
           go mod download
           go mod tidy
 
-      - name: Run tests with coverage
+      - name: Run tests with coverage (internal only)
         run: |
-          cd internal 
+          cd internal
           go test ./... -v -coverprofile=coverage.txt -covermode=atomic
 
       - name: Display coverage summary
         run: |
-          go tool cover -func=coverage.txt
+          go tool cover -func=internal/coverage.txt
