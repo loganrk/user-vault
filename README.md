@@ -97,16 +97,16 @@ docker compose -f docker-compose-kafka.yml up -d
 > Use the following commands to create Kafka topics inside the Kafka container.
 
 ```sh
-docker exec -it kafka /bin/kafka-topics --create --topic user-verification  --bootstrap-server kafka:9092  --partitions 3 --replication-factor 1
+docker exec -it kafka kafka-topics --create --topic user-verification  --bootstrap-server kafka:9092  --partitions 3 --replication-factor 1
 ```
 
 ```sh
-docker exec -it kafka /bin/kafka-topics --create --topic user-password-reset  --bootstrap-server kafka:9092  --partitions 3 --replication-factor 1
+docker exec -it kafka kafka-topics --create --topic user-password-reset  --bootstrap-server kafka:9092  --partitions 3 --replication-factor 1
 ```
 ### Check Kafka Topics
  
 ```sh
-docker exec -it kafka /bin/kafka-topics.sh --list --bootstrap-server kafka:9092
+docker exec -it kafka kafka-topics --list --bootstrap-server kafka:9092
 ```
 
 
