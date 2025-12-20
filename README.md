@@ -106,7 +106,7 @@ docker exec -it kafka /bin/kafka-topics --create --topic user-password-reset  --
 ### Check Kafka Topics
  
 ```sh
-docker exec -it kafka kafka-topics.sh --list --bootstrap-server kafka:9092
+docker exec -it kafka /bin/kafka-topics.sh --list --bootstrap-server kafka:9092
 ```
 
 
