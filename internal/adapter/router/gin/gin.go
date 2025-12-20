@@ -37,7 +37,7 @@ func New(accessLoggerIns port.Logger) *route {
 	}
 }
 
-func (r *route) SetupRoutes(apiConfig config.Api, logger port.Logger, middlewareIns port.GinMiddleware, handler port.Handler) {
+func (r *route) SetupRoutes(apiConfig config.Api, logger port.Logger, middlewareIns port.Middleware, handler port.Handler) {
 
 	apiKeyProtectedRoutes := r.gin.Group("/")
 	apiKeyProtectedRoutes.Use(wrapHTTPMiddleware(middlewareIns.ValidateApiKey()))

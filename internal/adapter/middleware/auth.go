@@ -1,7 +1,6 @@
-package gin
+package middleware
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -83,9 +82,6 @@ func (m *middleware) ValidateRefreshToken() http.Handler {
 			http.Error(w, "token is expired", http.StatusBadRequest)
 			return
 		}
-
-		ctx := context.WithValue(r.Context(), "userSubscriptionId", userSubscriptionId)
-		r = r.WithContext(ctx)
 
 	})
 }

@@ -61,8 +61,8 @@ type Token interface {
 	GetRefreshTokenData(encryptedToken string) (string, time.Time, error)                                     // Extracts user ID and expiry from a refresh token
 }
 
-// GinMiddleware defines the interface for API key and access token validation middleware.
-type GinMiddleware interface {
+// Middleware defines the interface for API key and access token validation middleware.
+type Middleware interface {
 	ValidateApiKey() http.Handler       // Returns middleware that validates API keys
 	ValidateRefreshToken() http.Handler // Returns middleware that validates refresh token
 }
