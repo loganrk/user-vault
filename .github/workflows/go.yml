@@ -1,57 +1,36 @@
-# GitHub Actions workflow file for a Go project
+name: User Vault CI
 
-name: Go CI/CD # Workflow name
-
-on: # Define when the workflow should run
+on:
   push:
     branches:
-      - main # Run on pushes to the main branch
-  pull_request: # Also run on pull requests
+      - main
+  pull_request:
     branches:
       - main
 
-jobs: # Define the jobs that make up the workflow
-  build: # Define the 'build' job
-    name: Build and Test # Job name
-    runs-on: ubuntu-latest # Use an Ubuntu runner
-
-    steps: # Define the steps to execute in the 'build' job
-      - name: Set up Go 1.24 # Step name
-        uses: actions/setup-go@v5 # Use the 'setup-go' action to install Go
-        with:
-          go-version: "1.24" # Specify the Go version
-
-      - name: Check out code # Step name
-        uses: actions/checkout@v4 # Use the 'checkout' action to clone the repository
-
-      - name: Get dependencies # Step name
-        run: |
-          go mod download # Download Go dependencies
-          go get github.com/joho/godotenv # Add missing go.sum entry
-
-      - name: Run tests # Step name
-        run: |
-          cd ./cmd # Change to the directory containing main.go
-          go test -v # Run tests in the current directory
-
-  coverage:
-    name: Coverage
+jobs:
+  test:
+    name: Build, Test & Coverage
     runs-on: ubuntu-latest
+
     steps:
-      - name: Set up Go 1.24
+      - name: Set up Go 1.22
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.22"
 
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Get dependencies
+      - name: Download dependencies
         run: |
           go mod download
-          go get github.com/joho/godotenv # Add missing go.sum entry
+          go mod tidy
 
       - name: Run tests with coverage
         run: |
-          cd ./cmd # Change to the directory containing main.go
-          go test -v -coverprofile=coverage.txt # Run tests with coverage
+          go test ./... -v -coverprofile=coverage.txt -covermode=atomic
+
+      - name: Display coverage summary
+        run: |
+          go tool cover -func=coverage.txt
