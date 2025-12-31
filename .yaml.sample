@@ -7,8 +7,8 @@ logger:
   encoding:
     method: "json"
     caller: true
-  path: "/app/logs/app.log"
-  err-path: ""/app/logs/error.log"
+  path: "../logs/app.log"
+  err-path: "../logs/error.log"
 
 middleware:
   keys:
@@ -19,7 +19,7 @@ middleware:
 
 kafka:
   brokers:
-    - "kafka:9092"
+    - ""
   topics:
     user-verify: "user-verification"
     user-password-reset: "user-password-reset"
@@ -29,10 +29,10 @@ kafka:
 
 store:
   database:
-    host: "mysql"
-    port: "3306"
-    username: "admin"
-    password: "admin123"
+    host: ""
+    port: ""
+    username: ""
+    password: ""
     name: "userVault"
     prefix: "uv_"
 

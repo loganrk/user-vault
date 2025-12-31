@@ -1,27 +1,36 @@
+version: "3.9"
+
 services:
   user-vault:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: user-vault
     ports:
       - "8080:8080"
     environment:
-      CONFIG_FILE_PATH: /app/conf/local.yml
-      CIPHER_SECRET_ENCRYPTION_ENABLED: false
-      CIPHER_SECRET_KEY:
+      # Config file inside container
+      CONFIG_PATH: /app/conf/local.yml
+
+      # Optional encryption
+      CIPHER_SECRET_ENCRYPTION_ENABLED: "false"
+      CIPHER_SECRET_KEY: ""
+
+      # JWT configuration
       JWT_METHOD: HS256
       JWT_HMAC_KEY: supersecretkeyforhmac
-      JWT_RSA_PRIVATE_KEY_PATH: 
-      JWT_RSA_PUBLIC_KEY_PATH:
+      JWT_RSA_PRIVATE_KEY_PATH: ""
+      JWT_RSA_PUBLIC_KEY_PATH: ""
+
+      # Database configuration
+      DB_HOST: ""
+      DB_PORT: ""
+      DB_USERNAME: ""
+      DB_PASSWORD: ""
+
+      # Kafka configuration
+      KAFKA_BROKERS: ""
 
     volumes:
-      - ./etc/conf/:/app/conf/:ro
-      - ./etc/env/:/app/env/:ro
-      - ./etc/secret/:/app/secret/:ro
+      - local.yml:/app/conf/local.yml:ro
     restart: unless-stopped
-    networks:
-      - app-network
-
-networks:
-  app-network:
-    external: true

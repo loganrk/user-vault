@@ -43,7 +43,7 @@ func main() {
 	}
 
 	// Fetch config file path from environment variables
-	configFilePath := os.Getenv("CONFIG_FILE_PATH")
+	configFilePath := os.Getenv("CONFIG_PATH")
 
 	// Extract the file name (e.g., "config.yaml")
 	configFileName := filepath.Base(configFilePath)
@@ -225,6 +225,7 @@ func initDatabase(conf config.App) (port.RepositoryMySQL, error) {
 		if err != nil {
 			return nil, err
 		}
+
 	}
 
 	// Pass the decrypted database configuration parameters to the repository.New function
