@@ -209,6 +209,10 @@ The service automatically reads:
 http://localhost:8080
 ```
 
+ Detailed documentation, architecture details, and API usage examples are available on the project Wiki:
+
+[**User Vault Wiki**](https://github.com/loganrk/user-vault/wiki)
+
 ---
 
 ## Contributing
