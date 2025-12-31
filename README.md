@@ -1,47 +1,80 @@
-# User Vault - Secure User Authentication System
+# User Vault — Secure User Authentication System
 
-**User Vault** is a Go-based microservice for secure and scalable user authentication.  
-It supports the full account lifecycle: registration, login, logout, password reset, token validation, and account verification.  
+**User Vault** is a production-ready Go microservice designed for **secure, scalable, and extensible user authentication**.
 
-The project is structured using a clean **Hexagonal Architecture** for maintainability and testability.
+It supports the full user account lifecycle including **registration, login, logout, password reset, token validation, and account verification**, and is built using **Hexagonal Architecture (Ports & Adapters)** to ensure clean separation of concerns, maintainability, and testability.
 
 ---
 
 ## Table of Contents
 
 - [Features](#features)
-- [Dependencies Installation](#dependencies-installation)
+- [Architecture Overview](#architecture-overview)
+- [Dependencies](#dependencies)
 - [Configuration](#configuration)
 - [Installation](#installation)
-  - [Using Binary](#installation-using-binary)
-  - [Using Docker](#installation-using-docker)
-- [Access the API](#access-the-api)
+  - [Using Binary](#using-binary)
+  - [Using Docker](#using-docker)
+- [API Access](#api-access)
+- [Security Notes](#security-notes)
 - [Contributing](#contributing)
 
 ---
 
 ## Features
 
-- 🔐 Secure Password Hashing using **bcrypt**  
-- 🔑 JWT Access and Refresh Token Authentication (**HS256/RS256**)  
-- 🔁 Refresh Token Rotation and Validation  
-- 📧 Kafka-based Email Delivery for Account Verification and Password Reset  
-- 🧪 Validator-Based Request Validation (GET/POST)  
-- 📦 Hexagonal Architecture with Domain-Driven Design  
-- 🧱 Modular Adapters for Database, Messaging, Email, Tokens, Logging  
-- 🔄 Graceful Shutdown  
+- 🔐 Secure password hashing using **bcrypt**
+- 🔑 JWT authentication with **Access & Refresh Tokens** (HS256 / RS256)
+- 🔁 Refresh token rotation and validation
+- 📧 Kafka-based email events for:
+  - Account verification
+  - Password reset
+- 🧪 Validator-based request validation (GET / POST)
+- 📦 Hexagonal Architecture with Domain-Driven Design (DDD)
+- 🧱 Pluggable adapters for:
+  - Database
+  - Messaging
+  - Email
+  - Token generation
+  - Logging
+- 🔄 Graceful shutdown support
 
 ---
 
-## Dependencies Installation
+## Architecture Overview
 
-User Vault requires **MySQL** and **Kafka** to be installed and running externally.
+User Vault follows **Hexagonal Architecture**, ensuring that:
 
-### 1️⃣ Install MySQL
+- Business logic lives in the **domain**
+- External systems (DB, Kafka, Email, JWT, Logging) are implemented as **adapters**
+- Infrastructure changes do not impact core logic
 
-1. Install **MySQL 8.0+**  
-2. Start the MySQL service  
-3. Create the required database and user:
+This design makes the service:
+- Easy to test
+- Easy to extend
+- Easy to replace infrastructure components
+
+---
+
+## Dependencies
+
+User Vault depends on the following **external services**:
+
+### MySQL
+- Version: **8.0+**
+- Used for persistent user data storage
+
+### Kafka
+- Used for asynchronous email workflows
+- Required topics:
+  - `user-verification`
+  - `user-password-reset`
+
+---
+
+## Dependencies Setup
+
+### 1. MySQL Setup
 
 ```sql
 CREATE DATABASE userVault;
@@ -53,63 +86,55 @@ FLUSH PRIVILEGES;
 
 ---
 
-### 2️⃣ Install Kafka
-
-1. Install **Apache Kafka**  
-2. Start **Zookeeper** (if required)  
-3. Start the **Kafka broker**  
-4. Create the required Kafka topic:
+### 2. Kafka Setup
 
 ```bash
-kafka-topics.sh --create  --topic user-verification  --bootstrap-server localhost:9092  --partitions 1  --replication-factor 1
+kafka-topics.sh --create   --topic user-verification   --bootstrap-server localhost:9092   --partitions 1   --replication-factor 1
 ```
 
-
 ```bash
-kafka-topics.sh --create  --topic user-password-reset  --bootstrap-server localhost:9092  --partitions 1  --replication-factor 1
-
+kafka-topics.sh --create   --topic user-password-reset   --bootstrap-server localhost:9092   --partitions 1   --replication-factor 1
 ```
 
 ---
 
-### 3️⃣ Verify Dependencies
+### 3. Verify Dependencies
 
-Ensure that the following are available:
+Ensure the following before starting User Vault:
 
-- ✅ MySQL is running  
-- ✅ Database `userVault` exists  
-- ✅ Kafka broker is running  
-- ✅ Kafka topic is created  
+- ✅ MySQL is running
+- ✅ Database `userVault` exists
+- ✅ Kafka broker is running
+- ✅ Kafka topics are created
 
 ---
 
 ## Configuration
 
-
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/loganrk/user-vault
+git clone https://github.com/loganrk/user-vault.git
 cd user-vault
 ```
 
 ---
 
-### Prepare Configuration File
+### Configuration File
 
-Rename the sample config file:
+Rename the sample configuration:
 
 ```bash
-mv .yaml.sample local.yaml
+mv conf/local.yaml.sample conf/local.yaml
 ```
 
-Update values in `local.yaml` if required.
+Update values in `conf/local.yaml` as needed.
 
 ---
 
-### Environment Variables (for Docker or local)
+### Environment Variables
 
-You can define environment variables in `.env` or directly in `docker-compose.yml`:
+These variables can be set locally, via `.env`, or in `docker-compose.yml`.
 
 ```bash
 # Config
@@ -125,49 +150,56 @@ JWT_HMAC_KEY=supersecretkeyforhmac
 JWT_RSA_PRIVATE_KEY_PATH=
 JWT_RSA_PUBLIC_KEY_PATH=
 
-# MySQL (external)
+# MySQL
 DB_HOST=mysqlHost
 DB_PORT=3306
 DB_USERNAME=user_vault_user
 DB_PASSWORD=password
 DB_NAME=userVault
 
-# Kafka (external)
+# Kafka
 KAFKA_BROKERS=kafkaHost:9092
 ```
 
 ---
 
-### Encrypted Credentials (Optional)
+## Encrypted Credentials (Optional)
 
-If encryption is enabled:
+User Vault supports **environment variable encryption** for sensitive values.
+
+### Enable Encryption
 
 ```bash
 export CIPHER_SECRET_ENCRYPTION_ENABLED=true
 export CIPHER_SECRET_KEY=your-secret-key
 ```
 
-All sensitive values must then be encrypted, including `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`, `KAFKA_BROKERS`.
+Generate encryption keys using the provided scripts:
 
-Example:
+🔗 https://github.com/loganrk/user-vault/tree/main/scripts
+
+### Encrypted Values Example
 
 ```bash
 export DB_PASSWORD=ENC(encrypted_value)
 export KAFKA_BROKERS=ENC(encrypted_value)
 ```
 
+> When encryption is enabled, **all sensitive fields must be encrypted**.
+
 ---
 
+## Installation
 
-## Installation Using Binary
+### Using Binary
 
-### Build the Binary
+#### Build
 
 ```bash
 go build -o user-vault cmd/main.go
 ```
 
-### Run the Binary
+#### Run
 
 ```bash
 ./user-vault
@@ -175,47 +207,59 @@ go build -o user-vault cmd/main.go
 
 ---
 
-## Installation Using Docker
+### Using Docker
 
-### Prerequisites
+#### Prerequisites
 
-- Docker  
-- Docker Compose v2+  
+- Docker
+- Docker Compose v2+
 
 ```bash
 docker --version
 docker compose version
 ```
 
----
-
-
-
-### Start User Vault
+#### Start the Service
 
 ```bash
 docker compose up -d --build
 ```
 
-The service automatically reads:
-
-- `local.yaml`  
+The service automatically loads:
+- `conf/local.yaml`
 
 ---
 
-## Access the API
+## API Access
+
+Once running, the API is available at:
 
 ```
 http://localhost:8080
 ```
 
- Detailed documentation, architecture details, and API usage examples are available on the project Wiki:
+Comprehensive API documentation, architecture details, and usage examples are available in the Wiki:
 
-[**User Vault Wiki**](https://github.com/loganrk/user-vault/wiki)
+🔗 https://github.com/loganrk/user-vault/wiki
+
+---
+
+## Security Notes
+
+- Always use **RS256** in production environments
+- Rotate JWT keys regularly
+- Use encrypted environment variables for secrets
+- Run Kafka and MySQL on secured networks
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Feel free to submit issues and pull requests.
+Contributions are welcome! 🎉
 
+Feel free to:
+- Open issues
+- Submit pull requests
+- Suggest improvements
+
+Please ensure code follows project conventions and includes tests where applicable.
