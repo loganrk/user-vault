@@ -61,20 +61,13 @@ FLUSH PRIVILEGES;
 4. Create the required Kafka topic:
 
 ```bash
-kafka-topics.sh --create \
-  --topic user-verification \
-  --bootstrap-server localhost:9092 \
-  --partitions 1 \
-  --replication-factor 1
+kafka-topics.sh --create  --topic user-verification  --bootstrap-server localhost:9092  --partitions 1  --replication-factor 1
 ```
 
 
 ```bash
-kafka-topics.sh --create \
-  --topic user-password-reset \
-  --bootstrap-server localhost:9092 \
-  --partitions 1 \
-  --replication-factor 1
+kafka-topics.sh --create  --topic user-password-reset  --bootstrap-server localhost:9092  --partitions 1  --replication-factor 1
+
 ```
 
 ---
