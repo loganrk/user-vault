@@ -115,7 +115,7 @@ func main() {
 
 	// Set up and start the router with routes and handlers
 	router := router.New(loggerIns)
-	router.SetupRoutes(appConfig.GetApi(), loggerIns, middlewareIns, handlerIns)
+	router.SetupRoutes(loggerIns, middlewareIns, handlerIns)
 
 	port := appConfig.GetAppPort()
 	loggerIns.Infow(context.Background(), "Starting server", "port", port)

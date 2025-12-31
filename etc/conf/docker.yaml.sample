@@ -27,44 +27,6 @@ kafka:
   version: "2.6.0"
   retry-max: 5
 
-api:
-  user-login:
-    enabled: true
-    route: "/api/v1/login"
-    method: "POST"
-  user-oauth-login:
-    enabled: true
-    route: "/api/v1/oAuthlogin"
-    method: "POST"
-  user-register:
-    enabled: true
-    route: "/api/v1/register"
-    method: "POST"
-  user-verify:
-    enabled: true
-    route: "/api/v1/verify"
-    method: "POST"
-  user-logout:
-    enabled: true
-    route: "/api/v1/logout"
-    method: "POST"
-  user-forgot-password:
-    enabled: true
-    route: "/api/v1/forgot-password"
-    method: "POST"
-  user-password-reset:
-    enabled: true
-    route: "/api/v1/reset-password"
-    method: "POST"
-  user-refresh-token:
-    enabled: true
-    route: "/api/v1/refresh-token"
-    method: "POST"
-  user-resend-verification:
-    enabled: true
-    route: "/api/v1/resend-verification"
-    method: "POST"
-
 store:
   database:
     host: "mysql"

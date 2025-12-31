@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/loganrk/user-vault/internal/config"
 	"github.com/loganrk/user-vault/internal/core/port"
 
 	"github.com/gin-contrib/cors"
@@ -39,66 +38,50 @@ func New(accessLoggerIns port.Logger) *route {
 	}
 }
 
-func (r *route) SetupRoutes(apiConfig config.Api, logger port.Logger, middlewareIns port.Middleware, handler port.Handler) {
+func (r *route) SetupRoutes(
+	logger port.Logger,
+	middlewareIns port.Middleware,
+	handler port.Handler,
+) {
 
-	apiKeyProtectedRoutes := r.gin.Group("/")
-	apiKeyProtectedRoutes.Use(wrapHTTPMiddleware(middlewareIns.ValidateApiKey()))
-	if apiConfig.GetUserLoginEnabled() {
-		method, route := apiConfig.GetUserLoginProperties()
-		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserLogin)
-	}
+	// ===============================
+	// API Key Protected Routes
+	// ===============================
+	api := r.gin.Group("/api/v1")
+	api.Use(wrapHTTPMiddleware(middlewareIns.ValidateApiKey()))
 
-	// User Logout
-	if apiConfig.GetUserOauthLoginEnabled() {
-		method, route := apiConfig.GetUserOauthLoginProperties()
-		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserOAuthLogin)
-	}
+	// User Login
+	wrapAndRegisterRoute(api, "POST", "login", handler.UserLogin)
+
+	// User OAuth Login
+	wrapAndRegisterRoute(api, "POST", "oAuthlogin", handler.UserOAuthLogin)
 
 	// User Register
-	if apiConfig.GetUserRegisterEnabled() {
-		method, route := apiConfig.GetUserRegisterProperties()
-		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserRegister)
-	}
+	wrapAndRegisterRoute(api, "POST", "register", handler.UserRegister)
 
 	// User Verify
-	if apiConfig.GetUserVerifyEnabled() {
-		method, route := apiConfig.GetUserVerifyProperties()
-		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserVerify)
-	}
+	wrapAndRegisterRoute(api, "POST", "verify", handler.UserVerify)
 
 	// User Resend Verification
-	if apiConfig.GetUserResendVerificationEnabled() {
-		method, route := apiConfig.GetUserResendVerificationProperties()
-		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserResendVerification)
-	}
+	wrapAndRegisterRoute(api, "POST", "resend-verification", handler.UserResendVerification)
 
 	// User Forgot Password
-	if apiConfig.GetUserForgotPasswordEnabled() {
-		method, route := apiConfig.GetUserForgotPasswordProperties()
-		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserForgotPassword)
-	}
+	wrapAndRegisterRoute(api, "POST", "forgot-password", handler.UserForgotPassword)
 
 	// User Password Reset
-	if apiConfig.GetUserPasswordResetEnabled() {
-		method, route := apiConfig.GetUserPasswordResetProperties()
-		wrapAndRegisterRoute(apiKeyProtectedRoutes, method, route, handler.UserPasswordReset)
-	}
+	wrapAndRegisterRoute(api, "POST", "reset-password", handler.UserPasswordReset)
 
-	refreshTokenProtectedRoutes := r.gin.Group("/")
-	refreshTokenProtectedRoutes.Use(wrapHTTPMiddleware(middlewareIns.ValidateRefreshToken()))
+	// ===============================
+	// Refresh Token Protected Routes
+	// ===============================
+	refresh := r.gin.Group("/api/v1")
+	refresh.Use(wrapHTTPMiddleware(middlewareIns.ValidateRefreshToken()))
 
-	// User Refresh Token Validate
-	if apiConfig.GetUserRefreshTokenEnabled() {
-		method, route := apiConfig.GetUserRefreshTokenProperties()
-		wrapAndRegisterRoute(refreshTokenProtectedRoutes, method, route, handler.UserRefreshToken)
-	}
+	// Refresh Token
+	wrapAndRegisterRoute(refresh, "POST", "refresh-token", handler.UserRefreshToken)
 
-	// User Logout
-	if apiConfig.GetUserLogoutEnabled() {
-		method, route := apiConfig.GetUserLogoutProperties()
-		wrapAndRegisterRoute(refreshTokenProtectedRoutes, method, route, handler.UserLogout)
-	}
-
+	// Logout
+	wrapAndRegisterRoute(refresh, "POST", "logout", handler.UserLogout)
 }
 
 // StartServer starts the Gin HTTP server on the specified port.
