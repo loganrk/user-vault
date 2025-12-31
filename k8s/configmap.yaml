@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-vault-config
+data:
+  config.yaml: |
+    application:
+      port: 8080
+      name: "user-vault"
+
+    logger:
+      level: "debug"
+      encoding:
+        method: "json"
+        caller: true
+      path: "/app/logs/app.log"
+      err-path: ""/app/logs/error.log"
+
+    middleware:
+      keys:
+        - "mhkwuhcL30tq6IuErPfKgRi86BfcRC8vtdQvJa5ILqrDmC2JdNlGlYs05w2KWcyd"
+        - "f97bTqnEWXcSKQ4wtMwFf2vDCdUjnCrZDS6voQNZbf5s0a18j8uOWuS41Uwj6Jhv"
+        - "bLiaBYhfYGr1ZXp6VfIEeaipGXWFAqxtw7LgaYaDcNMmHyz73BBnxMgK78YcfpUp"
+        - "qIAJeZ7qzrUZ2CjsR2vvmhfnDOz8hMnKH2BwlpvCHkmc7TP0poxeqrCmU8ZV7q9q"
+
+    kafka:
+      brokers: "${KAFKA_BROKERS}"
+      topics:
+        user-verify: "${KAFKA_USER_VERIFY_TOPIC}"
+        user-password-reset: "${KAFKA_PASSWORD_RESET_TOPIC}"
+      client-id: "${KAFKA_CLIENT_ID}"
+      version: "${KAFKA_VERSION}"
+      retry-max: "${KAFKA_RETRY_MAX}"
+
+    store:
+      database:
+        host: "{DB_HOST}"
+        port: "${DB_PORT}"
+        username: "${DB_USERNAME}"
+        password: "${DB_PASSWORD}"
+        name: "${DB_NAME}"
+        prefix: "${DB_PREFIX}"
+
+    user:
+      max-login-attempt: 5
+      login-attempt-session-period: 60
+      password-hash-cost: 12
+      apple-client-id: ""
+      google-client-id: ""
+      microsoft-client-id: ""
+
+      verification:
+        link: "http://sample.com/verify/{{token}}"
+        token-expiry: 1800
+
+      password-reset:
+        link: "http://sample.com/password-reset/{{token}}"
+        token-expiry: 1800
+
+      refresh-token:
+        enabled: true
+        rotation: false
+        expiry: 36000
+
+      access-token:
+        expiry: 1500

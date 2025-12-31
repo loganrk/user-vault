@@ -31,7 +31,6 @@ type app struct {
 		JWT tokenJWT `mapstructure:"jwt"`
 	} `mapstructure:"token"`
 
-	Api   api   `mapstructure:"api"`
 	User  user  `mapstructure:"user"`
 	Kafka kafka `mapstructure:"kafka"`
 }
@@ -44,24 +43,6 @@ type logger struct {
 	} `mapstructure:"encoding"`
 	Path    string `mapstructure:"path"`
 	ErrPath string `mapstructure:"err-path"`
-}
-
-type api struct {
-	UserLogin              apiData `mapstructure:"user-login"`
-	UserOAuthLogin         apiData `mapstructure:"user-oauth-login"`
-	UserRegister           apiData `mapstructure:"user-register"`
-	UserVerify             apiData `mapstructure:"user-verify"`
-	UserResendVerification apiData `mapstructure:"user-resend-verification"`
-	UserForgotPassword     apiData `mapstructure:"user-forgot-password"`
-	UserPasswordReset      apiData `mapstructure:"user-password-reset"`
-	UserRefreshToken       apiData `mapstructure:"user-refresh-token"`
-	UserLogout             apiData `mapstructure:"user-logout"`
-}
-
-type apiData struct {
-	Enabled bool   `mapstructure:"enabled"`
-	Route   string `mapstructure:"route"`
-	Method  string `mapstructure:"method"`
 }
 
 type user struct {

@@ -18,7 +18,6 @@ type App interface {
 	GetMiddlewareApiKeys() []string
 	GetStoreDatabaseProperties() (string, string, string, string, string, string)
 	GetLogger() Logger
-	GetApi() Api
 	GetKafka() Kafka
 	GetUser() User
 	GetJWTToken() Jwt
@@ -71,10 +70,6 @@ func (a app) GetStoreDatabaseProperties() (string, string, string, string, strin
 	database := a.Store.Database
 
 	return database.Host, database.Port, database.Username, database.Password, database.Name, database.Prefix
-}
-
-func (a app) GetApi() Api {
-	return a.Api
 }
 
 func (a app) GetUser() User {

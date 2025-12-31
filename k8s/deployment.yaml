@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-vault
+  labels:
+    app: user-vault
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: user-vault
+  template:
+    metadata:
+      labels:
+        app: user-vault
+    spec:
+      containers:
+      - name: user-vault
+        image: ghcr.io/loganrk/user-vault:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+
+        # Explicit path to config.yaml
+        env:
+        - name: CONFIG_PATH
+          value: "/app/config/config.yaml"
+
+        # Inject other non-sensitive config & secrets as env vars
+        envFrom:
+        - configMapRef:
+            name: user-vault-config
+        - secretRef:
+            name: user-vault-secrets
+
+        # Mount config.yaml from ConfigMap
+        volumeMounts:
+        - name: user-vault-config-volume
+          mountPath: /app/config/config.yaml
+          subPath: config.yaml
+          readOnly: true
+
+      volumes:
+      - name: user-vault-config-volume
+        configMap:
+          name: user-vault-config
