@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -42,7 +44,33 @@ func StartConfig(path string, file File) (App, error) {
 		return nil, fmt.Errorf("unable to decode into struct, %v", err)
 	}
 
+	overrideFromEnv(&appConfig)
+
 	return appConfig, nil
+}
+
+func overrideFromEnv(appConfig *app) {
+
+	if v := os.Getenv("KAFKA_BROKERS"); v != "" {
+		appConfig.Kafka.Brokers = strings.Split(v, ",")
+	}
+
+	if v := os.Getenv("DB_HOST"); v != "" {
+		appConfig.Store.Database.Host = v
+	}
+
+	if v := os.Getenv("DB_PORT"); v != "" {
+		appConfig.Store.Database.Port = v
+	}
+
+	if v := os.Getenv("DB_USERNAME"); v != "" {
+		appConfig.Store.Database.Username = v
+	}
+
+	if v := os.Getenv("DB_PASSWORD"); v != "" {
+		appConfig.Store.Database.Password = v
+	}
+
 }
 
 func (a app) GetLogger() Logger {
