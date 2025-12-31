@@ -62,7 +62,16 @@ FLUSH PRIVILEGES;
 
 ```bash
 kafka-topics.sh --create \
-  --topic user-vault-email \
+  --topic user-verification \
+  --bootstrap-server localhost:9092 \
+  --partitions 1 \
+  --replication-factor 1
+```
+
+
+```bash
+kafka-topics.sh --create \
+  --topic user-password-reset \
   --bootstrap-server localhost:9092 \
   --partitions 1 \
   --replication-factor 1
@@ -83,7 +92,17 @@ Ensure that the following are available:
 
 ## Configuration
 
-### 1️⃣ Prepare Configuration File
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/loganrk/user-vault
+cd user-vault
+```
+
+---
+
+### Prepare Configuration File
 
 Rename the sample config file:
 
@@ -95,7 +114,7 @@ Update values in `local.yaml` if required.
 
 ---
 
-### 2️⃣ Environment Variables (for Docker or local)
+### Environment Variables (for Docker or local)
 
 You can define environment variables in `.env` or directly in `docker-compose.yml`:
 
@@ -126,7 +145,7 @@ KAFKA_BROKERS=kafkaHost:9092
 
 ---
 
-### 3️⃣ Encrypted Credentials (Optional)
+### Encrypted Credentials (Optional)
 
 If encryption is enabled:
 
@@ -145,6 +164,7 @@ export KAFKA_BROKERS=ENC(encrypted_value)
 ```
 
 ---
+
 
 ## Installation Using Binary
 
@@ -176,14 +196,7 @@ docker compose version
 
 ---
 
-### Clone the Repository
 
-```bash
-git clone https://github.com/loganrk/user-vault
-cd user-vault
-```
-
----
 
 ### Start User Vault
 
