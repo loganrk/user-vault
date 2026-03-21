@@ -26,6 +26,7 @@ import (
 	cipher "github.com/loganrk/utils-go/adapters/cipher/aes"
 	logger "github.com/loganrk/utils-go/adapters/logger/zapLogger"
 	message "github.com/loganrk/utils-go/adapters/message/kafka/producer"
+
 	token "github.com/loganrk/utils-go/adapters/token/jwt"
 )
 
@@ -38,8 +39,10 @@ func main() {
 			log.Fatalf("Error loading %s file", envFile)
 		}
 	} else {
-		log.Println("DEPLOYMENT_ENV_PATH is empty")
-		return
+		// Fall back to .env in the current directory
+		if err := godotenv.Load(".env"); err != nil {
+			log.Println("No .env file found, continuing with system environment variables")
+		}
 	}
 
 	// Fetch config file path from environment variables
@@ -92,14 +95,11 @@ func main() {
 	}
 
 	//Initialize Kafka message producer for event-driven messaging
-	kafkaIns, err := initMessager(appConfig.GetAppName(), appConfig.GetKafka())
+	kafkaIns, err := initNotifier(appConfig.GetAppName(), appConfig.GetKafka())
 	if err != nil {
 		log.Println("failed to setup kafka:", err)
 		return
 	}
-
-	kafkaIns.RegisterVerification(appConfig.GetKafka().GetVerificationTopic())
-	kafkaIns.RegisterPasswordReset(appConfig.GetKafka().GetPasswordResetTopic())
 
 	oAuthProviderIns := initOauthProvider(appConfig.GetUser())
 
@@ -161,8 +161,13 @@ func initLogger(conf config.Logger) (port.Logger, error) {
 	return logger.New(loggerConf)
 }
 
-// initMessager sets up the Kafka message producer with the provided configuration.
-func initMessager(appName string, conf config.Kafka) (port.Messager, error) {
+// initNotifier sets up the Kafka message producer with the provided configuration.
+// If Kafka is disabled, nil is returned and the caller must guard against nil before use.
+func initNotifier(appName string, conf config.Kafka) (port.Notifier, error) {
+	if !conf.GetEnabled() {
+		return nil, nil
+	}
+
 	var brokers []string
 
 	chiperEncryptEnabled := os.Getenv("CIPHER_SECRET_ENCRYPTION_ENABLED")
@@ -183,13 +188,20 @@ func initMessager(appName string, conf config.Kafka) (port.Messager, error) {
 		brokers = conf.GetBrokers()
 	}
 	// Pass the individual Kafka configuration parameters to the message.New function
-	return message.New(appName,
+	kafkaIns, err := message.New(appName,
 		brokers,
 		conf.GetClientID(),
 		conf.GetVersion(),
 		conf.GetRetryMax(),
 	)
+	if err != nil {
+		return nil, err
+	}
 
+	kafkaIns.RegisterVerification(conf.GetVerificationTopic())
+	kafkaIns.RegisterPasswordReset(conf.GetPasswordResetTopic())
+
+	return kafkaIns, nil
 }
 
 // initDatabase connects to the MySQL database using decrypted credentials from the config.

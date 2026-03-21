@@ -1,12 +1,17 @@
 package config
 
 type Kafka interface {
+	GetEnabled() bool
 	GetVerificationTopic() string
 	GetPasswordResetTopic() string
 	GetClientID() string
 	GetBrokers() []string
 	GetVersion() string
 	GetRetryMax() int
+}
+
+func (k kafka) GetEnabled() bool {
+	return k.Enabled
 }
 
 func (k kafka) GetVerificationTopic() string {

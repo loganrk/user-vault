@@ -24,6 +24,7 @@ data:
         - "qIAJeZ7qzrUZ2CjsR2vvmhfnDOz8hMnKH2BwlpvCHkmc7TP0poxeqrCmU8ZV7q9q"
 
     kafka:
+      enabled: true
       brokers: "${KAFKA_BROKERS}"
       topics:
         user-verify: "${KAFKA_USER_VERIFY_TOPIC}"
@@ -45,6 +46,7 @@ data:
       max-login-attempt: 5
       login-attempt-session-period: 60
       password-hash-cost: 12
+      auto-approval: false
       apple-client-id: ""
       google-client-id: ""
       microsoft-client-id: ""

@@ -33,6 +33,20 @@ func (m *MockUser) EXPECT() *MockUserMockRecorder {
 	return m.recorder
 }
 
+// GetAutoApproval mocks base method.
+func (m *MockUser) GetAutoApproval() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAutoApproval")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// GetAutoApproval indicates an expected call of GetAutoApproval.
+func (mr *MockUserMockRecorder) GetAutoApproval() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAutoApproval", reflect.TypeOf((*MockUser)(nil).GetAutoApproval))
+}
+
 // GetAccessTokenExpiry mocks base method.
 func (m *MockUser) GetAccessTokenExpiry() int {
 	m.ctrl.T.Helper()

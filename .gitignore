@@ -3,3 +3,5 @@
 
 # ignore ALL .bin files
 *.bin
+.env
+config.yml

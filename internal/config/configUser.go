@@ -4,6 +4,7 @@ type User interface {
 	GetMaxLoginAttempt() int
 	GetLoginAttemptSessionPeriod() int
 	GetPasswordHashCost() int
+	GetAutoApproval() bool
 
 	GetVerificationLink() string
 	GetVerificationTokenExpiry() int
@@ -20,6 +21,10 @@ type User interface {
 	GetAppleClientId() string
 	GetGoogleClientId() string
 	GetMicrosoftClientId() string
+}
+
+func (u user) GetAutoApproval() bool {
+	return u.AutoApproval
 }
 
 func (u user) GetMaxLoginAttempt() int {

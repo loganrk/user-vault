@@ -34,6 +34,31 @@ func (u *userSrv) Register(ctx context.Context, req domain.UserRegisterClientReq
 		return domain.UserRegisterClientResponse{}, errRes
 	}
 
+	if u.conf.GetAutoApproval() {
+		if req.Email != "" {
+			if err := u.mysql.UpdateEmailVerfied(ctx, userData.Id); err != nil {
+				u.logger.Errorw(ctx, "update_email_verfied failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.DBException)
+				return domain.UserRegisterClientResponse{}, domain.ErrorRes{
+					Code:      http.StatusInternalServerError,
+					Message:   constant.MessageInternalServerError,
+					Err:       err.Error(),
+					Exception: constant.DBException,
+				}
+			}
+		} else {
+			if err := u.mysql.UpdatePhoneVerfied(ctx, userData.Id); err != nil {
+				u.logger.Errorw(ctx, "update_phone_verfied failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.DBException)
+				return domain.UserRegisterClientResponse{}, domain.ErrorRes{
+					Code:      http.StatusInternalServerError,
+					Message:   constant.MessageInternalServerError,
+					Err:       err.Error(),
+					Exception: constant.DBException,
+				}
+			}
+		}
+		return domain.UserRegisterClientResponse{Message: "Account created successfully."}, domain.ErrorRes{}
+	}
+
 	var tokenType int8
 	if req.Email != "" {
 		tokenType = constant.TOKEN_TYPE_ACTIVATION_EMAIL
@@ -49,26 +74,27 @@ func (u *userSrv) Register(ctx context.Context, req domain.UserRegisterClientReq
 		return domain.UserRegisterClientResponse{}, errRes
 	}
 
-	if tokenType == constant.TOKEN_TYPE_ACTIVATION_EMAIL {
-		link := strings.Replace(u.conf.GetVerificationLink(), constant.TOKEN_MACRO, token, 1)
-		if err := u.messager.PublishVerificationEmail(userData.Email, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, link); err != nil {
-			u.logger.Errorw(ctx, "publish_verification_email failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
-			return domain.UserRegisterClientResponse{}, domain.ErrorRes{
-				Code:      http.StatusInternalServerError,
-				Message:   constant.MessageInternalServerError,
-				Err:       err.Error(),
-				Exception: constant.NetworkException,
+	if u.notifierEnabled() {
+		if tokenType == constant.TOKEN_TYPE_ACTIVATION_EMAIL {
+			link := strings.Replace(u.conf.GetVerificationLink(), constant.TOKEN_MACRO, token, 1)
+			if err := u.notifier.PublishVerificationEmail(userData.Email, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, link); err != nil {
+				u.logger.Errorw(ctx, "publish_verification_email failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
+				return domain.UserRegisterClientResponse{}, domain.ErrorRes{
+					Code:      http.StatusInternalServerError,
+					Message:   constant.MessageInternalServerError,
+					Err:       err.Error(),
+					Exception: constant.NetworkException,
+				}
 			}
-		}
-
-	} else {
-		if err := u.messager.PublishVerificationPhone(userData.Phone, userData.Name, token); err != nil {
-			u.logger.Errorw(ctx, "publish_verification_phone failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
-			return domain.UserRegisterClientResponse{}, domain.ErrorRes{
-				Code:      http.StatusInternalServerError,
-				Message:   constant.MessageInternalServerError,
-				Err:       err.Error(),
-				Exception: constant.NetworkException,
+		} else {
+			if err := u.notifier.PublishVerificationPhone(userData.Phone, userData.Name, token); err != nil {
+				u.logger.Errorw(ctx, "publish_verification_phone failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
+				return domain.UserRegisterClientResponse{}, domain.ErrorRes{
+					Code:      http.StatusInternalServerError,
+					Message:   constant.MessageInternalServerError,
+					Err:       err.Error(),
+					Exception: constant.NetworkException,
+				}
 			}
 		}
 	}
@@ -181,26 +207,27 @@ func (u *userSrv) ResendVerification(ctx context.Context, req domain.UserResendV
 		return domain.UserResendVerificationClientResponse{}, errRes
 	}
 
-	if req.Email != "" {
-
-		link := strings.Replace(u.conf.GetVerificationLink(), constant.TOKEN_MACRO, token, 1)
-		if err := u.messager.PublishVerificationEmail(userData.Email, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, link); err != nil {
-			u.logger.Errorw(ctx, "publish_verification_email failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
-			return domain.UserResendVerificationClientResponse{}, domain.ErrorRes{
-				Code:      http.StatusInternalServerError,
-				Message:   constant.MessageInternalServerError,
-				Err:       err.Error(),
-				Exception: constant.NetworkException,
+	if u.notifierEnabled() {
+		if req.Email != "" {
+			link := strings.Replace(u.conf.GetVerificationLink(), constant.TOKEN_MACRO, token, 1)
+			if err := u.notifier.PublishVerificationEmail(userData.Email, constant.USER_ACTIVATION_EMAIL_SUBJECT, userData.Name, link); err != nil {
+				u.logger.Errorw(ctx, "publish_verification_email failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
+				return domain.UserResendVerificationClientResponse{}, domain.ErrorRes{
+					Code:      http.StatusInternalServerError,
+					Message:   constant.MessageInternalServerError,
+					Err:       err.Error(),
+					Exception: constant.NetworkException,
+				}
 			}
-		}
-	} else {
-		if err := u.messager.PublishVerificationPhone(userData.Phone, userData.Name, token); err != nil {
-			u.logger.Errorw(ctx, "publish_verification_phone failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
-			return domain.UserResendVerificationClientResponse{}, domain.ErrorRes{
-				Code:      http.StatusInternalServerError,
-				Message:   constant.MessageInternalServerError,
-				Err:       err.Error(),
-				Exception: constant.NetworkException,
+		} else {
+			if err := u.notifier.PublishVerificationPhone(userData.Phone, userData.Name, token); err != nil {
+				u.logger.Errorw(ctx, "publish_verification_phone failed", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
+				return domain.UserResendVerificationClientResponse{}, domain.ErrorRes{
+					Code:      http.StatusInternalServerError,
+					Message:   constant.MessageInternalServerError,
+					Err:       err.Error(),
+					Exception: constant.NetworkException,
+				}
 			}
 		}
 	}

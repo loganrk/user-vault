@@ -39,7 +39,7 @@ mockgen -package=mocks -destination=test/mocks/adapter_middleware_gin_port.go gi
 
 mockgen -package=mocks -destination=test/mocks/adapter_logger_port.go github.com/loganrk/user-vault/internal/core/port Logger
 
-mockgen -package=mocks -destination=test/mocks/adapter_messager_port.go github.com/loganrk/user-vault/internal/core/port Messager
+mockgen -package=mocks -destination=test/mocks/adapter_Notifier_port.go github.com/loganrk/user-vault/internal/core/port Notifier
 
 mockgen -package=mocks -destination=test/mocks/adapter_oauthprovider_port.go github.com/loganrk/user-vault/internal/core/port OAuthProvider
 

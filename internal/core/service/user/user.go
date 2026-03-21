@@ -18,19 +18,19 @@ type userSrv struct {
 	mysql         port.RepositoryMySQL
 	conf          config.User
 	token         port.Token
-	messager      port.Messager
+	notifier      port.Notifier
 	oAuthProvider port.OAuthProvider
 	utils         port.Utils
 }
 
 // New initializes a new user service with required dependencies and returns it.
-func New(loggerIns port.Logger, tokenIns port.Token, messageIns port.Messager, mysqlIns port.RepositoryMySQL, oAuthProviderIns port.OAuthProvider, utilsIns port.Utils, appName string, userConfIns config.User) port.UserSvr {
+func New(loggerIns port.Logger, tokenIns port.Token, notifierIns port.Notifier, mysqlIns port.RepositoryMySQL, oAuthProviderIns port.OAuthProvider, utilsIns port.Utils, appName string, userConfIns config.User) port.UserSvr {
 	return &userSrv{
 		logger:        loggerIns,
 		mysql:         mysqlIns,
 		conf:          userConfIns,
 		token:         tokenIns,
-		messager:      messageIns,
+		notifier:      notifierIns,
 		oAuthProvider: oAuthProviderIns,
 		utils:         utilsIns,
 	}
@@ -69,6 +69,11 @@ func (u *userSrv) getLoginAttemptSessionPeriod() time.Time {
 // getMaxLoginAttempt retrieves the maximum number of failed login attempts allowed from configuration.
 func (u *userSrv) getMaxLoginAttempt() int {
 	return u.conf.GetMaxLoginAttempt()
+}
+
+// notifierEnabled reports whether the notifier is configured and available.
+func (u *userSrv) notifierEnabled() bool {
+	return u.notifier != nil
 }
 
 // getPasswordResetTokenExpiry calculates and returns the expiry time for the password reset based on configuration.

@@ -18,7 +18,7 @@ import (
 type mocksSetupPassword func(
 	ctx context.Context,
 	mockRepo *mocks.MockRepositoryMySQL,
-	mockMsg *mocks.MockMessager,
+	mockMsg *mocks.MockNotifier,
 	mockLogger *mocks.MockLogger,
 	mockConfigUser *mocks.MockUser,
 	mockUtils *mocks.MockUtils,
@@ -47,7 +47,7 @@ func TestForgotPassword(t *testing.T) {
 					Email: "alice@example.com",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				userData := domain.User{
 					Id:            1,
@@ -76,7 +76,7 @@ func TestForgotPassword(t *testing.T) {
 					Phone: "+1234567890",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				userData := domain.User{
 					Id:            1,
@@ -104,7 +104,7 @@ func TestForgotPassword(t *testing.T) {
 					Email: "notfound@example.com",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				mockRepo.EXPECT().GetUserByEmail(ctx, "notfound@example.com").Return(domain.User{}, nil)
 				mockLogger.EXPECT().Errorw(ctx, "fetch_user failed",
 					"email", "notfound@example.com",
@@ -123,7 +123,7 @@ func TestForgotPassword(t *testing.T) {
 					Email: "alice@example.com",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				userData := domain.User{
 					Id:            1,
@@ -143,7 +143,7 @@ func TestForgotPassword(t *testing.T) {
 					Email: "alice@example.com",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				userData := domain.User{
 					Id:            1,
@@ -164,7 +164,7 @@ func TestForgotPassword(t *testing.T) {
 					Email: "alice@example.com",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				userData := domain.User{
 					Id:            1,
@@ -191,7 +191,7 @@ func TestForgotPassword(t *testing.T) {
 					Email: "alice@example.com",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				userData := domain.User{
 					Id:            1,
@@ -225,7 +225,7 @@ func TestForgotPassword(t *testing.T) {
 
 			mockRepo := mocks.NewMockRepositoryMySQL(ctrl)
 			mockToken := mocks.NewMockToken(ctrl)
-			mockMsg := mocks.NewMockMessager(ctrl)
+			mockMsg := mocks.NewMockNotifier(ctrl)
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
 			mockUtils := mocks.NewMockUtils(ctrl)
@@ -273,7 +273,7 @@ func TestResetPassword(t *testing.T) {
 					Password: "newpass123",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				userData := domain.User{
 					Id:            1,
@@ -308,7 +308,7 @@ func TestResetPassword(t *testing.T) {
 					Password: "newpass123",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				userData := domain.User{
 					Id:            1,
@@ -343,7 +343,7 @@ func TestResetPassword(t *testing.T) {
 					Token: "valid-token",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				mockRepo.EXPECT().GetUserByEmail(ctx, "notfound@example.com").Return(domain.User{}, nil)
 				mockLogger.EXPECT().Errorw(ctx, "fetch_user failed",
 					"email", "notfound@example.com",
@@ -363,7 +363,7 @@ func TestResetPassword(t *testing.T) {
 					Token: "valid-token",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				userData := domain.User{
 					Id:            1,
@@ -384,7 +384,7 @@ func TestResetPassword(t *testing.T) {
 					Token: "valid-token",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				userData := domain.User{
 					Id:            1,
@@ -405,7 +405,7 @@ func TestResetPassword(t *testing.T) {
 					Token: "invalid-token",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				userData := domain.User{
 					Id:            1,
@@ -435,7 +435,7 @@ func TestResetPassword(t *testing.T) {
 					Token: "valid-token",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				userData := domain.User{
 					Id:            1,
@@ -466,7 +466,7 @@ func TestResetPassword(t *testing.T) {
 					Password: "newpass123",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				userData := domain.User{
 					Id:            1,
@@ -503,7 +503,7 @@ func TestResetPassword(t *testing.T) {
 					Password: "newpass123",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				userData := domain.User{
 					Id:            1,
@@ -541,7 +541,7 @@ func TestResetPassword(t *testing.T) {
 
 			mockRepo := mocks.NewMockRepositoryMySQL(ctrl)
 			mockToken := mocks.NewMockToken(ctrl)
-			mockMsg := mocks.NewMockMessager(ctrl)
+			mockMsg := mocks.NewMockNotifier(ctrl)
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
 			mockUtils := mocks.NewMockUtils(ctrl)

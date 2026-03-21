@@ -59,7 +59,7 @@ func (m *mySql) CreateOauthAccount(ctx context.Context, accountData domain.OAuth
 func (m *mySql) GetUserByUserID(ctx context.Context, userID int) (domain.User, error) {
 	var userData domain.User
 	// Select specific user fields to reduce data fetching overhead
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "email", "email_verified", "phone", "phone_verified", "name", "state", "status").First(&userData, userID)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "user_subscription_id", "email", "email_verified", "phone", "phone_verified", "name", "state", "status").First(&userData, userID)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no user found
 	}
@@ -70,7 +70,7 @@ func (m *mySql) GetUserByUserID(ctx context.Context, userID int) (domain.User, e
 func (m *mySql) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
 	var userData domain.User
 	// Select specific fields for user data fetching
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "email", "email_verified", "phone", "phone_verified", "name", "state", "status").Where("email = ?", email).First(&userData)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "user_subscription_id", "email", "email_verified", "phone", "phone_verified", "name", "state", "status").Where("email = ?", email).First(&userData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no user found
 	}
@@ -102,7 +102,7 @@ func (m *mySql) GetOauthAccountForProvider(ctx context.Context, userId int, emai
 func (m *mySql) GetUserByPhone(ctx context.Context, phone string) (domain.User, error) {
 	var userData domain.User
 	// Select specific fields for user data fetching
-	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "email", "email_verified", "phone", "phone_verified", "name", "state", "status").Where("phone = ?", phone).First(&userData)
+	result := m.dialer.WithContext(ctx).Model(&domain.User{}).Select("id", "user_subscription_id", "email", "email_verified", "phone", "phone_verified", "name", "state", "status").Where("phone = ?", phone).First(&userData)
 	if result.Error == gorm.ErrRecordNotFound {
 		result.Error = nil // Return nil error if no user found
 	}
@@ -119,7 +119,7 @@ func (m *mySql) GetUserByEmailOrPhone(ctx context.Context, email, phone string) 
 	}
 
 	query := m.dialer.WithContext(ctx).Model(&domain.User{}).
-		Select("id", "email", "email_verified", "phone", "phone_verified", "name", "state", "status")
+		Select("id", "user_subscription_id", "email", "email_verified", "phone", "phone_verified", "name", "state", "status")
 
 	// Apply conditions based on which field is present
 	if email != "" && phone != "" {

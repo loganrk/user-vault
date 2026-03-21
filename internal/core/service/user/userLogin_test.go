@@ -18,7 +18,7 @@ import (
 type mocksSetupLogin func(
 	ctx context.Context,
 	mockRepo *mocks.MockRepositoryMySQL,
-	mockMsg *mocks.MockMessager,
+	mockMsg *mocks.MockNotifier,
 	mockLogger *mocks.MockLogger,
 	mockToken *mocks.MockToken,
 	mockConfigUser *mocks.MockUser,
@@ -28,7 +28,7 @@ type mocksSetupLogin func(
 type mocksSetupOAuthLogin func(
 	ctx context.Context,
 	mockRepo *mocks.MockRepositoryMySQL,
-	mockMsg *mocks.MockMessager,
+	mockMsg *mocks.MockNotifier,
 	mockLogger *mocks.MockLogger,
 	mockToken *mocks.MockToken,
 	mockConfigUser *mocks.MockUser,
@@ -60,7 +60,7 @@ func TestLogin(t *testing.T) {
 					Password: "pass123",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				userData := domain.User{
 					Id:                 1,
 					Email:              "alice@example.com",
@@ -94,7 +94,7 @@ func TestLogin(t *testing.T) {
 					Email: "notfound@example.com",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				mockRepo.EXPECT().GetUserByEmail(ctx, "notfound@example.com").Return(domain.User{}, nil)
 				mockLogger.EXPECT().Errorw(ctx, "fetch_user failed",
 					"email", "notfound@example.com",
@@ -113,7 +113,7 @@ func TestLogin(t *testing.T) {
 					Email: "alice@example.com",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				userData := domain.User{
 					Id:            1,
 					Email:         "alice@example.com",
@@ -135,7 +135,7 @@ func TestLogin(t *testing.T) {
 					Email: "alice@example.com",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				userData := domain.User{
 					Id:                 1,
 					Email:              "alice@example.com",
@@ -158,7 +158,7 @@ func TestLogin(t *testing.T) {
 					Email: "alice@example.com",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				userData := domain.User{
 					Id:                 1,
 					Email:              "alice@example.com",
@@ -182,7 +182,7 @@ func TestLogin(t *testing.T) {
 					Password: "wrongpass",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				userData := domain.User{
 					Id:                 1,
 					Email:              "alice@example.com",
@@ -212,7 +212,7 @@ func TestLogin(t *testing.T) {
 					Email: "alice@example.com",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				userData := domain.User{
 					Id:                 1,
 					Email:              "alice@example.com",
@@ -241,7 +241,7 @@ func TestLogin(t *testing.T) {
 					Password: "pass123",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 				userData := domain.User{
 					Id:                 1,
 					Email:              "alice@example.com",
@@ -280,7 +280,7 @@ func TestLogin(t *testing.T) {
 
 			mockRepo := mocks.NewMockRepositoryMySQL(ctrl)
 			mockToken := mocks.NewMockToken(ctrl)
-			mockMsg := mocks.NewMockMessager(ctrl)
+			mockMsg := mocks.NewMockNotifier(ctrl)
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
 			mockUtils := mocks.NewMockUtils(ctrl)
@@ -329,7 +329,7 @@ func TestOAuthLogin(t *testing.T) {
 			},
 			setupMocks: func(ctx context.Context,
 				mockRepo *mocks.MockRepositoryMySQL,
-				mockMsg *mocks.MockMessager,
+				mockMsg *mocks.MockNotifier,
 				mockLogger *mocks.MockLogger,
 				mockToken *mocks.MockToken,
 				mockConfigUser *mocks.MockUser,
@@ -378,7 +378,7 @@ func TestOAuthLogin(t *testing.T) {
 			},
 			setupMocks: func(ctx context.Context,
 				mockRepo *mocks.MockRepositoryMySQL,
-				mockMsg *mocks.MockMessager,
+				mockMsg *mocks.MockNotifier,
 				mockLogger *mocks.MockLogger,
 				mockToken *mocks.MockToken,
 				mockConfigUser *mocks.MockUser,
@@ -424,7 +424,7 @@ func TestOAuthLogin(t *testing.T) {
 			},
 			setupMocks: func(ctx context.Context,
 				mockRepo *mocks.MockRepositoryMySQL,
-				mockMsg *mocks.MockMessager,
+				mockMsg *mocks.MockNotifier,
 				mockLogger *mocks.MockLogger,
 				mockToken *mocks.MockToken,
 				mockConfigUser *mocks.MockUser,
@@ -455,7 +455,7 @@ func TestOAuthLogin(t *testing.T) {
 			},
 			setupMocks: func(ctx context.Context,
 				mockRepo *mocks.MockRepositoryMySQL,
-				mockMsg *mocks.MockMessager,
+				mockMsg *mocks.MockNotifier,
 				mockLogger *mocks.MockLogger,
 				mockToken *mocks.MockToken,
 				mockConfigUser *mocks.MockUser,
@@ -490,7 +490,7 @@ func TestOAuthLogin(t *testing.T) {
 
 			mockRepo := mocks.NewMockRepositoryMySQL(ctrl)
 			mockToken := mocks.NewMockToken(ctrl)
-			mockMsg := mocks.NewMockMessager(ctrl)
+			mockMsg := mocks.NewMockNotifier(ctrl)
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
 			mockUtils := mocks.NewMockUtils(ctrl)
@@ -535,7 +535,7 @@ func TestLogout(t *testing.T) {
 					RefreshToken: "valid-token",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				tokenData := domain.UserTokens{
 					Id:        1,
@@ -559,7 +559,7 @@ func TestLogout(t *testing.T) {
 					RefreshToken: "invalid-token",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				tokenData := domain.UserTokens{
 					Id: 0,
@@ -578,7 +578,7 @@ func TestLogout(t *testing.T) {
 					RefreshToken: "valid-token",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				mockRepo.EXPECT().GetUserToken(ctx, constant.TOKEN_TYPE_REFRESH, "valid-token").Return(domain.UserTokens{}, assert.AnError)
 				mockLogger.EXPECT().Errorw(ctx, "validate_refresh_token failed",
@@ -598,7 +598,7 @@ func TestLogout(t *testing.T) {
 					RefreshToken: "valid-token",
 				},
 			},
-			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockMessager, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
+			setupMocks: func(ctx context.Context, mockRepo *mocks.MockRepositoryMySQL, mockMsg *mocks.MockNotifier, mockLogger *mocks.MockLogger, mockToken *mocks.MockToken, mockConfigUser *mocks.MockUser, mockUtils *mocks.MockUtils) {
 
 				tokenData := domain.UserTokens{
 					Id:        1,
@@ -627,7 +627,7 @@ func TestLogout(t *testing.T) {
 
 			mockRepo := mocks.NewMockRepositoryMySQL(ctrl)
 			mockToken := mocks.NewMockToken(ctrl)
-			mockMsg := mocks.NewMockMessager(ctrl)
+			mockMsg := mocks.NewMockNotifier(ctrl)
 			mockLogger := mocks.NewMockLogger(ctrl)
 			mockConfigUser := mocks.NewMockUser(ctrl)
 			mockUtils := mocks.NewMockUtils(ctrl)

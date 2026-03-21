@@ -90,15 +90,14 @@ type Logger interface {
 	Sync(ctx context.Context) error // Flushes any buffered log entries
 }
 
-type Messager interface {
-	RegisterVerification(topic string)
+type Notifier interface {
 	PublishVerificationEmail(toAddress, subject, name, link string) error
 	PublishVerificationPhone(phone, name, token string) error
 
-	RegisterPasswordReset(topic string)
 	PublishPasswordResetEmail(toAddress, subject, name, link string) error
 	PublishPasswordResetPhone(phone, name, token string) error
 }
+
 type OAuthProvider interface {
 	VerifyToken(ctx context.Context, provider string, token string) (string, string, domain.OAuthID, string, error)
 }

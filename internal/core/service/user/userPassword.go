@@ -49,16 +49,17 @@ func (u *userSrv) ForgotPassword(ctx context.Context, req domain.UserForgotPassw
 			return domain.UserForgotPasswordClientResponse{}, errRes
 		}
 
-		// Send verification email to the user
-		link := strings.Replace(u.conf.GetPasswordResetLink(), constant.TOKEN_MACRO, token, 1)
-		if err := u.messager.PublishPasswordResetEmail(userData.Email, constant.USER_PASSWORD_RESET_EMAIL_SUBJECT, userData.Name, link); err != nil {
-			u.logger.Errorw(ctx, "failed to send verification email", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
-
-			return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
-				Code:      http.StatusInternalServerError,
-				Message:   constant.MessageInternalServerError,
-				Err:       err.Error(),
-				Exception: constant.NetworkException,
+		if u.notifierEnabled() {
+			// Send verification email to the user
+			link := strings.Replace(u.conf.GetPasswordResetLink(), constant.TOKEN_MACRO, token, 1)
+			if err := u.notifier.PublishPasswordResetEmail(userData.Email, constant.USER_PASSWORD_RESET_EMAIL_SUBJECT, userData.Name, link); err != nil {
+				u.logger.Errorw(ctx, "failed to send verification email", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
+				return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
+					Code:      http.StatusInternalServerError,
+					Message:   constant.MessageInternalServerError,
+					Err:       err.Error(),
+					Exception: constant.NetworkException,
+				}
 			}
 		}
 	} else {
@@ -71,14 +72,16 @@ func (u *userSrv) ForgotPassword(ctx context.Context, req domain.UserForgotPassw
 			return domain.UserForgotPasswordClientResponse{}, errRes
 		}
 
-		// Send verification SMS to the user
-		if err := u.messager.PublishPasswordResetPhone(userData.Phone, userData.Name, token); err != nil {
-			u.logger.Errorw(ctx, "failed to send verification sms", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
-			return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
-				Code:      http.StatusInternalServerError,
-				Message:   constant.MessageInternalServerError,
-				Err:       "failed to send verification sms" + err.Error(),
-				Exception: constant.NetworkException,
+		if u.notifierEnabled() {
+			// Send verification SMS to the user
+			if err := u.notifier.PublishPasswordResetPhone(userData.Phone, userData.Name, token); err != nil {
+				u.logger.Errorw(ctx, "failed to send verification sms", "userId", userData.Id, "error", err.Error(), "code", http.StatusInternalServerError, "exception", constant.NetworkException)
+				return domain.UserForgotPasswordClientResponse{}, domain.ErrorRes{
+					Code:      http.StatusInternalServerError,
+					Message:   constant.MessageInternalServerError,
+					Err:       "failed to send verification sms" + err.Error(),
+					Exception: constant.NetworkException,
+				}
 			}
 		}
 	}

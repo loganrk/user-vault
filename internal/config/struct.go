@@ -49,6 +49,7 @@ type user struct {
 	MaxLoginAttempt           int    `mapstructure:"max-login-attempt"`
 	LoginAttemptSessionPeriod int    `mapstructure:"login-attempt-session-period"`
 	PasswordHashCost          int    `mapstructure:"password-hash-cost"`
+	AutoApproval              bool   `mapstructure:"auto-approval"`
 	AppleClientId             string `mapstructure:"apple-client-id"`
 	GoogleClientId            string `mapstructure:"google-client-id"`
 	MicroSoftClientId         string `mapstructure:"microsoft-client-id"`
@@ -82,6 +83,7 @@ type tokenJWT struct {
 }
 
 type kafka struct {
+	Enabled bool     `mapstructure:"enabled"`
 	Brokers []string `mapstructure:"brokers"`
 	Topics  struct {
 		UserVerify        string `mapstructure:"user-verify"`
